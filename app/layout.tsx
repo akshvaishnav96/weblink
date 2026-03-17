@@ -1,18 +1,23 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond } from "next/font/google";
+import { Cormorant_Garamond, DM_Sans } from "next/font/google";
 
 // Global CSS only — component/page styles are co-located CSS Modules
 import "./globals.css";
 import "@/styles/tokens.css";
 import "@/styles/globals.css";
 
-import BottomNav from "@/components/layout/BottomNav";
-import TopNav from "@/components/layout/TopNav";
 
 const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
-  weight: ["700"],
+  weight: ["400", "500", "600", "700"],
   variable: "--font-heading",
+  display: "swap",
+});
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-sans",
   display: "swap",
 });
 
@@ -23,7 +28,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={cormorant.variable}>
+    <html lang="en" className={`${cormorant.variable} ${dmSans.variable}`}>
       <head>
         <link rel="preconnect" href="https://api.fontshare.com" />
         <link

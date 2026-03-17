@@ -22,6 +22,8 @@ interface ServiceRowProps {
   businessName?: string;
   businessAddress?: string;
   hideBadge?: boolean;
+  expanded?: boolean;
+  onToggle?: () => void;
 }
 
 function todayISO(): string {
@@ -44,9 +46,12 @@ function toRawSlot(displayTime: string, durationMins: number): string {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}-${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}`;
 }
 
-export default function ServiceRow({ service, barberId, businessName = "", businessAddress = "", hideBadge = false }: ServiceRowProps) {
-  const [expanded, setExpanded] = useState(false);
+export default function ServiceRow({ service, barberId, businessName = "", businessAddress = "", hideBadge = false, expanded: externalExpanded, onToggle }: ServiceRowProps) {
+  const [internalExpanded, setInternalExpanded] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+
+  const expanded = externalExpanded !== undefined ? externalExpanded : internalExpanded;
+  const handleToggle = onToggle ?? (() => setInternalExpanded((prev) => !prev));
   const router = useRouter();
   const setSelection = useBookingStore((s) => s.setSelection);
 
@@ -116,7 +121,7 @@ export default function ServiceRow({ service, barberId, businessName = "", busin
       {/* Main row */}
       <div
         className={`${styles.main} ${styles.mainClickable}`}
-        onClick={() => setExpanded((prev) => !prev)}
+        onClick={handleToggle}
       >
         <div className={styles.left}>
           <div className={styles.nameRow}>

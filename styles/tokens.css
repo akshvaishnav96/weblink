@@ -67,7 +67,7 @@
 
   /* Typography */
   --font-heading: var(--font-heading, 'Cormorant Garamond', Georgia, serif);
-  --font-body:    'Satoshi', -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  --font-body:    var(--font-sans, 'Satoshi', -apple-system, 'Helvetica Neue', Arial, sans-serif);
   --heading-letter-spacing: 0.01em;
 }
 

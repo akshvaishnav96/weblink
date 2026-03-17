@@ -2,6 +2,7 @@
 
 import { useState, use, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { MapPin, User } from "lucide-react";
 import BackHeader from "@/components/layout/BackHeader";
 import ExpertSelector from "@/components/booking/ExpertSelector";
 import BookingCalendar from "@/components/booking/BookingCalendar";
@@ -27,7 +28,6 @@ function getInitials(name: string): string {
 }
 
 function toISODate(date: Date): string {
-  // "YYYY-MM-DD" in local time (avoids UTC offset shifting the day)
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
   const d = String(date.getDate()).padStart(2, "0");
@@ -40,11 +40,9 @@ function formatSlotStart(slot: string): string {
   const h = parseInt(hours, 10);
   const ampm = h >= 12 ? "PM" : "AM";
   const h12 = h > 12 ? h - 12 : h === 0 ? 12 : h;
-  return minutes === "00" ? `${h12} ${ampm}` : `${h12}:${minutes} ${ampm}`;
+  return minutes === "00" ? `${h12}:00 ${ampm}` : `${h12}:${minutes} ${ampm}`;
 }
 
-
-/** Collect staff attached to a specific service ID from the profile */
 function getStaffForService(
   profile: ApiBusinessProfile,
   serviceId: string
@@ -68,37 +66,27 @@ export default function ViewTimesPage({
   const businessName    = searchParams.get("businessName")    ?? "";
   const businessAddress = searchParams.get("businessAddress") ?? "";
 
-  // ── Profile (for service name/price + staff list) ────────────────────────
   const [profile, setProfile] = useState<ApiBusinessProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileError, setProfileError] = useState<string | null>(null);
 
-  // ── Selection state ──────────────────────────────────────────────────────
   const [selectedExpert, setSelectedExpert] = useState("anyone");
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
-  const [comment, setComment] = useState("");
+  const [notes, setNotes] = useState("");
+  const [meetUpAddress, setMeetUpAddress] = useState("");
 
-  // ── Availability slots from API ──────────────────────────────────────────
   const [slots, setSlots] = useState<string[]>([]);
   const [rawSlotsMap, setRawSlotsMap] = useState<Record<string, string>>({});
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [, setSlotsError] = useState<string | null>(null);
 
-  // ── Fetch business profile ────────────────────────────────────────────────
   useEffect(() => {
     fetchBusinessProfile(barberId)
-      .then((data) => {
-        setProfile(data);
-        setProfileLoading(false);
-      })
-      .catch((err: Error) => {
-        setProfileError(err.message ?? "Failed to load profile");
-        setProfileLoading(false);
-      });
+      .then((data) => { setProfile(data); setProfileLoading(false); })
+      .catch((err: Error) => { setProfileError(err.message ?? "Failed to load profile"); setProfileLoading(false); });
   }, [barberId]);
 
-  // ── Fetch available slots whenever date / expert / service changes ────────
   const fetchSlots = useCallback(async () => {
     if (!selectedDate || !serviceId) return;
     setSlotsLoading(true);
@@ -108,15 +96,10 @@ export default function ViewTimesPage({
       const result = await checkStaffAvailability({
         business_id: barberId,
         type: selectedExpert === "anyone" ? "anyone" : "specific",
-        ...(selectedExpert !== "anyone"
-          ? { staff_id: selectedExpert }
-          : {}),
+        ...(selectedExpert !== "anyone" ? { staff_id: selectedExpert } : {}),
         date: toISODate(selectedDate),
         business_service_id: serviceId,
       });
-        console.log("result",result.slots);
-        
-      // data is a single ApiStaffAvailability object — slots live directly on it
       const rawSlots: string[] = result.slots ?? [];
       const sorted = [...new Set(rawSlots)].sort();
       const displaySlotsList = sorted.map(formatSlotStart);
@@ -132,11 +115,8 @@ export default function ViewTimesPage({
     }
   }, [barberId, selectedDate, selectedExpert, serviceId]);
 
-  useEffect(() => {
-    fetchSlots();
-  }, [fetchSlots]);
+  useEffect(() => { fetchSlots(); }, [fetchSlots]);
 
-  // ── Derived ───────────────────────────────────────────────────────────────
   const staffForService = profile ? getStaffForService(profile, serviceId) : [];
   const experts = staffForService.map((s) => ({
     id: s.id.toString(),
@@ -149,12 +129,13 @@ export default function ViewTimesPage({
   const servicePrice =
     parseFloat(service?.walk_price ?? service?.mobile_price ?? "0") || 0;
 
-  const displaySlots = slots;
-  const activeRawMap = rawSlotsMap;
-
   const canBook = !!(selectedDate && selectedTime);
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  const selectedExpertName =
+    selectedExpert === "anyone"
+      ? "Anyone"
+      : experts.find((e) => e.id === selectedExpert)?.name ?? "Anyone";
+
   if (profileLoading) {
     return (
       <div className={styles.page}>
@@ -173,9 +154,7 @@ export default function ViewTimesPage({
         <BackHeader title="Select Your Expert" />
         <div className={styles.centeredMsg}>
           <p className={styles.errorText}>{profileError}</p>
-          <button onClick={() => router.back()} className={styles.backBtn}>
-            Go back
-          </button>
+          <button onClick={() => router.back()} className={styles.backBtn}>Go back</button>
         </div>
       </div>
     );
@@ -185,35 +164,39 @@ export default function ViewTimesPage({
     <div className={styles.page}>
       <BackHeader title="Select Your Expert" />
 
-      {/* Expert selector — built from real staff data */}
+      {/* Expert selector */}
       <ExpertSelector
         experts={experts}
         selectedId={selectedExpert}
-        onSelect={(id) => {
-          setSelectedExpert(id);
-          setSelectedTime(null);
-        }}
+        onSelect={(id) => { setSelectedExpert(id); setSelectedTime(null); }}
       />
 
-      {/* Date picker */}
+      {/* Progress line + selected expert chip */}
+      <div className={`${styles.progressLine}${slotsLoading ? ` ${styles.progressLineLoading}` : ""}`} />
+      <div className={styles.selectedExpertRow}>
+        <div className={styles.selectedExpertChip}>
+          <User size={12} />
+          <span>{selectedExpertName}</span>
+        </div>
+      </div>
+
+      {/* Calendar */}
       <BookingCalendar
         selectedDate={selectedDate}
-        onDateSelect={(d) => {
-          setSelectedDate(d);
-          setSelectedTime(null);
-        }}
+        onDateSelect={(d) => { setSelectedDate(d); setSelectedTime(null); }}
       />
 
       {/* Time slots */}
       <div className={styles.timeSlotsSection}>
+        <p className={styles.sectionTitle}>Choose Time</p>
         {slotsLoading ? (
           <div className={styles.slotsLoading}>
             <div className={styles.spinner} />
             <span className={styles.msgText}>Checking availability…</span>
           </div>
-        ) : displaySlots.length > 0 ? (
+        ) : slots.length > 0 ? (
           <div className={styles.timeSlotsGrid}>
-            {displaySlots.map((slot) => (
+            {slots.map((slot) => (
               <TimeSlotButton
                 key={slot}
                 time={slot}
@@ -223,43 +206,50 @@ export default function ViewTimesPage({
             ))}
           </div>
         ) : (
-          <p className={styles.noSlots}>
-            No availability for this date — try another day
-          </p>
+          <p className={styles.noSlots}>No availability for this date — try another day</p>
         )}
       </div>
 
-      {/* Comment */}
-      <div className={styles.commentSection}>
-        <label className={styles.commentLabel}>Comment</label>
+      {/* Additional Notes */}
+      <div className={styles.formSection}>
+        <label className={styles.formLabel}>Additional Notes (Optional)</label>
         <textarea
-          className={styles.commentTextarea}
-          placeholder="Type here…"
-          value={comment}
-          onChange={(e) => setComment(e.target.value)}
+          className={styles.formTextarea}
+          placeholder="Any special requests or notes..."
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
           rows={3}
         />
       </div>
 
-      {/* CTA */}
+      {/* Meet Up Address */}
+      <div className={styles.formSection}>
+        <label className={styles.formLabel}>Meet Up Address</label>
+        <div className={styles.addressWrapper}>
+          <input
+            className={styles.addressInput}
+            placeholder="Enter your address..."
+            value={meetUpAddress}
+            onChange={(e) => setMeetUpAddress(e.target.value)}
+          />
+          <MapPin size={16} className={styles.addressIcon} />
+        </div>
+      </div>
+
+      {/* Book button */}
       <div className={styles.ctaSection}>
         <button
           onClick={() => {
             if (!canBook) return;
             const expertObj = experts.find((e) => e.id === selectedExpert);
-            const staffName = expertObj?.name ?? "Anyone";
-            const staffInitials = expertObj?.initials ?? "??";
-            const staffId = expertObj?.id ?? "anyone";
-            const staffPicture = expertObj?.picture ?? "";
+            const staffName      = expertObj?.name     ?? "Anyone";
+            const staffInitials  = expertObj?.initials ?? "??";
+            const staffId        = expertObj?.id       ?? "anyone";
+            const staffPicture   = expertObj?.picture  ?? "";
             const dateStr = selectedDate
-              ? selectedDate.toLocaleDateString("en-US", {
-                  weekday: "short",
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                })
+              ? selectedDate.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })
               : "";
-            const rawTimeSlot = selectedTime ? (activeRawMap[selectedTime] ?? "") : "";
+            const rawTimeSlot = selectedTime ? (rawSlotsMap[selectedTime] ?? "") : "";
             const bookingDate  = selectedDate ? toISODate(selectedDate) : "";
             setSelection({
               barberId,
@@ -277,6 +267,8 @@ export default function ViewTimesPage({
               rawTimeSlot,
               bookingDate,
               serviceType:    service?.service_type ?? "walkin",
+              notes:          notes || undefined,
+              meetUpAddress:  meetUpAddress || undefined,
             });
             router.push(`/payment/${barberId}`);
           }}
@@ -285,6 +277,8 @@ export default function ViewTimesPage({
           Book Appointment
         </button>
       </div>
+
+      <p className={styles.poweredBy}>Powered by Valet Vault</p>
     </div>
   );
 }

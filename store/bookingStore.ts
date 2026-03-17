@@ -17,6 +17,8 @@ export interface BookingSelection {
   rawTimeSlot: string;
   bookingDate: string;
   serviceType: string;
+  notes?: string;
+  meetUpAddress?: string;
 }
 
 export interface CustomerInfo {

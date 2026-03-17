@@ -23,14 +23,19 @@ function getDaysInMonth(year: number, month: number): (number | null)[] {
 
 export default function BookingCalendar({ selectedDate, onDateSelect }: BookingCalendarProps) {
   const today = new Date();
-  const [viewYear, setViewYear] = useState(today.getFullYear());
+  const [viewYear, setViewYear]   = useState(today.getFullYear());
   const [viewMonth, setViewMonth] = useState(today.getMonth());
 
   const days = getDaysInMonth(viewYear, viewMonth);
-  const monthName = new Date(viewYear, viewMonth).toLocaleString("default", {
-    month: "long",
-    year: "numeric",
-  });
+
+  // Format: "March, 2026"
+  const monthLabel = new Date(viewYear, viewMonth).toLocaleString("default", { month: "long" });
+  const monthName  = `${monthLabel}, ${viewYear}`;
+
+  // Today's weekday index (Mon=0 … Sun=6) — used to amber-highlight that column header
+  const todayWeekdayIndex = (today.getDay() + 6) % 7;
+  const isCurrentViewMonth =
+    viewMonth === today.getMonth() && viewYear === today.getFullYear();
 
   const prevMonth = () => {
     if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); }
@@ -61,18 +66,23 @@ export default function BookingCalendar({ selectedDate, onDateSelect }: BookingC
       <h2 className={styles.calendarTitle}>Book Appointment</h2>
 
       <div className={styles.nav}>
-        <button className={styles.navPrev} onClick={prevMonth}>
+        <button className={styles.navBtn} onClick={prevMonth} aria-label="Previous month">
           <ChevronLeft />
         </button>
         <span className={styles.navMonth}>{monthName}</span>
-        <button className={styles.navNext} onClick={nextMonth}>
+        <button className={styles.navBtn} onClick={nextMonth} aria-label="Next month">
           <ChevronRight />
         </button>
       </div>
 
       <div className={styles.weekdays}>
-        {DAYS.map((d) => (
-          <div key={d} className={styles.weekday}>{d}</div>
+        {DAYS.map((d, i) => (
+          <div
+            key={d}
+            className={`${styles.weekday}${isCurrentViewMonth && i === todayWeekdayIndex ? ` ${styles.weekdayToday}` : ""}`}
+          >
+            {d}
+          </div>
         ))}
       </div>
 

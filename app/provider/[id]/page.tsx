@@ -14,7 +14,6 @@ import {
   ExternalLink,
   CreditCard,
   Home,
-  Car,
   User,
 } from "lucide-react";
 import BarberAvatar from "@/components/ui/BarberAvatar";
@@ -29,7 +28,6 @@ import type { Service, StaffAvailability } from "@/types";
 import styles from "./page.module.css";
 
 type Tab = "services" | "portfolio" | "about";
-type ServiceMode = "onsite" | "mobile";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -81,7 +79,7 @@ function getPaymentType(
   return "PAY_ONSITE";
 }
 
-function mapApiService(apiService: ApiService, mode: ServiceMode): Service {
+function mapApiService(apiService: ApiService, mode: "onsite" | "mobile"): Service {
   let price: number;
   let originalPrice: number | undefined;
 
@@ -180,8 +178,8 @@ export default function ProviderProfilePage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("services");
-  const [serviceMode, setServiceMode] = useState<ServiceMode>("onsite");
   const [searchQuery, setSearchQuery] = useState("");
+  const [expandedServiceId, setExpandedServiceId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchBusinessProfile(id)
@@ -197,15 +195,8 @@ export default function ProviderProfilePage({
 
   const mappedServices = useMemo(() => {
     if (!profile) return [];
-    return profile.services
-      .filter((s) =>
-        // ─── FIX: filter correctly — "both" should appear in BOTH modes
-        serviceMode === "mobile"
-          ? s.service_type === "mobile" || s.service_type === "both"
-          : s.service_type === "walkin" || s.service_type === "both"
-      )
-      .map((s) => mapApiService(s, serviceMode));
-  }, [profile, serviceMode]);
+    return profile.services.map((s) => mapApiService(s, "onsite"));
+  }, [profile]);
 
   const filteredServices = useMemo(
     () =>
@@ -420,24 +411,6 @@ export default function ProviderProfilePage({
             </button>
           </div>
 
-          <div className={styles.modeToggle}>
-            <button
-              onClick={() => setServiceMode("onsite")}
-              className={`${styles.modeBtn}${
-                serviceMode === "onsite" ? ` ${styles.modeBtnActive}` : ""
-              }`}
-            >
-              <Home /> Onsite
-            </button>
-            <button
-              onClick={() => setServiceMode("mobile")}
-              className={`${styles.modeBtn}${
-                serviceMode === "mobile" ? ` ${styles.modeBtnActive}` : ""
-              }`}
-            >
-              <Car /> Mobile
-            </button>
-          </div>
 
           <div className={styles.serviceSearch}>
             <Search />
@@ -466,13 +439,21 @@ export default function ProviderProfilePage({
                       <span className={styles.sectionHeaderIcon}>{icon}</span>
                       {label}
                     </div>
-                    <ServiceRow service={s} barberId={id} businessName={profile.business_display_name ?? profile.business_name} businessAddress={profile.business_address} hideBadge />
+                    <ServiceRow
+                      service={s}
+                      barberId={id}
+                      businessName={profile.business_display_name ?? profile.business_name}
+                      businessAddress={profile.business_address}
+                      hideBadge
+                      expanded={expandedServiceId === s.id}
+                      onToggle={() => setExpandedServiceId(expandedServiceId === s.id ? null : s.id)}
+                    />
                   </div>
                 );
               })
             ) : (
               <p className={styles.noResults}>
-                No {serviceMode} services found
+                No services found
               </p>
             )}
           </div>
@@ -593,6 +574,9 @@ export default function ProviderProfilePage({
           )}
         </div>
       )}
+
+      {/* ── Powered by ── */}
+      <p className={styles.poweredBy}>Powered by Valet Vault</p>
 
     </div>
   );

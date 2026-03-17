@@ -27,7 +27,7 @@ function ExpertAvatar({ picture, initials, active }: { picture?: string; initial
         <img
           src={picture}
           alt={initials}
-          className={styles.avatarImg}
+          className={`${styles.avatarImg}${active ? ` ${styles.avatarImgActive}` : ""}`}
           onError={() => setImgFailed(true)}
         />
       </div>
@@ -49,7 +49,7 @@ export default function ExpertSelector({ experts, selectedId, onSelect }: Expert
         onClick={() => onSelect("anyone")}
         className={`${styles.item}${selectedId === "anyone" ? ` ${styles.itemActive}` : ""}`}
       >
-        <div className={styles.avatar}>
+        <div className={`${styles.avatar}${selectedId === "anyone" ? ` ${styles.avatarActive}` : ""}`}>
           <User className={styles.personIcon} />
         </div>
         <span className={styles.label}>Anyone</span>

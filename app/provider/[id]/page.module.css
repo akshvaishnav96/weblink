@@ -81,17 +81,16 @@
 }
 .heroSeats {
   position: absolute;
-  bottom: var(--sp-3);
+  bottom: var(--sp-8);
   left: var(--sp-4);
   z-index: 6;
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--color-white);
   text-shadow: 0 1px 4px rgba(0,0,0,0.4);
-  bottom: 2.5rem;
 }
 .heroSeatsDot {
   width: 8px;
@@ -103,18 +102,20 @@
 }
 
 .info {
-  padding: var(--sp-3) var(--sp-4) var(--sp-4);
+  padding: var(--sp-4) var(--sp-4) var(--sp-4);
   border-bottom: 1px solid var(--color-border-light);
-      position: relative;
-    top: -2rem;
-    background: white;
-    border-radius: 2rem;
+  position: relative;
+  top: -1.6rem;
+  background: #fff;
+  border-radius: 20px 20px 0 0;
+  z-index: 2;
 }
 .infoName {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--color-text-primary);
-  letter-spacing: -0.3px;
+  letter-spacing: -0.4px;
+  margin-bottom: 4px;
 }
 .infoAddress {
   display: flex;
@@ -180,15 +181,16 @@
 }
 .tabBtn {
   flex: 1;
-  padding: 13px 12px;
-  border-radius: var(--radius-full);
-  border: 1.5px solid var(--color-border);
+  padding: 12px 10px;
+  border-radius: 999px;
+  border: 1.5px solid #DEDAD3;
   background: var(--color-white);
-  font-size: var(--text-sm);
+  font-size: 13.5px;
   font-weight: 500;
-  color: var(--color-text-secondary);
+  color: #6b6258;
   cursor: pointer;
   transition: all 0.15s;
+  white-space: nowrap;
 }
 .tabBtnBorder {
   /* no longer needed — kept to avoid JSX error */
@@ -206,18 +208,20 @@
 
 /* ── Services section wrapper — warm surface so each card floats visibly ── */
 .servicesSection {
-  background: var(--color-surface-alt);
-  padding-bottom: var(--sp-4);
+  background: #F5F2ED;
+  padding-bottom: var(--sp-6);
+  position: relative;
+  z-index: 1;
 }
 
 .servicesTop {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--sp-3) var(--sp-4);
+  padding: var(--sp-4) var(--sp-4) var(--sp-3);
 }
 .servicesTopTitle {
-  font-size: var(--text-base);
+  font-size: 16px;
   font-weight: 700;
   color: var(--color-text-primary);
 }
@@ -229,56 +233,35 @@
   font-weight: 600;
   color: var(--color-primary);
   cursor: pointer;
+  background: none;
+  border: none;
 }
 .quickBook svg {
   width: 12px;
   height: 12px;
 }
 
-.modeToggle {
-  display: flex;
-  background: var(--color-white);
-  border: 1px solid var(--color-border-light);
-  border-radius: 14px;
-  padding: 4px;
-  margin: 0 var(--sp-4) var(--sp-3);
-  gap: 4px;
-}
-.modeBtn {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--sp-2);
-  padding: 11px var(--sp-3);
-  border-radius: 10px;
-  font-size: var(--text-sm);
-  font-weight: 500;
-  color: var(--color-text-muted);
-  cursor: pointer;
-  transition: all 0.18s;
-  border: none;
-  background: none;
-}
-.modeBtnActive {
-  background: #E8E8E8;
-  color: var(--color-text-primary);
+/* ── Powered by footer ── */
+.poweredBy {
+  text-align: center;
+  padding: var(--sp-5) var(--sp-4) var(--sp-6);
+  font-size: 11px;
   font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #c0b8ac;
+  background: #F5F2ED;
 }
-.modeBtn svg {
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
-}
+
 
 .serviceSearch {
   display: flex;
   align-items: center;
   gap: var(--sp-2);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: 8px var(--sp-3);
+  background: #fff;
+  border: 1.5px solid #E4DFD8;
+  border-radius: 10px;
+  padding: 10px var(--sp-3);
   margin: 0 var(--sp-4) var(--sp-3);
   transition: border-color 0.15s;
 }
@@ -286,9 +269,9 @@
   border-color: var(--color-primary-border);
 }
 .serviceSearch svg {
-  width: 14px;
-  height: 14px;
-  color: var(--color-text-muted);
+  width: 15px;
+  height: 15px;
+  color: #b0a898;
   flex-shrink: 0;
 }
 .serviceSearchInput {
@@ -296,10 +279,11 @@
   background: transparent;
   border: none;
   outline: none;
-  font-size: 13px;
+  font-size: 13.5px;
+  color: #2a1f10;
 }
 .serviceSearchInput::placeholder {
-  color: var(--color-text-placeholder);
+  color: #b0a898;
 }
 
 .servicesList {
@@ -602,9 +586,6 @@
   .servicesTop {
     padding: var(--sp-3) var(--sp-8);
   }
-  .modeToggle {
-    margin: 0 var(--sp-8) var(--sp-3);
-  }
   .serviceSearch {
     margin: 0 var(--sp-8) var(--sp-3);
   }
@@ -627,9 +608,6 @@
   }
   .servicesTop {
     padding: var(--sp-4) var(--sp-6);
-  }
-  .modeToggle {
-    margin: 0 var(--sp-6) var(--sp-3);
   }
   .serviceSearch {
     margin: 0 var(--sp-6) var(--sp-3);
