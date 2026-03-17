@@ -7,6 +7,9 @@ import styles from "./AppDownloadModal.module.css";
 interface AppDownloadModalProps {
   name?: string;
   pin?: string;
+  bookingId?: number;
+  serviceId?: number;
+  servicePrice?: number;
   onSkip: () => void;
   onSaveDetails?: () => void;
 }
@@ -17,9 +20,47 @@ const FEATURES = [
   { icon: Tag,          label: "Offers",        desc: "Special deals & discounts" },
 ];
 
-export default function AppDownloadModal({ name, pin, onSkip, onSaveDetails }: AppDownloadModalProps) {
-  const [fasterDismissed, setFasterDismissed] = useState(false);
-  const [detailsSaved,    setDetailsSaved]    = useState(false);
+export default function AppDownloadModal({ name, pin, bookingId, serviceId, servicePrice = 0, onSkip, onSaveDetails }: AppDownloadModalProps) {
+  const [fasterDismissed,  setFasterDismissed]  = useState(false);
+  const [detailsSaved,     setDetailsSaved]     = useState(false);
+  const [calLoading,       setCalLoading]       = useState(false);
+  const [calError,         setCalError]         = useState<string | null>(null);
+
+  async function handleAddToCalendar() {
+    if (calLoading) return;
+    if (!bookingId) { setCalError(`No booking ID available (serviceId=${serviceId})`); return; }
+    if (!serviceId) { setCalError("No service ID available"); return; }
+    setCalLoading(true);
+    setCalError(null);
+    try {
+      const res = await fetch("/api/booking/add-to-calendar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          booking_id: bookingId,
+          services: [{ service_id: serviceId, price: servicePrice }],
+        }),
+      });
+      const contentType = res.headers.get("content-type") ?? "";
+      if (contentType.includes("json")) {
+        const json = await res.json();
+        throw new Error(json.message ?? "Calendar download failed");
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "booking.ics";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setCalError((err as Error).message ?? "Could not download calendar file");
+    } finally {
+      setCalLoading(false);
+    }
+  }
 
   return (
     <div className={styles.backdrop}>
@@ -42,11 +83,15 @@ export default function AppDownloadModal({ name, pin, onSkip, onSaveDetails }: A
               <span className={styles.pin}>{pin}</span>
             </div>
           )}
-          <button className={styles.calBtn}>
+          <button
+            className={styles.calBtn}
+            onClick={handleAddToCalendar}
+            disabled={calLoading}
+          >
             <CalendarPlus size={16} />
-            Add to Calendar
+            {calLoading ? "Downloading…" : "Add to Calendar"}
           </button>
-          
+          {calError && <p className={styles.calError}>{calError}</p>}
           <p className={styles.calNote}>Includes reminders at 24h, 3h &amp; at appointment time</p>
         </div>
 

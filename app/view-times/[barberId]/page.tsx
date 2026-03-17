@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, use, useEffect, useCallback, useMemo } from "react";
+import { useState, use, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import BackHeader from "@/components/layout/BackHeader";
 import ExpertSelector from "@/components/booking/ExpertSelector";
@@ -43,28 +43,6 @@ function formatSlotStart(slot: string): string {
   return minutes === "00" ? `${h12} ${ampm}` : `${h12}:${minutes} ${ampm}`;
 }
 
-/** Generate default time slots from open/close time at given interval (mins) */
-function generateDefaultSlots(openTime: string, closeTime: string, durationMins: number): { display: string; raw: string }[] {
-  const [openH, openM]   = openTime.split(":").map(Number);
-  const [closeH, closeM] = closeTime.split(":").map(Number);
-  const openMins  = openH  * 60 + openM;
-  const closeMins = closeH * 60 + closeM;
-  const step = durationMins > 0 ? durationMins : 30;
-  const result: { display: string; raw: string }[] = [];
-  for (let m = openMins; m + step <= closeMins; m += step) {
-    const h      = Math.floor(m / 60);
-    const min    = m % 60;
-    const endMin = m + step;
-    const endH   = Math.floor(endMin / 60);
-    const endM   = endMin % 60;
-    const ampm   = h >= 12 ? "PM" : "AM";
-    const h12    = h > 12 ? h - 12 : h === 0 ? 12 : h;
-    const display = min === 0 ? `${h12} ${ampm}` : `${h12}:${String(min).padStart(2, "0")} ${ampm}`;
-    const raw = `${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}-${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}`;
-    result.push({ display, raw });
-  }
-  return result;
-}
 
 /** Collect staff attached to a specific service ID from the profile */
 function getStaffForService(
@@ -105,7 +83,7 @@ export default function ViewTimesPage({
   const [slots, setSlots] = useState<string[]>([]);
   const [rawSlotsMap, setRawSlotsMap] = useState<Record<string, string>>({});
   const [slotsLoading, setSlotsLoading] = useState(false);
-  const [slotsError, setSlotsError] = useState<string | null>(null);
+  const [, setSlotsError] = useState<string | null>(null);
 
   // ── Fetch business profile ────────────────────────────────────────────────
   useEffect(() => {
@@ -136,7 +114,8 @@ export default function ViewTimesPage({
         date: toISODate(selectedDate),
         business_service_id: serviceId,
       });
-
+        console.log("result",result.slots);
+        
       // data is a single ApiStaffAvailability object — slots live directly on it
       const rawSlots: string[] = result.slots ?? [];
       const sorted = [...new Set(rawSlots)].sort();
@@ -170,30 +149,8 @@ export default function ViewTimesPage({
   const servicePrice =
     parseFloat(service?.walk_price ?? service?.mobile_price ?? "0") || 0;
 
-  // Default slots derived from today's open hours when API returns nothing
-  const defaultSlotsData = useMemo(() => {
-    if (!profile || !selectedDate) return [];
-    const dayName = selectedDate.toLocaleDateString("en-US", { weekday: "long" });
-    const todayHours = profile.open_hours?.find(
-      (h) => h.day.toLowerCase() === dayName.toLowerCase() && !h.is_closed
-    );
-    if (!todayHours?.open_time || !todayHours?.close_time) return [];
-    return generateDefaultSlots(
-      todayHours.open_time,
-      todayHours.close_time,
-      service?.time ?? 30
-    );
-  }, [profile, selectedDate, service]);
-
-  const defaultRawSlotsMap = useMemo(() => {
-    const map: Record<string, string> = {};
-    defaultSlotsData.forEach(({ display, raw }) => { map[display] = raw; });
-    return map;
-  }, [defaultSlotsData]);
-
-  // Use API slots when available, fall back to default
-  const displaySlots = slots.length > 0 ? slots : defaultSlotsData.map(s => s.display);
-  const activeRawMap = slots.length > 0 ? rawSlotsMap : defaultRawSlotsMap;
+  const displaySlots = slots;
+  const activeRawMap = rawSlotsMap;
 
   const canBook = !!(selectedDate && selectedTime);
 
@@ -255,26 +212,19 @@ export default function ViewTimesPage({
             <span className={styles.msgText}>Checking availability…</span>
           </div>
         ) : displaySlots.length > 0 ? (
-          <>
-            {(slots.length === 0) && (
-              <p className={styles.defaultSlotsNote}>
-                Showing general opening hours — confirm with the business
-              </p>
-            )}
-            <div className={styles.timeSlotsGrid}>
-              {displaySlots.map((slot) => (
-                <TimeSlotButton
-                  key={slot}
-                  time={slot}
-                  selected={selectedTime === slot}
-                  onClick={() => setSelectedTime(slot)}
-                />
-              ))}
-            </div>
-          </>
+          <div className={styles.timeSlotsGrid}>
+            {displaySlots.map((slot) => (
+              <TimeSlotButton
+                key={slot}
+                time={slot}
+                selected={selectedTime === slot}
+                onClick={() => setSelectedTime(slot)}
+              />
+            ))}
+          </div>
         ) : (
           <p className={styles.noSlots}>
-            No available times for the selected date.
+            No availability for this date — try another day
           </p>
         )}
       </div>

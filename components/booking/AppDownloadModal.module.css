@@ -128,10 +128,8 @@
   background: var(--color-primary-hover);
   transform: translateY(-1px);
 }
-.calNote {
-  font-size: 11px;
-  color: var(--color-text-muted);
-}
+.calNote  { font-size: 11px; color: var(--color-text-muted); }
+.calError { font-size: 12px; color: #c0392b; margin-top: 4px; }
 
 /* ══ FASTER NEXT TIME BANNER ══ */
 .fasterBanner {

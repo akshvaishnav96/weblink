@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const API_BASE = "https://valetvaultdev.24livehost.com/api/v2/weblink";
-const BOOKING_TOKEN = "1949|UySbRO7OsCWTjTof0BRpCFNLaQFTM10CZOe4Iig789c039a2";
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,7 +10,6 @@ export async function POST(req: NextRequest) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${BOOKING_TOKEN}`,
       },
       body: JSON.stringify(body),
     });

@@ -35,7 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div className="app-shell">
           {/* <TopNav /> */}
           <main className="page-content">{children}</main>
-          <BottomNav />
+          {/* <BottomNav /> */}
         </div>
       </body>
     </html>

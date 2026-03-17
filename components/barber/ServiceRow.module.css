@@ -1,20 +1,21 @@
 /* ── Card wrapper ── */
 .row {
   background: #faf7f2;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   overflow: hidden;
-  box-shadow: 0 1px 4px 0 rgba(160, 120, 60, 0.06);
+  box-shadow: 0 1px 6px 0 rgba(160, 120, 60, 0.08);
+  border-radius: 12px;
   transition: box-shadow 0.15s;
 }
 .row:last-child { margin-bottom: 0; }
-.row:hover { box-shadow: 0 3px 12px 0 rgba(160, 120, 60, 0.11); }
+.row:hover { box-shadow: 0 4px 16px 0 rgba(160, 120, 60, 0.13); }
 
 /* ── Badge ── */
 .badge {
   display: flex;
   align-items: center;
   gap: 5px;
-  padding: 10px 16px 4px;
+  padding: 12px 18px 4px;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.07em;
@@ -38,7 +39,7 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  padding: 4px 16px 14px;
+  padding: 6px 18px 18px;
   transition: background 0.12s;
 }
 .mainClickable { cursor: pointer; }
@@ -50,7 +51,7 @@
 .nameRow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
 .name {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   color: #2a1f10;
 }
@@ -72,11 +73,11 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 12px;
+  font-size: 13px;
   color: #a09080;
-  margin-top: 4px;
+  margin-top: 5px;
 }
-.duration svg { width: 11px; height: 11px; }
+.duration svg { width: 12px; height: 12px; }
 
 .avail {
   font-size: 12px;
@@ -111,7 +112,7 @@
 }
 
 .price {
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 700;
   color: #c8901a;
   display: block;
@@ -153,7 +154,7 @@
 }
 
 /* ── Panel content ── */
-.panel { padding: var(--sp-3) 16px var(--sp-3); }
+.panel { padding: var(--sp-3) 18px var(--sp-4); }
 
 .panelDesc {
   font-size: 12px;
@@ -165,10 +166,11 @@
 }
 
 .panelDate {
-  font-size: 11px;
-  font-weight: 600;
-  color: #a09080;
+  font-size: 13px;
+  font-weight: 700;
+  color: #7a6a55;
   margin-bottom: var(--sp-3);
+  letter-spacing: 0.01em;
 }
 
 .noStaff {
@@ -181,9 +183,9 @@
 .staffBlock { margin-bottom: var(--sp-3); }
 .staffBlock:last-of-type { margin-bottom: 0; }
 
-.staffHeader { display: flex; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-2); }
+.staffHeader { display: flex; align-items: center; gap: var(--sp-2); margin-bottom: 10px; }
 
-.staffName { font-size: 13px; font-weight: 500; color: #2a1f10; flex: 1; }
+.staffName { font-size: 14px; font-weight: 600; color: #2a1f10; flex: 1; }
 
 .staffMostBooked {
   display: inline-flex;
@@ -198,7 +200,7 @@
 }
 .staffMostBooked svg { width: 10px; height: 10px; }
 
-.staffSlots { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.staffSlots { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 4px; }
 
 /* ── View more ── */
 .viewMore {
@@ -234,7 +236,6 @@
   align-items: center;
   justify-content: space-between;
   padding: 10px 0;
-  border-bottom: 1px solid #ede8df;
 }
 .staffRowWalkin:last-child { border-bottom: none; }
 
@@ -251,16 +252,18 @@
 
 /* ── Responsive ── */
 @media (min-width: 768px) {
-  .main   { padding: var(--sp-3) var(--sp-6) var(--sp-4); }
+  .main   { padding: var(--sp-3) var(--sp-6) var(--sp-5); }
   .badge  { padding: var(--sp-3) var(--sp-6) 4px; }
-  .panel  { padding: var(--sp-3) var(--sp-6) var(--sp-4); }
-  .name   { font-size: 15px; }
-  .price  { font-size: 16px; }
+  .panel  { padding: var(--sp-3) var(--sp-6) var(--sp-5); }
+  .name   { font-size: 16px; }
+  .price  { font-size: 18px; }
   .duration { font-size: 13px; }
   .avail  { font-size: 13px; }
 }
 @media (min-width: 1024px) {
-  .main   { padding: var(--sp-4) var(--sp-8) var(--sp-5); }
-  .badge  { padding: var(--sp-4) var(--sp-8) 4px; }
-  .panel  { padding: var(--sp-4) var(--sp-8) var(--sp-5); }
+  .main   { padding: var(--sp-5) var(--sp-8) var(--sp-6); }
+  .badge  { padding: var(--sp-4) var(--sp-8) 6px; }
+  .panel  { padding: var(--sp-4) var(--sp-8) var(--sp-6); }
+  .name   { font-size: 17px; }
+  .price  { font-size: 19px; }
 }

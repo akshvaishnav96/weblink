@@ -168,7 +168,7 @@ export default function ServiceRow({ service, barberId, businessName = "", busin
             )}
 
             {/* No staff available message */}
-            {!hasStaff && !isWalkIn && (
+            {!hasStaff && (
               <p className={styles.noStaff}>No staff available at this time</p>
             )}
 

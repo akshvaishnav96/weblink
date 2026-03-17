@@ -23,20 +23,29 @@
 
 .pill {
   display: inline-flex; align-items: center; justify-content: center;
-  padding: 5px 12px;
-  border-radius: var(--sp-2);
-  border: 1px solid var(--color-border);
-  background: var(--color-white);
-  font-size: 12px; font-weight: 500; color: var(--color-text-primary);
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--color-primary-border);
+  background: var(--color-primary-bg);
+  font-size: 13px; font-weight: 500; color: var(--color-text-primary);
   cursor: pointer; white-space: nowrap;
-  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  transition: background 0.12s, border-color 0.12s, color 0.12s, box-shadow 0.12s;
 }
-.pill:hover { border-color: var(--color-primary-border); }
+.pill:hover {
+  border-color: var(--color-primary-border);
+  background: var(--color-primary-bg);
+  color: var(--color-primary);
+}
 .pillSelected {
   background: var(--color-primary);
   border-color: var(--color-primary);
   color: var(--color-white);
   font-weight: 600;
+  box-shadow: 0 2px 10px rgba(184,134,11,0.25);
+}
+
+@media (min-width: 768px) {
+  .pill { padding: 9px 18px; font-size: 14px; }
 }
 
 @media (min-width: 768px) {

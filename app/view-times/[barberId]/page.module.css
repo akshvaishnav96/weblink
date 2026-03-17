@@ -90,9 +90,9 @@
   .ctaBtn { max-width: 400px; font-size: var(--text-base); padding: 18px var(--sp-5); }
 }
 @media (min-width: 1024px) {
-  .timeSlotsSection { padding: 0; border: none; }
-  .timeSlotsGrid { grid-template-columns: repeat(3, 1fr); }
-  .commentSection { padding: var(--sp-5) 0 0; border: none; }
-  .ctaSection { padding: var(--sp-5) 0 0; }
+  .timeSlotsSection { padding: var(--sp-6) var(--sp-10); border: none; }
+  .timeSlotsGrid { grid-template-columns: repeat(4, 1fr); gap: var(--sp-3); }
+  .commentSection { padding: var(--sp-5) var(--sp-10) 0; border: none; }
+  .ctaSection { padding: var(--sp-5) var(--sp-10) var(--sp-6); }
   .ctaBtn { max-width: none; }
 }

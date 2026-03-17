@@ -35,7 +35,7 @@ function ExpertAvatar({ picture, initials, active }: { picture?: string; initial
   }
 
   return (
-    <div className={styles.avatar}>
+    <div className={`${styles.avatar}${active ? ` ${styles.avatarActive}` : ""}`}>
       {initials}
     </div>
   );

@@ -21,7 +21,10 @@ export default function ConfirmBookingPage() {
   const [submitError,     setSubmitError]     = useState<string | null>(null);
   const [confirmedPin,    setConfirmedPin]    = useState<string | null>(null);
   const [upiStatus,       setUpiStatus]       = useState<UpiStatus>("idle");
-  const [customerSnapshot, setCustomerSnapshot] = useState<{ firstName: string; phone: string; email: string; countryCode: string } | null>(null);
+  const [customerSnapshot,  setCustomerSnapshot]  = useState<{ firstName: string; phone: string; email: string; countryCode: string } | null>(null);
+  const [confirmedBookingId, setConfirmedBookingId] = useState<number | null>(null);
+  const [confirmedServiceId, setConfirmedServiceId] = useState<number>(0);
+  const [confirmedServicePrice, setConfirmedServicePrice] = useState<number>(0);
 
   // ── Redirect guard — fires only after hydration ────────────────────────────
   useEffect(() => {
@@ -105,6 +108,9 @@ export default function ConfirmBookingPage() {
     const json = await res.json();
     console.log("[booking] response:", JSON.stringify(json));
     if (!json.status) throw new Error(json.message ?? "Booking creation failed");
+    const bId = json.data?.booking_id ?? json.data?.id ?? json.booking_id ?? json.id ?? null;
+    console.log("[booking] booking_id resolved:", bId, "| full data keys:", Object.keys(json.data ?? json));
+    if (bId) setConfirmedBookingId(Number(bId));
     return json.data?.booking_otp ? String(json.data.booking_otp).slice(-4) : fallbackPin;
   }
 
@@ -202,6 +208,8 @@ export default function ConfirmBookingPage() {
       }
 
       setCustomerSnapshot({ firstName, phone, email, countryCode });
+      setConfirmedServiceId(Number(serviceId));
+      setConfirmedServicePrice(parseFloat(price) || 0);
       clearBooking();
       setConfirmedPin(pin);
       setShowModal(true);
@@ -316,6 +324,9 @@ export default function ConfirmBookingPage() {
         <AppDownloadModal
           name={firstName}
           pin={confirmedPin ?? fallbackPin}
+          bookingId={confirmedBookingId ?? undefined}
+          serviceId={confirmedServiceId}
+          servicePrice={confirmedServicePrice}
           onSkip={() => router.push("/")}
           onSaveDetails={() => {
             try {
