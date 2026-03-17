@@ -24,6 +24,7 @@ export default function ConfirmBookingPage() {
   const [customerSnapshot,  setCustomerSnapshot]  = useState<{ firstName: string; phone: string; email: string; countryCode: string } | null>(null);
   const [confirmedBookingId, setConfirmedBookingId] = useState<number | null>(null);
   const [confirmedServiceId, setConfirmedServiceId] = useState<number>(0);
+  const [confirmedBarberId,  setConfirmedBarberId]  = useState<string>("");
   const [confirmedServicePrice, setConfirmedServicePrice] = useState<number>(0);
 
   // ── Redirect guard — fires only after hydration ────────────────────────────
@@ -210,6 +211,7 @@ export default function ConfirmBookingPage() {
       setCustomerSnapshot({ firstName, phone, email, countryCode });
       setConfirmedServiceId(Number(serviceId));
       setConfirmedServicePrice(parseFloat(price) || 0);
+      setConfirmedBarberId(barberId);
       clearBooking();
       setConfirmedPin(pin);
       setShowModal(true);
@@ -327,7 +329,7 @@ export default function ConfirmBookingPage() {
           bookingId={confirmedBookingId ?? undefined}
           serviceId={confirmedServiceId}
           servicePrice={confirmedServicePrice}
-          onSkip={() => router.push("/")}
+          onSkip={() => router.push(confirmedBarberId ? `/provider/${confirmedBarberId}` : "/")}
           onSaveDetails={() => {
             try {
               if (customerSnapshot) {

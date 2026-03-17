@@ -260,6 +260,34 @@ function PaymentPageInner() {
     };
   }
 
+  // ── Form validation ────────────────────────────────────────────────────────
+  function validateForm(): string | null {
+    if (!firstName.trim())
+      return "Please enter your first name";
+    if (firstName.trim().length < 2)
+      return "First name must be at least 2 characters";
+    if (forSomeoneElse && !guestName.trim())
+      return "Please enter the guest's name";
+    if (forSomeoneElse && guestName.trim().length < 2)
+      return "Guest name must be at least 2 characters";
+
+    const digits = phone.replace(/\D/g, "");
+    if (!phone.trim())
+      return "Please enter your phone number";
+    if (digits.length < 9 || digits.length > 11)
+      return "Phone number must be 9–11 digits";
+
+    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
+      return "Please enter a valid email address";
+
+    if (payment === "upi" && !upiId.trim())
+      return "Please enter your UPI ID";
+    if (payment === "upi" && !upiId.trim().includes("@"))
+      return "UPI ID must contain '@' (e.g. yourname@upi)";
+
+    return null;
+  }
+
   // ── Derived ────────────────────────────────────────────────────────────────
   const serviceName     = selection.serviceName     ?? "—";
   const staffName       = selection.staffName       ?? "Anyone";
@@ -286,13 +314,18 @@ function PaymentPageInner() {
   ];
 
   const canConfirm =
-    firstName.trim().length > 0 &&
-    phone.trim().length > 0 &&
+    firstName.trim().length >= 2 &&
+    phone.replace(/\D/g, "").length >= 9 &&
+    phone.replace(/\D/g, "").length <= 11 &&
     (payment !== "upi" || upiId.trim().includes("@"));
 
   // ── Main submit handler ────────────────────────────────────────────────────
   async function handleConfirmBooking() {
-    if (!canConfirm || isProcessing) return;
+    if (isProcessing) return;
+
+    const validationError = validateForm();
+    if (validationError) { setPaymentError(validationError); return; }
+
     setIsProcessing(true);
     setPaymentError(null);
 
@@ -324,7 +357,6 @@ function PaymentPageInner() {
           payment: "upi", upiId,
         });
       } else {
-        // onsite
         setCustomer({
           firstName, phone, countryCode: country.dial_code,
           email, guestName, isBookingSomeone: forSomeoneElse,
@@ -501,7 +533,7 @@ function PaymentPageInner() {
               </div>
               <div className={styles.inputRow} style={{ flex: 1, marginBottom: 0 }}>
                 <Phone className={styles.inputIcon} />
-                <input className={styles.input} placeholder="4XX XXX XXX" type="tel" value={phone} onChange={e => setPhone(e.target.value)} autoComplete="tel" />
+                <input className={styles.input} placeholder="4XX XXX XXX" type="tel" inputMode="numeric" value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g, ""))} maxLength={11} autoComplete="tel" />
               </div>
             </div>
             <p className={styles.phoneNote}>
@@ -516,7 +548,7 @@ function PaymentPageInner() {
             {PAYMENT_OPTIONS.map(({ key, Icon, label }) => {
               const active = payment === key;
               return (
-                <button key={key} type="button" className={`${styles.payOption} ${active ? styles.payOptionActive : ""}`} onClick={() => { setPayment(key); setPaymentError(null); }}>
+                <button key={key} type="button" className={`${styles.payOption} ${active ? styles.payOptionActive : ""}`} onClick={() => { setPayment(key); }}>
                   <Icon size={16} className={active ? styles.payIconActive : styles.payIcon} />
                   <span className={styles.payLabel}>{label}</span>
                   <span className={`${styles.payRadio} ${active ? styles.payRadioActive : ""}`} />

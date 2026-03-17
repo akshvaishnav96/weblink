@@ -1,201 +1,120 @@
-// "use client";
-
-// import { useState } from "react";
-// import Link from "next/link";
-// import { MOCK_BOOKINGS } from "@/lib/data";
-// import { Booking } from "@/types";
-// import BookingCard from "@/components/bookings/BookingCard";
-// import styles from "./page.module.css";
-
-// type BookingTab = "upcoming" | "past";
-
-// export default function BookingsPage() {
-//   const [activeTab, setActiveTab] = useState<BookingTab>("upcoming");
-
-//   const upcoming: Booking[] = MOCK_BOOKINGS.filter((b) => b.status === "confirmed");
-//   const past: Booking[]     = MOCK_BOOKINGS.filter((b) => b.status !== "confirmed");
-//   const displayed           = activeTab === "upcoming" ? upcoming : past;
-
-//   return (
-//     <div className="page-content">
-//       <div className={styles.header}>
-//         <h1 className={styles.headerTitle}>My Bookings</h1>
-//         <span className={styles.headerCount}>
-//           {displayed.length} appointment{displayed.length !== 1 ? "s" : ""}
-//         </span>
-//       </div>
-
-//       {/* Tab toggle */}
-//       <div className={styles.tabs}>
-//         <button
-//           className={`${styles.tabBtn}${activeTab === "upcoming" ? ` ${styles.tabActive}` : ""}`}
-//           onClick={() => setActiveTab("upcoming")}
-//         >
-//           Upcoming
-//           {upcoming.length > 0 && <span className={styles.tabBadge}>{upcoming.length}</span>}
-//         </button>
-//         <button
-//           className={`${styles.tabBtn}${activeTab === "past" ? ` ${styles.tabActive}` : ""}`}
-//           onClick={() => setActiveTab("past")}
-//         >
-//           Past
-//         </button>
-//       </div>
-
-//       {/* List or empty state */}
-//       {displayed.length > 0 ? (
-//         <div className={styles.list}>
-//           {displayed.map((booking) => (
-//             <BookingCard key={booking.id} booking={booking} />
-//           ))}
-//         </div>
-//       ) : (
-//         <div className={styles.empty}>
-//           <span className={styles.emptyIcon}>📅</span>
-//           <p className={styles.emptyTitle}>
-//             {activeTab === "upcoming" ? "No upcoming bookings" : "No past bookings"}
-//           </p>
-//           <p className={styles.emptySubtitle}>
-//             {activeTab === "upcoming"
-//               ? "Book your next grooming session with a top barber near you."
-//               : "Your completed and cancelled appointments will appear here."}
-//           </p>
-//           {activeTab === "upcoming" && (
-//             <Link href="/explore" className={styles.emptyCta}>
-//               Find a Barber
-//             </Link>
-//           )}
-//         </div>
-//       )}
-//     </div>
-//   );
-// }
-
-
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Calendar, Clock, MapPin, Home, Search, BookOpen, Gift, User } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, CreditCard, Timer } from "lucide-react";
 import styles from "./page.module.css";
 
 type BookingStatus = "upcoming" | "completed" | "cancelled";
+type BookingType   = "Appointment" | "Pay Onsite" | "Walk-in";
 
 interface Booking {
   id: string;
   service: string;
   provider: string;
-  date: string;
-  time: string;
-  location: string;
+  date: string;          // e.g. "Mar 6, 2025"
+  dateGroup: string;     // e.g. "Thursday, March 6, 2025"
+  time: string;          // e.g. "2:30 PM"
+  duration: string;      // e.g. "45 min"
+  paymentMethod: string; // e.g. "Apple Pay"
+  price: string;         // e.g. "$35"
+  bookingType: BookingType;
+  verificationCode: string;
   status: BookingStatus;
 }
 
 const BOOKINGS: Booking[] = [
   {
     id: "1",
-    service: "Skin Fade",
-    provider: "with Marcus R.",
-    date: "11:00 AM",
-    time: "11:00 AM",
-    location: "42 King St, Downtown",
+    service: "The Works",
+    provider: "VV's Barbershop",
+    date: "Mar 6, 2025",
+    dateGroup: "Thursday, March 6, 2025",
+    time: "2:30 PM",
+    duration: "45 min",
+    paymentMethod: "Apple Pay",
+    price: "$35",
+    bookingType: "Appointment",
+    verificationCode: "4821",
     status: "upcoming",
   },
   {
     id: "2",
-    service: "Classic Haircut & Beard Trim",
-    provider: "with Marcus Rivera",
-    date: "Sat, Feb 22",
-    time: "10:00 AM",
-    location: "Downtown Studio, NYC",
-    status: "upcoming",
-  },
-  {
-    id: "3",
-    service: "Deep Tissue Massage",
-    provider: "with Alex Thompson",
-    date: "Wed, Feb 26",
-    time: "2:30 PM",
-    location: "Wellness Hub, Brooklyn",
-    status: "upcoming",
-  },
-  {
-    id: "4",
-    service: "Pro Look Package",
-    provider: "with James Chen",
-    date: "Jan 28",
+    service: "Shape Up",
+    provider: "VV's Barbershop",
+    date: "Feb 22, 2025",
+    dateGroup: "Saturday, February 22, 2025",
     time: "11:00 AM",
-    location: "Midtown Barbers, NYC",
-    status: "completed",
-  },
-  {
-    id: "5",
-    service: "Beard Sculpting",
-    provider: "with Derek Williams",
-    date: "Jan 15",
-    time: "3:00 PM",
-    location: "The Grooming Room, SoHo",
-    status: "completed",
+    duration: "30 min",
+    paymentMethod: "Apple Pay",
+    price: "$25",
+    bookingType: "Pay Onsite",
+    verificationCode: "3310",
+    status: "cancelled",
   },
 ];
 
-
 export default function BookingsPage() {
   const router = useRouter();
-  const [bookings,     setBookings]     = useState<Booking[]>(BOOKINGS);
-  const [cancellingId, setCancellingId] = useState<string | null>(null);
-  const [activeNav,    setActiveNav]    = useState("Bookings");
+  const [bookings,       setBookings]       = useState<Booking[]>(BOOKINGS);
+  const [confirmingId,   setConfirmingId]   = useState<string | null>(null);
+  const [cancellingId,   setCancellingId]   = useState<string | null>(null);
 
-  const upcoming = bookings.filter((b) => b.status === "upcoming");
-  const past     = bookings.filter((b) => b.status !== "upcoming");
+  const upcoming  = bookings.filter((b) => b.status === "upcoming");
+  const cancelled = bookings.filter((b) => b.status === "cancelled");
 
-  const handleCancel = (id: string) => {
+  const handleConfirmCancel = (id: string) => {
     setCancellingId(id);
+    setConfirmingId(null);
     setTimeout(() => {
       setBookings((prev) =>
         prev.map((b) => (b.id === id ? { ...b, status: "cancelled" as BookingStatus } : b))
       );
       setCancellingId(null);
-    }, 600);
+    }, 500);
   };
 
   return (
     <div className={styles.pageShell}>
-      {/* Scrollable content */}
       <div className={styles.scrollArea}>
         {/* Header */}
         <div className={styles.header}>
-          <button className={styles.backBtn} onClick={() => router.back()} aria-label="Go back">
+          <button className={styles.backBtn} onClick={() => router.back()} aria-label="Back">
             <ArrowLeft size={18} />
           </button>
           <h1 className={styles.title}>My Bookings</h1>
         </div>
 
         <div className={styles.content}>
+          {/* Upcoming section */}
           {upcoming.length > 0 && (
             <section className={styles.section}>
-              <p className={styles.sectionLabel}>UPCOMING</p>
-              <div className={styles.list}>
-                {upcoming.map((b) => (
+              <p className={styles.sectionLabelUpcoming}>Upcoming</p>
+              {upcoming.map((b) => (
+                <div key={b.id}>
+                  <p className={styles.dateGroup}>{b.dateGroup}</p>
                   <BookingCard
-                    key={b.id}
                     booking={b}
                     cancelling={cancellingId === b.id}
-                    onCancel={() => handleCancel(b.id)}
+                    confirming={confirmingId === b.id}
+                    onRequestCancel={() => setConfirmingId(b.id)}
+                    onKeep={() => setConfirmingId(null)}
+                    onConfirmCancel={() => handleConfirmCancel(b.id)}
                   />
-                ))}
-              </div>
+                </div>
+              ))}
             </section>
           )}
 
-          {past.length > 0 && (
+          {/* Cancelled section */}
+          {cancelled.length > 0 && (
             <section className={styles.section}>
-              <p className={styles.sectionLabel}>PAST</p>
-              <div className={styles.list}>
-                {past.map((b) => (
-                  <BookingCard key={b.id} booking={b} />
-                ))}
-              </div>
+              <p className={styles.sectionLabelCancelled}>Cancelled</p>
+              {cancelled.map((b) => (
+                <div key={b.id}>
+                  <BookingCard booking={b} />
+                </div>
+              ))}
             </section>
           )}
 
@@ -213,50 +132,91 @@ export default function BookingsPage() {
 function BookingCard({
   booking,
   cancelling,
-  onCancel,
+  confirming,
+  onRequestCancel,
+  onKeep,
+  onConfirmCancel,
 }: {
   booking: Booking;
   cancelling?: boolean;
-  onCancel?: () => void;
+  confirming?: boolean;
+  onRequestCancel?: () => void;
+  onKeep?: () => void;
+  onConfirmCancel?: () => void;
 }) {
   const isUpcoming  = booking.status === "upcoming";
   const isCancelled = booking.status === "cancelled";
 
   return (
     <div className={`${styles.card} ${isCancelled ? styles.cardCancelled : ""}`}>
-      <div className={styles.cardTop}>
-        <div className={styles.cardInfo}>
+      {/* Service + provider */}
+      <div className={styles.cardHeader}>
+        <div>
           <p className={styles.cardService}>{booking.service}</p>
           <p className={styles.cardProvider}>{booking.provider}</p>
         </div>
-        <span className={`${styles.badge} ${styles[`badge_${booking.status}`]}`}>
-          {isCancelled ? "cancelled" : booking.status}
-        </span>
       </div>
 
-      <div className={styles.cardMeta}>
-        <div className={styles.metaRow}>
-          <Calendar size={13} className={styles.metaIcon} />
-          <span>{booking.date}</span>
+      {/* Meta grid: 2 columns */}
+      <div className={styles.metaGrid}>
+        <div className={styles.metaCol}>
+          <div className={styles.metaRow}>
+            <Calendar size={14} className={styles.metaIcon} />
+            <span>{booking.date}</span>
+          </div>
+          <div className={styles.metaRow}>
+            <CreditCard size={14} className={styles.metaIcon} />
+            <span>{booking.paymentMethod}</span>
+          </div>
         </div>
-        <div className={styles.metaRow}>
-          <Clock size={13} className={styles.metaIcon} />
-          <span>{booking.time}</span>
-        </div>
-        <div className={styles.metaRow}>
-          <MapPin size={13} className={styles.metaIcon} />
-          <span>{booking.location}</span>
+        <div className={styles.metaCol}>
+          <div className={styles.metaRow}>
+            <Clock size={14} className={styles.metaIcon} />
+            <span>{booking.time}</span>
+          </div>
+          <div className={styles.metaRow}>
+            <Timer size={14} className={styles.metaIcon} />
+            <span>{booking.duration}</span>
+          </div>
         </div>
       </div>
 
-      {isUpcoming && onCancel && (
+      {/* Type badge + price */}
+      <div className={styles.cardFooterRow}>
+        <span className={styles.typeBadge}>{booking.bookingType}</span>
+        <span className={styles.price}>{booking.price}</span>
+      </div>
+
+      {/* Verification code */}
+      <div className={styles.verificationRow}>
+        <span className={styles.verificationLabel}>Verification Code</span>
+        <span className={styles.verificationCode}>{booking.verificationCode}</span>
+      </div>
+
+      {/* Upcoming: cancel button or inline confirmation */}
+      {isUpcoming && !confirming && (
         <button
           className={styles.cancelBtn}
-          onClick={onCancel}
+          onClick={onRequestCancel}
           disabled={cancelling}
         >
           {cancelling ? "Cancelling…" : "Cancel Booking"}
         </button>
+      )}
+
+      {isUpcoming && confirming && (
+        <div className={styles.cancelConfirm}>
+          <p className={styles.cancelConfirmTitle}>Cancel this booking?</p>
+          <p className={styles.cancelConfirmSub}>50% fee applies within 12 hrs of appointment.</p>
+          <div className={styles.cancelConfirmBtns}>
+            <button className={styles.keepBtn} onClick={onKeep}>Keep</button>
+            <button className={styles.confirmCancelBtn} onClick={onConfirmCancel}>Confirm Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {isCancelled && (
+        <div className={styles.cancelledBtn}>Cancelled</div>
       )}
     </div>
   );
