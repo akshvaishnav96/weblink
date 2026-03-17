@@ -1,0 +1,30 @@
+.selector {
+  display: flex; align-items: flex-start; gap: var(--sp-3);
+  padding: var(--sp-4); overflow-x: auto;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.item { display: flex; flex-direction: column; align-items: center; gap: 5px; flex-shrink: 0; cursor: pointer; }
+.avatar {
+  width: 44px; height: 44px; border-radius: var(--radius-full);
+  border: 2px solid var(--color-border); background: var(--color-surface-alt);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: var(--color-text-muted);
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.itemActive .avatar { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-white); }
+.itemNamed.itemActive .avatar { background: var(--color-primary-bg); border-color: var(--color-primary); color: var(--color-primary); border-width: 2.5px; }
+.avatarActive { border-color: var(--color-primary) !important; border-width: 2.5px !important; }
+.avatarImg { width: 100%; height: 100%; border-radius: var(--radius-full); object-fit: cover; display: block; }
+.personIcon { width: 20px; height: 20px; stroke-width: 1.8; }
+.label { font-size: 10px; font-weight: 500; color: var(--color-text-muted); white-space: nowrap; }
+
+@media (min-width: 768px) {
+  .selector { overflow-x: visible; flex-wrap: wrap; padding: var(--sp-5) var(--sp-6); gap: var(--sp-4); }
+  .avatar { width: 52px; height: 52px; font-size: 14px; }
+  .label  { font-size: 11px; }
+}
+@media (min-width: 1024px) {
+  .selector { padding: var(--sp-6) var(--sp-8); gap: var(--sp-5); }
+  .avatar { width: 60px; height: 60px; font-size: 16px; }
+}

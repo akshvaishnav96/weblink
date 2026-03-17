@@ -1,0 +1,33 @@
+.header { padding: var(--sp-6) var(--sp-4) var(--sp-2); }
+.title  { font-size: 26px; font-weight: 700; color: var(--color-text-primary); letter-spacing: -0.5px; }
+
+.search { display: flex; align-items: center; gap: var(--sp-2); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 10px var(--sp-3); margin: var(--sp-2) var(--sp-4) 0; transition: border-color 0.15s; }
+.search:focus-within { border-color: var(--color-primary-border); }
+.searchIcon  { width: 16px; height: 16px; color: var(--color-text-muted); flex-shrink: 0; }
+.searchInput { flex: 1; background: transparent; border: none; outline: none; font-size: var(--text-sm); color: var(--color-text-primary); }
+.searchInput::placeholder { color: var(--color-text-muted); }
+.searchFilter { display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; color: var(--color-text-muted); cursor: pointer; transition: color 0.15s; }
+.searchFilter:hover { color: var(--color-primary); }
+.searchFilter svg { width: 15px; height: 15px; }
+
+.filters { display: flex; gap: var(--sp-2); padding: var(--sp-3) var(--sp-4) var(--sp-1); overflow-x: auto; }
+.list { border-top: 1px solid var(--color-border-light); margin-top: var(--sp-2); }
+.listEmpty { text-align: center; padding: 60px var(--sp-4); font-size: var(--text-sm); color: var(--color-text-muted); }
+
+@media (min-width: 768px) {
+  .header { padding: var(--sp-8) var(--sp-8) var(--sp-3); max-width: var(--content-max); margin: 0 auto; width: 100%; }
+  .title  { font-size: 32px; }
+  .search { margin: var(--sp-2) var(--sp-8) 0; max-width: var(--content-max); border-radius: var(--radius-xl); padding: 12px var(--sp-4); }
+  .searchInput { font-size: var(--text-base); }
+  .filters { padding: var(--sp-4) var(--sp-8) var(--sp-2); overflow-x: visible; flex-wrap: wrap; max-width: var(--content-max); margin: 0 auto; width: 100%; }
+  .list { max-width: var(--content-max); margin: var(--sp-2) auto 0; }
+}
+@media (min-width: 1024px) {
+  .header { padding: var(--sp-10) var(--content-padding) var(--sp-4); }
+  .search { margin: 0 var(--content-padding) var(--sp-2); max-width: var(--content-max); }
+  .filters { padding: var(--sp-3) var(--content-padding); max-width: var(--content-max); gap: var(--sp-3); }
+  .list { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--sp-1); border-top: none; padding: 0 var(--content-padding); max-width: var(--content-max); }
+}
+@media (min-width: 1280px) {
+  .list { grid-template-columns: repeat(3, 1fr); }
+}
