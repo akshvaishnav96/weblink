@@ -12,6 +12,7 @@ import {
   type ApiBusinessProfile,
   type ApiStaff,
 } from "@/lib/api";
+import { useBookingStore } from "@/store/bookingStore";
 import styles from "./page.module.css";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -84,6 +85,7 @@ export default function ViewTimesPage({
   const { barberId } = use(params);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const setSelection = useBookingStore((s) => s.setSelection);
   const serviceId       = searchParams.get("service")         ?? "";
   const businessName    = searchParams.get("businessName")    ?? "";
   const businessAddress = searchParams.get("businessAddress") ?? "";
@@ -309,23 +311,24 @@ export default function ViewTimesPage({
               : "";
             const rawTimeSlot = selectedTime ? (activeRawMap[selectedTime] ?? "") : "";
             const bookingDate  = selectedDate ? toISODate(selectedDate) : "";
-            const qp = new URLSearchParams({
-              service: service?.service_name ?? serviceId,
+            setSelection({
+              barberId,
+              serviceName:    service?.service_name ?? serviceId,
               serviceId,
-              staff: staffName,
+              staffName,
               staffId,
               staffInitials,
               staffPicture,
-              time: `${dateStr}, ${selectedTime}`,
-              duration: String(service?.time ?? ""),
-              price: String(servicePrice),
+              displayTime:    `${dateStr}, ${selectedTime}`,
+              duration:       String(service?.time ?? ""),
+              price:          String(servicePrice),
               businessName,
               businessAddress,
               rawTimeSlot,
               bookingDate,
-              serviceType: service?.service_type ?? "walkin",
+              serviceType:    service?.service_type ?? "walkin",
             });
-            router.push(`/payment/${barberId}?${qp.toString()}`);
+            router.push(`/payment/${barberId}`);
           }}
           className={`${styles.ctaBtn}${!canBook ? ` ${styles.ctaBtnDisabled}` : ""}`}
         >

@@ -233,7 +233,9 @@ export interface PaymentIntentResult {
 export async function createPaymentIntent(payload: PaymentIntentPayload): Promise<PaymentIntentResult> {
   const res = await fetch(`${API_BASE}/create-payment-intent`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify(payload),
   });
   const json = await res.json();

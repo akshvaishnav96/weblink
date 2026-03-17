@@ -8,6 +8,7 @@ interface AppDownloadModalProps {
   name?: string;
   pin?: string;
   onSkip: () => void;
+  onSaveDetails?: () => void;
 }
 
 const FEATURES = [
@@ -16,8 +17,9 @@ const FEATURES = [
   { icon: Tag,          label: "Offers",        desc: "Special deals & discounts" },
 ];
 
-export default function AppDownloadModal({ name, pin, onSkip }: AppDownloadModalProps) {
+export default function AppDownloadModal({ name, pin, onSkip, onSaveDetails }: AppDownloadModalProps) {
   const [fasterDismissed, setFasterDismissed] = useState(false);
+  const [detailsSaved,    setDetailsSaved]    = useState(false);
 
   return (
     <div className={styles.backdrop}>
@@ -53,10 +55,17 @@ export default function AppDownloadModal({ name, pin, onSkip }: AppDownloadModal
           <div className={styles.fasterBanner}>
             <span className={styles.fasterIcon}><Zap size={14} /></span>
             <div className={styles.fasterText}>
-              <p className={styles.fasterTitle}>Faster next time?</p>
-              <p className={styles.fasterDesc}>Save your details for instant bookings.</p>
+              {detailsSaved
+                ? <p className={styles.fasterTitle}>Details saved ✓</p>
+                : <>
+                    <p className={styles.fasterTitle}>Faster next time?</p>
+                    <p className={styles.fasterDesc}>Save your details for instant bookings.</p>
+                  </>
+              }
             </div>
-            <button className={styles.fasterYes}>Yes</button>
+            {!detailsSaved && (
+              <button className={styles.fasterYes} onClick={() => { onSaveDetails?.(); setDetailsSaved(true); }}>Yes</button>
+            )}
             <button className={styles.fasterClose} onClick={() => setFasterDismissed(true)} aria-label="Dismiss">
               <X size={13} />
             </button>

@@ -240,7 +240,7 @@
   .summaryCard,
   .cancelBox,
   .spacer,
-  .ctaWrap { width: 100%; max-width: 640px; }
+  .ctaWrap { width: 80%; max-width: 700px; }
 
   .header {
     border-radius: 16px 16px 0 0;
@@ -294,7 +294,7 @@
   .summaryCard,
   .cancelBox,
   .spacer,
-  .ctaWrap { max-width: 700px; }
+  .ctaWrap { width: 80%; max-width: 800px; }
 
   .summaryRow   { padding: 16px 32px; }
   .summaryTotal { padding: 18px 32px; }

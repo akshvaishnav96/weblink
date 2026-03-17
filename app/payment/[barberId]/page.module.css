@@ -631,12 +631,14 @@
 @media (min-width: 1024px) {
   .header {
     padding: 20px 48px 16px;
-    max-width: 560px;
+    width: 80%;
+    max-width: 900px;
     margin: 0 auto;
   }
 
   .body {
-    max-width: 560px;
+    width: 80%;
+    max-width: 900px;
     margin: 28px auto;
     box-shadow: 0 4px 32px rgba(0,0,0,0.08);
   }
@@ -656,11 +658,118 @@
    LARGE DESKTOP  ≥ 1280px
    ════════════════════════════ */
 @media (min-width: 1280px) {
-  .header { max-width: 1100px; padding: 22px 56px 18px; }
-  .body   { max-width: 1100px; }
+  .header { width: 80%; max-width: 1100px; padding: 22px 56px 18px; }
+  .body   { width: 80%; max-width: 1100px; }
   .formArea { padding: 28px 36px; }
   .summaryRow { padding: 13px 28px; }
   .summaryTotal { padding: 16px 28px; }
   .cancelBox { padding: 20px 32px; }
   .summaryTotalValue { font-size: 26px; }
+}
+
+/* ── Stripe CardElement wrapper ── */
+.stripeElementWrap {
+  width: 100%;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 14px;
+  box-sizing: border-box;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.stripeElementWrap:focus-within {
+  border-color: var(--color-primary-border);
+  box-shadow: 0 0 0 3px rgba(184,134,11,0.08);
+}
+
+/* ── Payment Request Button (Apple/Google Pay) wrapper ── */
+.prButtonWrap {
+  margin-top: 10px;
+}
+.prUnavailable {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  text-align: center;
+  padding: 12px;
+  background: var(--color-surface);
+  border: 1px dashed var(--color-border);
+  border-radius: 10px;
+  margin-top: 10px;
+}
+
+/* ── UPI input ── */
+.upiInput {
+  width: 100%;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 13px 14px;
+  font-size: 14px;
+  color: var(--color-text-primary);
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  -webkit-appearance: none;
+  margin-top: 10px;
+}
+.upiInput::placeholder { color: var(--color-text-placeholder); }
+.upiInput:focus {
+  border-color: var(--color-primary-border);
+  box-shadow: 0 0 0 3px rgba(184,134,11,0.08);
+}
+.upiHint {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  margin-top: 5px;
+  line-height: 1.5;
+}
+
+/* ── Saved details banner ── */
+.savedBanner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f0faf4;
+  border: 1px solid #b7e4c7;
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+}
+.savedBannerIcon { color: #2d9c5c; flex-shrink: 0; }
+.savedBannerText { font-size: 13px; color: #1a4731; flex: 1; }
+.savedBannerClear {
+  font-size: 12px;
+  color: #2d9c5c;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  flex-shrink: 0;
+}
+
+/* ── Payment error ── */
+.paymentError {
+  font-size: 13px;
+  color: #c0392b;
+  background: #fdf2f2;
+  border: 1px solid #f5c6cb;
+  border-radius: 8px;
+  padding: 10px 14px;
+  text-align: center;
+  line-height: 1.5;
+  margin-top: 8px;
+}
+
+/* ── Processing spinner inside button ── */
+.btnSpinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  vertical-align: middle;
+  margin-right: 8px;
 }

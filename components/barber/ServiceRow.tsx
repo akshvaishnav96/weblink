@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Clock, ChevronDown, TrendingUp } from "lucide-react";
 import { Service } from "@/types";
 import { formatDuration, formatPrice, getPaymentLabel } from "@/lib/utils";
 import BarberAvatar from "@/components/ui/BarberAvatar";
 import TimeSlotButton from "@/components/ui/TimeSlotButton";
 import Link from "next/link";
+import { useBookingStore } from "@/store/bookingStore";
 import styles from "./ServiceRow.module.css";
 
 function getTodayLabel(): string {
@@ -45,6 +47,30 @@ function toRawSlot(displayTime: string, durationMins: number): string {
 export default function ServiceRow({ service, barberId, businessName = "", businessAddress = "", hideBadge = false }: ServiceRowProps) {
   const [expanded, setExpanded] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  const router = useRouter();
+  const setSelection = useBookingStore((s) => s.setSelection);
+
+  function handleSlotClick(staff: { staffId: string; staffInitials: string; staffName: string }, slot: string) {
+    setSelectedSlot(slot);
+    setSelection({
+      barberId,
+      serviceName:    service.name,
+      serviceId:      service.id,
+      staffName:      staff.staffName,
+      staffId:        staff.staffId,
+      staffInitials:  staff.staffInitials,
+      staffPicture:   "",
+      displayTime:    `${getTodayLabel()}, ${slot}`,
+      duration:       String(service.duration),
+      price:          String(service.price),
+      businessName,
+      businessAddress,
+      rawTimeSlot:    toRawSlot(slot, service.duration),
+      bookingDate:    todayISO(),
+      serviceType:    service.serviceType ?? "walkin",
+    });
+    router.push(`/payment/${barberId}`);
+  }
 
   const isWalkIn = service.paymentType === "WALK_IN_ONLY";
 
@@ -141,6 +167,11 @@ export default function ServiceRow({ service, barberId, businessName = "", busin
               <p className={styles.panelDate}>Today — {getTodayLabel()}</p>
             )}
 
+            {/* No staff available message */}
+            {!hasStaff && !isWalkIn && (
+              <p className={styles.noStaff}>No staff available at this time</p>
+            )}
+
             {/* Staff rows — only if staff exists */}
             {hasStaff && service.staffAvailability!.map((staff) => (
               <div
@@ -166,17 +197,13 @@ export default function ServiceRow({ service, barberId, businessName = "", busin
                   staff.slots && staff.slots.length > 0 && (
                     <div className={styles.staffSlots}>
                       {staff.slots.map((slot) => (
-                        <Link
+                        <TimeSlotButton
                           key={slot}
-                          href={`/payment/${barberId}?service=${encodeURIComponent(service.name)}&serviceId=${service.id}&staff=${encodeURIComponent(staff.staffName)}&staffId=${staff.staffId}&staffInitials=${staff.staffInitials}&time=${encodeURIComponent(slot)}&duration=${service.duration}&price=${service.price}&businessName=${encodeURIComponent(businessName)}&businessAddress=${encodeURIComponent(businessAddress)}&rawTimeSlot=${encodeURIComponent(toRawSlot(slot, service.duration))}&bookingDate=${todayISO()}&serviceType=${encodeURIComponent(service.serviceType ?? "walkin")}`}
-                        >
-                          <TimeSlotButton
-                            time={slot}
-                            variant="pill"
-                            selected={selectedSlot === slot}
-                            onClick={() => setSelectedSlot(slot)}
-                          />
-                        </Link>
+                          time={slot}
+                          variant="pill"
+                          selected={selectedSlot === slot}
+                          onClick={() => handleSlotClick(staff, slot)}
+                        />
                       ))}
                     </div>
                   )

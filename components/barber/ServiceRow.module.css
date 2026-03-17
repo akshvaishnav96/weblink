@@ -1,8 +1,6 @@
 /* ── Card wrapper ── */
 .row {
   background: #faf7f2;
-  border: 1.5px solid #e8ddd0;
-  border-radius: 14px;
   margin-bottom: 10px;
   overflow: hidden;
   box-shadow: 0 1px 4px 0 rgba(160, 120, 60, 0.06);
@@ -171,6 +169,12 @@
   font-weight: 600;
   color: #a09080;
   margin-bottom: var(--sp-3);
+}
+
+.noStaff {
+  font-size: 13px;
+  color: #a09080;
+  padding: var(--sp-2) 0;
 }
 
 /* ── Staff blocks ── */
