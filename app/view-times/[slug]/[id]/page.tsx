@@ -2,7 +2,7 @@
 
 import { useState, use, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { MapPin, User } from "lucide-react";
+import { User } from "lucide-react";
 import BackHeader from "@/components/layout/BackHeader";
 import ExpertSelector from "@/components/booking/ExpertSelector";
 import BookingCalendar from "@/components/booking/BookingCalendar";
@@ -11,7 +11,6 @@ import {
   fetchBusinessProfile,
   checkStaffAvailability,
   type ApiBusinessProfile,
-  type ApiStaff,
 } from "@/lib/api";
 import { useBookingStore } from "@/store/bookingStore";
 import styles from "./page.module.css";
@@ -43,63 +42,88 @@ function formatSlotStart(slot: string): string {
   return minutes === "00" ? `${h12}:00 ${ampm}` : `${h12}:${minutes} ${ampm}`;
 }
 
-function getStaffForService(
-  profile: ApiBusinessProfile,
-  serviceId: string
-): ApiStaff[] {
-  const svc = profile.services.find((s) => s.id.toString() === serviceId);
-  return svc?.staff ?? [];
-}
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ViewTimesPage({
   params,
 }: {
-  params: Promise<{ barberId: string }>;
+  params: Promise<{ id: string,slug: string}>;
 }) {
-  const { barberId } = use(params);
+  const { slug,id } = use(params);
   const router = useRouter();
   const searchParams = useSearchParams();
   const setSelection = useBookingStore((s) => s.setSelection);
   const serviceId       = searchParams.get("service")         ?? "";
   const businessName    = searchParams.get("businessName")    ?? "";
   const businessAddress = searchParams.get("businessAddress") ?? "";
+  const mode            = (searchParams.get("mode") ?? "onsite") as "onsite" | "mobile";
+  const isMobileMode    = mode === "mobile";
+  const encId           = searchParams.get("encId")           ?? id;
 
   const [profile, setProfile] = useState<ApiBusinessProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileError, setProfileError] = useState<string | null>(null);
 
   const [selectedExpert, setSelectedExpert] = useState("anyone");
+  const [randomStaffId, setRandomStaffId] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
-  const [meetUpAddress, setMeetUpAddress] = useState("");
+  const [meetUpAddress] = useState("");
 
   const [slots, setSlots] = useState<string[]>([]);
   const [rawSlotsMap, setRawSlotsMap] = useState<Record<string, string>>({});
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [, setSlotsError] = useState<string | null>(null);
 
+  // Pick a random staff whenever profile loads or "anyone" is selected
   useEffect(() => {
-    fetchBusinessProfile(barberId)
-      .then((data) => { setProfile(data); setProfileLoading(false); })
-      .catch((err: Error) => { setProfileError(err.message ?? "Failed to load profile"); setProfileLoading(false); });
-  }, [barberId]);
+    if (!profile) return;
+    const allStaff = Object.values(
+      profile.services.flatMap((svc) => svc.staff)
+        .reduce<Record<number, typeof profile.services[0]["staff"][0]>>((acc, s) => {
+          if (!acc[s.id]) acc[s.id] = s;
+          return acc;
+        }, {})
+    );
+    if (allStaff.length > 0 && selectedExpert === "anyone") {
+      const random = allStaff[Math.floor(Math.random() * allStaff.length)];
+      setRandomStaffId(random.id.toString());
+    }
+  }, [profile, selectedExpert]);
 
-  const fetchSlots = useCallback(async () => {
-    if (!selectedDate || !serviceId) return;
+  useEffect(() => {
+    console.log("[ViewTimes] params:", { slug, id, encId });
+    fetchBusinessProfile(slug, encId)
+      .then((data) => { console.log("[ViewTimes] profile loaded:", data); setProfile(data); setProfileLoading(false); })
+      .catch((err: Error) => { console.error("[ViewTimes] profile error:", err.message); setProfileError(err.message ?? "Failed to load profile"); setProfileLoading(false); });
+  }, [id, slug, encId]);
+
+const fetchSlots = useCallback(async () => {
+    console.log("[ViewTimes] fetchSlots called:", { selectedExpert, randomStaffId, selectedDate, serviceId, profileId: profile?.id });
+    if (!selectedDate || !serviceId || !profile) return;
+    const effectiveStaffId = selectedExpert === "anyone" ? randomStaffId : selectedExpert;
+    if (!effectiveStaffId) return;
     setSlotsLoading(true);
     setSlotsError(null);
     setSelectedTime(null);
     try {
-      const result = await checkStaffAvailability({
-        business_id: barberId,
-        type: selectedExpert === "anyone" ? "anyone" : "specific",
-        ...(selectedExpert !== "anyone" ? { staff_id: selectedExpert } : {}),
+      console.log("[ViewTimes] checkStaffAvailability params:", {
+        business_id: profile.id,
+        type: "specific",
+        staff_id: effectiveStaffId,
         date: toISODate(selectedDate),
         business_service_id: serviceId,
       });
+      const result = await checkStaffAvailability({
+        business_id: profile.id,
+        type: "specific",
+        staff_id: effectiveStaffId,
+        date: toISODate(selectedDate),
+        business_service_id: serviceId,
+      });
+      console.log("[ViewTimes] checkStaffAvailability response:", result);
       const rawSlots: string[] = result.slots ?? [];
       const sorted = [...new Set(rawSlots)].sort();
       const displaySlotsList = sorted.map(formatSlotStart);
@@ -113,21 +137,42 @@ export default function ViewTimesPage({
     } finally {
       setSlotsLoading(false);
     }
-  }, [barberId, selectedDate, selectedExpert, serviceId]);
+  },[profile, selectedDate, selectedExpert, randomStaffId, serviceId]);
 
   useEffect(() => { fetchSlots(); }, [fetchSlots]);
 
-  const staffForService = profile ? getStaffForService(profile, serviceId) : [];
-  const experts = staffForService.map((s) => ({
-    id: s.id.toString(),
-    initials: getInitials(s.name),
-    name: s.name,
-    picture: s.picture ?? undefined,
-  }));
+  const experts = profile
+    ? Object.values(
+        profile.services
+          .flatMap((svc) => svc.staff)
+          .reduce<Record<number, typeof profile.services[0]["staff"][0]>>((acc, s) => {
+            if (!acc[s.id]) acc[s.id] = s;
+            return acc;
+          }, {})
+      ).map((s) => ({
+        id: s.id.toString(),
+        initials: getInitials(s.name),
+        name: s.name,
+        picture: s.picture ?? undefined,
+      }))
+    : [];
 
   const service = profile?.services.find((s) => s.id.toString() === serviceId);
-  const servicePrice =
-    parseFloat(service?.walk_price ?? service?.mobile_price ?? "0") || 0;
+  const servicePrice = (() => {
+    if (!service) return 0;
+    const applyDiscount = (base: number, isDiscount: number, pct: string) => {
+      const discountPct = parseFloat(pct) || 0;
+      if (isDiscount && discountPct > 0)
+        return Math.round(base * (1 - discountPct / 100) * 100) / 100;
+      return base;
+    };
+    // Use mobile price when mode=mobile or service is mobile-only
+    if (service.service_type === "mobile" || (service.service_type === "both" && isMobileMode)) {
+      return applyDiscount(parseFloat(service.mobile_price) || 0, service.is_mobile_discount, service.mobile_discount_percentage);
+    }
+    return applyDiscount(parseFloat(service.walk_price) || 0, service.is_walk_discount, service.walk_discount_percentage);
+  })();
+  console.log("[ViewTimes] Selection from store:", { serviceId, serviceName: service?.service_name, price: servicePrice, serviceType: service?.service_type });
 
   const canBook = !!(selectedDate && selectedTime);
 
@@ -222,37 +267,42 @@ export default function ViewTimesPage({
         />
       </div>
 
-      {/* Meet Up Address */}
-      <div className={styles.formSection}>
-        <label className={styles.formLabel}>Meet Up Address</label>
-        <div className={styles.addressWrapper}>
-          <input
-            className={styles.addressInput}
-            placeholder="Enter your address..."
-            value={meetUpAddress}
-            onChange={(e) => setMeetUpAddress(e.target.value)}
-          />
-          <MapPin size={16} className={styles.addressIcon} />
+      {/* Meet Up Address — only for mobile mode */}
+      {/* {(service?.service_type === "mobile" || (service?.service_type === "both" && isMobileMode)) && (
+        <div className={styles.formSection}>
+          <label className={styles.formLabel}>Meet Up Address</label>
+          <div className={styles.addressWrapper}>
+            <input
+              className={styles.addressInput}
+              placeholder="Enter your address..."
+              value={meetUpAddress}
+              onChange={(e) => setMeetUpAddress(e.target.value)}
+            />
+            <MapPin size={16} className={styles.addressIcon} />
+          </div>
         </div>
-      </div>
+      )} */}
 
       {/* Book button */}
       <div className={styles.ctaSection}>
         <button
           onClick={() => {
             if (!canBook) return;
-            const expertObj = experts.find((e) => e.id === selectedExpert);
+            const effectiveId = selectedExpert === "anyone" ? (randomStaffId ?? "anyone") : selectedExpert;
+            const expertObj = experts.find((e) => e.id === effectiveId);
             const staffName      = expertObj?.name     ?? "Anyone";
             const staffInitials  = expertObj?.initials ?? "??";
-            const staffId        = expertObj?.id       ?? "anyone";
+            const staffId        = expertObj?.id       ?? effectiveId;
             const staffPicture   = expertObj?.picture  ?? "";
             const dateStr = selectedDate
               ? selectedDate.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })
               : "";
             const rawTimeSlot = selectedTime ? (rawSlotsMap[selectedTime] ?? "") : "";
             const bookingDate  = selectedDate ? toISODate(selectedDate) : "";
-            setSelection({
-              barberId,
+            const selectionPayload = {
+              barberId:       String(profile?.id ?? ""),
+              barberSlug:     slug,
+              barberEncodedId: encId,
               serviceName:    service?.service_name ?? serviceId,
               serviceId,
               staffName,
@@ -266,11 +316,13 @@ export default function ViewTimesPage({
               businessAddress,
               rawTimeSlot,
               bookingDate,
-              serviceType:    service?.service_type ?? "walkin",
+              serviceType:    service?.service_type === "both" ? (isMobileMode ? "mobile" : "walkin") : (service?.service_type ?? "walkin"),
               notes:          notes || undefined,
               meetUpAddress:  meetUpAddress || undefined,
-            });
-            router.push(`/payment/${barberId}`);
+            };
+            console.log("[ViewTimes] setSelection payload:", selectionPayload);
+            setSelection(selectionPayload);
+            router.push(`/confirm-booking`);
           }}
           className={`${styles.ctaBtn}${!canBook ? ` ${styles.ctaBtnDisabled}` : ""}`}
         >
@@ -278,7 +330,6 @@ export default function ViewTimesPage({
         </button>
       </div>
 
-      <p className={styles.poweredBy}>Powered by Valet Vault</p>
     </div>
   );
 }

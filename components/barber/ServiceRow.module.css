@@ -51,9 +51,10 @@
 .nameRow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
 .name {
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 700;
   color: #2a1f10;
+  font-family: var(--font-heading);
 }
 
 .popular {
@@ -211,10 +212,22 @@
   color: #c8901a;
   margin-top: var(--sp-3);
   padding-top: var(--sp-2);
-  border-top: 1px solid #e8ddd0;
   text-decoration: none;
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+    transition-timing-function: cubic-bezier(.4, 0, .2, 1);
+    transition-duration: .15s;
+    padding-top: .625rem;
+    padding-bottom: .625rem;
+    font-size: .875rem;
+    line-height: 1.25rem;
+    border: solid;
+        font-weight: 600;
+            background: var(--color-white);
+    border: 1px solid #e2c97a;
+                border-radius: .75rem;
+                    margin-top: 1rem;
 }
-.viewMore:hover { color: #a06010; }
+.viewMore:hover { color: #a06010;  border: 1px solid var(--color-primary) }
 
 /* ── Walk-in panel ── */
 .panelWalkin {
@@ -261,9 +274,10 @@
   .avail  { font-size: 13px; }
 }
 @media (min-width: 1024px) {
-  .main   { padding: var(--sp-5) var(--sp-8) var(--sp-6); }
+  .main   { padding: var(--sp-4) var(--sp-8) var(--sp-2) var(--sp-6); }
   .badge  { padding: var(--sp-4) var(--sp-8) 6px; }
   .panel  { padding: var(--sp-4) var(--sp-8) var(--sp-6); }
   .name   { font-size: 17px; }
-  .price  { font-size: 19px; }
+  .price  {    font-size: 1.125rem;
+    line-height: 1.75rem; }
 }

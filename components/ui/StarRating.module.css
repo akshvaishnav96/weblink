@@ -1,5 +1,11 @@
 .rating { display: inline-flex; align-items: center; gap: 3px; line-height: 1; }
-.star  { color: var(--color-star); font-size: 13px; }
+.star  { color: var(--color-star); font-size: 13px; fill: var(--color-star);width: 1rem; height: 1rem; }
+
+.star::before, .star::after {
+      box-sizing: border-box;
+    border-width: 0;
+    border-style: solid;
+}
 .value { font-size: 12px; font-weight: 600; color: var(--color-text-primary); }
 .count { font-size: 12px; color: var(--color-text-muted); }
 

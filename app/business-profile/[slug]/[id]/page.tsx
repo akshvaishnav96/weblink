@@ -15,6 +15,7 @@ import {
   CreditCard,
   Home,
   User,
+  Car,
 } from "lucide-react";
 import BarberAvatar from "@/components/ui/BarberAvatar";
 import StarRating from "@/components/ui/StarRating";
@@ -28,8 +29,7 @@ import type { Service, StaffAvailability } from "@/types";
 import styles from "./page.module.css";
 
 type Tab = "services" | "portfolio" | "about";
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+type ServiceMode = "onsite" | "mobile";
 
 function getInitials(name: string): string {
   return name
@@ -49,29 +49,26 @@ function formatApiTime(time: string): string {
 }
 
 function formatSlotStart(slot: string): string {
-  const [start] = slot.split("-");
-  return formatApiTime(start);
+  return formatApiTime(slot.split("-")[0]);
 }
 
 function applyDiscount(
-  basePrice: number,
+  base: number,
   isDiscount: number,
-  pct: string
+  pct: string,
 ): { price: number; originalPrice?: number } {
   const discountPct = parseFloat(pct) || 0;
   if (isDiscount && discountPct > 0) {
-    const discounted =
-      Math.round(basePrice * (1 - discountPct / 100) * 100) / 100;
-    return { price: discounted, originalPrice: basePrice };
+    return {
+      price: Math.round(base * (1 - discountPct / 100) * 100) / 100,
+      originalPrice: base,
+    };
   }
-  return { price: basePrice };
+  return { price: base };
 }
 
-// ─── FIX: getPaymentType now correctly returns PAY_ONLINE_OR_ONSITE for "both"
-// regardless of the selected mode — the badge should always reflect what the
-// service actually supports, not what mode the user has toggled.
 function getPaymentType(
-  serviceType: ApiService["service_type"]
+  serviceType: ApiService["service_type"],
 ): Service["paymentType"] {
   if (serviceType === "walkin") return "WALK_IN_ONLY";
   if (serviceType === "mobile") return "PAY_ONLINE";
@@ -79,77 +76,66 @@ function getPaymentType(
   return "PAY_ONSITE";
 }
 
-function mapApiService(apiService: ApiService, mode: "onsite" | "mobile"): Service {
+function mapApiService(apiService: ApiService, mode: ServiceMode): Service {
   let price: number;
   let originalPrice: number | undefined;
-
-  // ─── FIX: paymentType no longer depends on mode — it reflects the service's
-  // actual payment capabilities from the API
   const paymentType = getPaymentType(apiService.service_type);
 
   if (apiService.service_type === "walkin") {
-    // Walk-in only → always use walk_price
-    const base = parseFloat(apiService.walk_price) || 0;
     const d = applyDiscount(
-      base,
+      parseFloat(apiService.walk_price) || 0,
       apiService.is_walk_discount,
-      apiService.walk_discount_percentage
+      apiService.walk_discount_percentage,
     );
     price = d.price;
     originalPrice = d.originalPrice;
-
   } else if (apiService.service_type === "mobile") {
-    // Mobile only → always use mobile_price
-    const base = parseFloat(apiService.mobile_price) || 0;
     const d = applyDiscount(
-      base,
+      parseFloat(apiService.mobile_price) || 0,
       apiService.is_mobile_discount,
-      apiService.mobile_discount_percentage
+      apiService.mobile_discount_percentage,
     );
     price = d.price;
     originalPrice = d.originalPrice;
-
   } else {
-    // "both" → price shown depends on selected mode tab
-    if (mode === "mobile") {
-      const base = parseFloat(apiService.mobile_price) || 0;
-      const d = applyDiscount(
-        base,
-        apiService.is_mobile_discount,
-        apiService.mobile_discount_percentage
-      );
-      price = d.price;
-      originalPrice = d.originalPrice;
-    } else {
-      const base = parseFloat(apiService.walk_price) || 0;
-      const d = applyDiscount(
-        base,
-        apiService.is_walk_discount,
-        apiService.walk_discount_percentage
-      );
-      price = d.price;
-      originalPrice = d.originalPrice;
-    }
+    const useMobile = mode === "mobile";
+    const d = useMobile
+      ? applyDiscount(
+          parseFloat(apiService.mobile_price) || 0,
+          apiService.is_mobile_discount,
+          apiService.mobile_discount_percentage,
+        )
+      : applyDiscount(
+          parseFloat(apiService.walk_price) || 0,
+          apiService.is_walk_discount,
+          apiService.walk_discount_percentage,
+        );
+    price = d.price;
+    originalPrice = d.originalPrice;
   }
 
   const staffAvailability: StaffAvailability[] = apiService.staff
     .filter((s) => s.staff_availability.length > 0)
     .map((staff) => {
       const avail = staff.staff_availability[0];
-      const slots = (avail?.slots ?? []).map(formatSlotStart);
-      const hours =
-        avail?.open_time && avail?.close_time
-          ? `${formatApiTime(avail.open_time)} – ${formatApiTime(avail.close_time)}`
-          : undefined;
-
       return {
         staffId: staff.id.toString(),
         staffInitials: getInitials(staff.name),
         staffName: staff.name,
-        slots,
-        hours,
+        slots: (avail?.slots ?? []).map(formatSlotStart),
+        hours:
+          avail?.open_time && avail?.close_time
+            ? `${formatApiTime(avail.open_time)} – ${formatApiTime(avail.close_time)}`
+            : undefined,
       };
     });
+
+  const resolvedServiceType =
+    apiService.service_type === "both"
+      ? mode === "mobile"
+        ? "mobile"
+        : "walkin"
+      : apiService.service_type;
 
   return {
     id: apiService.id.toString(),
@@ -158,20 +144,21 @@ function mapApiService(apiService: ApiService, mode: "onsite" | "mobile"): Servi
     price,
     originalPrice,
     description: apiService.service_description ?? undefined,
-    serviceType: apiService.service_type,
+    serviceType: resolvedServiceType,
     paymentType,
-    staffAvailability: staffAvailability.length > 0 ? staffAvailability : undefined,
+    staffAvailability:
+      staffAvailability.length > 0 ? staffAvailability : undefined,
   };
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// ─── Page ──────────────────────────────────────────────────────────────────────
 
-export default function ProviderProfilePage({
+export default function BusinessProfilePage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string; id: string }>;
 }) {
-  const { id } = use(params);
+  const { slug, id } = use(params);
   const router = useRouter();
 
   const [profile, setProfile] = useState<ApiBusinessProfile | null>(null);
@@ -179,10 +166,13 @@ export default function ProviderProfilePage({
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("services");
   const [searchQuery, setSearchQuery] = useState("");
-  const [expandedServiceId, setExpandedServiceId] = useState<string | null>(null);
-
+  const [expandedServiceId, setExpandedServiceId] = useState<string | null>(
+    null,
+  );
+  const [serviceMode, setServiceMode] = useState<ServiceMode>("onsite");
+  console.log("BusinessProfilePage rendered with slug:", slug, "id:", id);
   useEffect(() => {
-    fetchBusinessProfile(id)
+    fetchBusinessProfile(slug, id)
       .then((data) => {
         setProfile(data);
         setLoading(false);
@@ -191,19 +181,33 @@ export default function ProviderProfilePage({
         setError(err.message ?? "Failed to load profile");
         setLoading(false);
       });
-  }, [id]);
+  }, [slug, id]);
+
+  const hasMobileServices = useMemo(
+    () =>
+      profile?.services.some(
+        (s) => s.service_type === "mobile" || s.service_type === "both",
+      ) ?? false,
+    [profile],
+  );
 
   const mappedServices = useMemo(() => {
     if (!profile) return [];
-    return profile.services.map((s) => mapApiService(s, "onsite"));
-  }, [profile]);
+    return profile.services
+      .filter((s) =>
+        serviceMode === "mobile"
+          ? s.service_type === "mobile" || s.service_type === "both"
+          : true,
+      )
+      .map((s) => mapApiService(s, serviceMode));
+  }, [profile, serviceMode]);
 
   const filteredServices = useMemo(
     () =>
       mappedServices.filter((s) =>
-        s.name.toLowerCase().includes(searchQuery.toLowerCase())
+        s.name.toLowerCase().includes(searchQuery.toLowerCase()),
       ),
-    [mappedServices, searchQuery]
+    [mappedServices, searchQuery],
   );
 
   const TABS = [
@@ -213,59 +217,59 @@ export default function ProviderProfilePage({
   ];
 
   type PaymentType = Service["paymentType"];
-
   const SECTION_CONFIG: Record<
     PaymentType,
     { label: string; variant: "amber" | "gray"; icon: React.ReactNode }
   > = {
-    PAY_ONLINE: {
-      label: "PAY ONLINE",
-      variant: "amber",
-      icon: <CreditCard />,
-    },
-    PAY_ONSITE: {
-      label: "PAY ONSITE",
-      variant: "amber",
-      icon: <Home />,
-    },
+    PAY_ONLINE: { label: "PAY ONLINE", variant: "amber", icon: <CreditCard /> },
+    PAY_ONSITE: { label: "PAY ONSITE", variant: "amber", icon: <Home /> },
     PAY_ONLINE_OR_ONSITE: {
       label: "",
       variant: "amber",
       icon: (
         <>
           <CreditCard />
-          <span style={{ fontWeight: 700, letterSpacing: "0.06em", fontSize: 10, marginLeft: 4 }}>PAY ONLINE</span>
+          <span
+            style={{
+              fontWeight: 700,
+              letterSpacing: "0.06em",
+              fontSize: 10,
+              marginLeft: 4,
+            }}
+          >
+            PAY ONLINE
+          </span>
           <span style={{ margin: "0 5px", opacity: 0.35 }}>·</span>
           <Home />
-          <span style={{ fontWeight: 700, letterSpacing: "0.06em", fontSize: 10, marginLeft: 4 }}>PAY ONSITE</span>
+          <span
+            style={{
+              fontWeight: 700,
+              letterSpacing: "0.06em",
+              fontSize: 10,
+              marginLeft: 4,
+            }}
+          >
+            PAY ONSITE
+          </span>
         </>
       ),
     },
-    WALK_IN_ONLY: {
-      label: "WALK-IN ONLY",
-      variant: "gray",
-      icon: <User />,
-    },
+    WALK_IN_ONLY: { label: "WALK-IN ONLY", variant: "gray", icon: <User /> },
   };
 
-  const hasAvailableSlots = mappedServices.some(
-    (s) =>
-      s.staffAvailability &&
-      s.staffAvailability.some((st) => st.slots.length > 0)
+  const hasAvailableSlots = mappedServices.some((s) =>
+    s.staffAvailability?.some((st) => st.slots.length > 0),
   );
 
-  // ── Loading ────────────────────────────────────────────────────────────────
-  if (loading) {
+  if (loading)
     return (
       <div className={styles.loadingState}>
         <div className={styles.loadingSpinner} />
         <p className={styles.loadingText}>Loading profile…</p>
       </div>
     );
-  }
 
-  // ── Error ──────────────────────────────────────────────────────────────────
-  if (error || !profile) {
+  if (error || !profile)
     return (
       <div className={styles.errorState}>
         <p className={styles.errorMsg}>{error ?? "Profile not found"}</p>
@@ -274,15 +278,12 @@ export default function ProviderProfilePage({
         </button>
       </div>
     );
-  }
 
   return (
     <div className="page-content">
-      {/* ── Hero ────────────────────────────────────────────────────────── */}
+      {/* ── Hero ── */}
       <div
-        className={`${styles.hero}${
-          profile.business_banner ? ` ${styles.heroBanner}` : ""
-        }`}
+        className={`${styles.hero}${profile.business_banner ? ` ${styles.heroBanner}` : ""}`}
         style={
           profile.business_banner
             ? {
@@ -296,14 +297,12 @@ export default function ProviderProfilePage({
         <button className={styles.heroBack} onClick={() => router.back()}>
           <ArrowLeft />
         </button>
-
         <div className={styles.heroCenter}>
           <p className={styles.heroName}>{profile.business_name}</p>
           {profile.business_type && (
             <p className={styles.heroType}>{profile.business_type}</p>
           )}
         </div>
-
         {hasAvailableSlots && (
           <div className={styles.heroSeats}>
             <span className={styles.heroSeatsDot} />
@@ -312,24 +311,22 @@ export default function ProviderProfilePage({
         )}
       </div>
 
-      {/* ── Info ────────────────────────────────────────────────────────── */}
+      {/* ── Info ── */}
       <div className={styles.info}>
         <h1 className={styles.infoName}>
           {profile.business_display_name ?? profile.business_name}
         </h1>
-        {profile.business_address && (
+        {/* {profile.business_address && (
           <p className={styles.infoAddress}>
             <MapPin /> {profile.business_address}
           </p>
-        )}
+        )} */}
         <div className={styles.infoRating}>
           <StarRating
             rating={profile.average_rating}
             count={profile.total_reviews}
           />
         </div>
-
-        {/* Social Links */}
         <div className={styles.infoSocials}>
           {profile.website_url && (
             <a
@@ -384,16 +381,12 @@ export default function ProviderProfilePage({
             </a>
           )}
         </div>
-
-        {/* Tabs */}
         <div className={styles.tabs}>
-          {TABS.map(({ id, label }, i) => (
+          {TABS.map(({ id: tabId, label }, i) => (
             <button
-              key={id}
-              onClick={() => setActiveTab(id)}
-              className={`${styles.tabBtn}${
-                activeTab === id ? ` ${styles.tabActive}` : ""
-              }${i < TABS.length - 1 ? ` ${styles.tabBtnBorder}` : ""}`}
+              key={tabId}
+              onClick={() => setActiveTab(tabId)}
+              className={`${styles.tabBtn}${activeTab === tabId ? ` ${styles.tabActive}` : ""}${i < TABS.length - 1 ? ` ${styles.tabBtnBorder}` : ""}`}
             >
               {label}
             </button>
@@ -401,7 +394,7 @@ export default function ProviderProfilePage({
         </div>
       </div>
 
-      {/* ── Services Tab ────────────────────────────────────────────────── */}
+      {/* ── Services Tab ── */}
       {activeTab === "services" && (
         <div className={styles.servicesSection}>
           <div className={styles.servicesTop}>
@@ -411,6 +404,22 @@ export default function ProviderProfilePage({
             </button>
           </div>
 
+          {hasMobileServices && (
+            <div className={styles.modeToggle}>
+              <button
+                className={`${styles.modeBtn}${serviceMode === "onsite" ? ` ${styles.modeBtnActive}` : ""}`}
+                onClick={() => setServiceMode("onsite")}
+              >
+                <Home size={13} /> Walk-in
+              </button>
+              <button
+                className={`${styles.modeBtn}${serviceMode === "mobile" ? ` ${styles.modeBtnActive}` : ""}`}
+                onClick={() => setServiceMode("mobile")}
+              >
+                <Car size={13} /> Mobile
+              </button>
+            </div>
+          )}
 
           <div className={styles.serviceSearch}>
             <Search />
@@ -430,11 +439,7 @@ export default function ProviderProfilePage({
                 return (
                   <div key={s.id} className={styles.serviceCard}>
                     <div
-                      className={`${styles.sectionHeader} ${
-                        variant === "amber"
-                          ? styles.sectionHeaderAmber
-                          : styles.sectionHeaderGray
-                      }`}
+                      className={`${styles.sectionHeader} ${variant === "amber" ? styles.sectionHeaderAmber : styles.sectionHeaderGray}`}
                     >
                       <span className={styles.sectionHeaderIcon}>{icon}</span>
                       {label}
@@ -442,25 +447,32 @@ export default function ProviderProfilePage({
                     <ServiceRow
                       service={s}
                       barberId={id}
-                      businessName={profile.business_display_name ?? profile.business_name}
+                      numericBusinessId={String(profile.id)}
+                      barberSlug={slug}
+                      businessName={
+                        profile.business_display_name ?? profile.business_name
+                      }
                       businessAddress={profile.business_address}
                       hideBadge
                       expanded={expandedServiceId === s.id}
-                      onToggle={() => setExpandedServiceId(expandedServiceId === s.id ? null : s.id)}
+                      onToggle={() =>
+                        setExpandedServiceId(
+                          expandedServiceId === s.id ? null : s.id,
+                        )
+                      }
+                      serviceMode={serviceMode}
                     />
                   </div>
                 );
               })
             ) : (
-              <p className={styles.noResults}>
-                No services found
-              </p>
+              <p className={styles.noResults}>No services found</p>
             )}
           </div>
         </div>
       )}
 
-      {/* ── Portfolio Tab ────────────────────────────────────────────────── */}
+      {/* ── Portfolio Tab ── */}
       {activeTab === "portfolio" && (
         <div className={styles.portfolioTab}>
           {profile.portfolio?.description && (
@@ -468,7 +480,6 @@ export default function ProviderProfilePage({
               {profile.portfolio.description}
             </p>
           )}
-
           {profile.portfolio?.images?.length > 0 && (
             <div className={styles.portfolioGrid}>
               {profile.portfolio.images.map((img) => (
@@ -482,7 +493,6 @@ export default function ProviderProfilePage({
               ))}
             </div>
           )}
-
           {profile.portfolio?.videos?.length > 0 && (
             <div className={styles.videosSection}>
               <h3 className={styles.videosSectionTitle}>
@@ -501,22 +511,21 @@ export default function ProviderProfilePage({
               </div>
             </div>
           )}
-
           {!profile.portfolio?.images?.length &&
             !profile.portfolio?.videos?.length && (
-              <div className={styles.portfolioEmpty}>No portfolio items yet</div>
+              <div className={styles.portfolioEmpty}>
+                No portfolio items yet
+              </div>
             )}
         </div>
       )}
 
-      {/* ── About Tab ────────────────────────────────────────────────────── */}
+      {/* ── About Tab ── */}
       {activeTab === "about" && (
         <div className={styles.aboutTab}>
           {profile.who_we_are && (
             <p className={styles.aboutBio}>{profile.who_we_are}</p>
           )}
-
-          {/* Open Hours */}
           {profile.open_hours?.length > 0 && (
             <div className={styles.openHoursSection}>
               <h3 className={styles.sectionTitle}>
@@ -527,23 +536,17 @@ export default function ProviderProfilePage({
                   <div key={h.id} className={styles.hoursRow}>
                     <span className={styles.hoursDay}>{h.day}</span>
                     <span
-                      className={`${styles.hoursTime}${
-                        h.is_closed ? ` ${styles.hoursClosed}` : ""
-                      }`}
+                      className={`${styles.hoursTime}${h.is_closed ? ` ${styles.hoursClosed}` : ""}`}
                     >
                       {h.is_closed
                         ? "Closed"
-                        : `${formatApiTime(h.open_time!)} – ${formatApiTime(
-                            h.close_time!
-                          )}`}
+                        : `${formatApiTime(h.open_time!)} – ${formatApiTime(h.close_time!)}`}
                     </span>
                   </div>
                 ))}
               </div>
             </div>
           )}
-
-          {/* Team */}
           {profile.staff?.length > 0 && (
             <div className={styles.teamSection}>
               <h3 className={styles.sectionTitle}>Our Team</h3>
@@ -574,10 +577,6 @@ export default function ProviderProfilePage({
           )}
         </div>
       )}
-
-      {/* ── Powered by ── */}
-      <p className={styles.poweredBy}>Powered by Valet Vault</p>
-
     </div>
   );
 }

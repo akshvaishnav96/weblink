@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const API_BASE = "https://valetvaultdev.24livehost.com/api/v2/weblink";
+const API_BASE = process.env.API_BASE_URL ?? "https://valetvaultdev.24livehost.com/api/v2/weblink";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+    console.log("[API/create] Incoming body:", body);
 
     const res = await fetch(`${API_BASE}/create-booking-payment`, {
       method: "POST",
@@ -16,6 +17,7 @@ export async function POST(req: NextRequest) {
 
     const data = await res.json();
     console.log("[booking-create] response:", JSON.stringify(data));
+    console.log("[API/create] Upstream response:", data);
     return NextResponse.json(data);
   } catch (err) {
     console.error("[booking-create] error:", err);

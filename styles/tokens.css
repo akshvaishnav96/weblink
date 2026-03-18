@@ -23,7 +23,7 @@
   --color-text-placeholder: #C0BFBD;
 
   /* Semantic */
-  --color-star:            #F5A623;
+  --color-star:            hsl(36 50% 50%);
   --color-badge-pay-fg:    #9B6B0A;
   --color-badge-walkin-fg: #888888;
 
@@ -66,8 +66,8 @@
   /* sm: 640px  |  md: 768px  |  lg: 1024px  |  xl: 1280px */
 
   /* Typography */
-  --font-heading: var(--font-heading, 'Cormorant Garamond', Georgia, serif);
-  --font-body:    var(--font-sans, 'Satoshi', -apple-system, 'Helvetica Neue', Arial, sans-serif);
+  --font-heading: 'Cormorant Garamond', Georgia, serif;
+  --font-body:    'Satoshi', -apple-system, 'Helvetica Neue', Arial, sans-serif;
   --heading-letter-spacing: 0.01em;
 }
 

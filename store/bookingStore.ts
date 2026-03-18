@@ -1,8 +1,11 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import { STORAGE_KEYS } from "@/lib/constants";
 
 export interface BookingSelection {
   barberId: string;
+  barberSlug: string;
+  barberEncodedId: string;
   serviceName: string;
   serviceId: string;
   staffName: string;
@@ -53,7 +56,7 @@ export const useBookingStore = create<BookingState>()(
       clearBooking: () => set({ selection: {}, customer: {} }),
     }),
     {
-      name: "groomly-booking",
+      name: STORAGE_KEYS.BOOKING,
       storage: createJSONStorage(() => sessionStorage),
     }
   )

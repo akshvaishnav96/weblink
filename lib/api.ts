@@ -1,5 +1,5 @@
 // ─── Base ──────────────────────────────────────────────────────────────────────
-const API_BASE = "https://valetvaultdev.24livehost.com/api/v2/weblink";
+const API_BASE = process.env.API_BASE_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://valetvaultdev.24livehost.com/api/v2/weblink";
 
 interface ApiResponse<T> {
   message: string;
@@ -133,16 +133,17 @@ export type AvailabilityResult = ApiStaffAvailability;
 
 // ─── API Functions ─────────────────────────────────────────────────────────────
 export async function fetchBusinessProfile(
+  businessSlug: string,
   businessId: string | number
 ): Promise<ApiBusinessProfile> {
   const res = await fetch(
-    `${API_BASE}/business-profile/${businessId}?search=`,
+    `${API_BASE}/business-profile/${businessSlug}/${businessId}?search=`,
     { headers: { Accept: "application/json" } }
   );
-  if (!res.ok) {
-    throw new Error(`Failed to fetch business profile (${res.status})`);
-  }
+  
+  if (!res.ok) throw new Error(`Failed to fetch business profile (${res.status})`);
   const json: ApiResponse<ApiBusinessProfile> = await res.json();
+  console.log("[API] Business profile fetched:", json);
   if (!json.status) throw new Error(json.message);
   return json.data;
 }
@@ -178,7 +179,7 @@ export async function checkStaffAvailability(
 }
 
 // ─── Booking API ───────────────────────────────────────────────────────────────
-const BOOKING_TOKEN = "1949|UySbRO7OsCWTjTof0BRpCFNLaQFTM10CZOe4Iig789c039a2";
+const BOOKING_TOKEN = process.env.BOOKING_API_TOKEN ?? "";
 
 export interface BookingPayload {
   business_id: string | number;

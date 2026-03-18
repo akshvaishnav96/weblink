@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const API_BASE = "https://valetvaultdev.24livehost.com/api/v2/weblink";
+const API_BASE = process.env.API_BASE_URL ?? "https://valetvaultdev.24livehost.com/api/v2/weblink";
 
 export async function POST(req: NextRequest) {
   try {

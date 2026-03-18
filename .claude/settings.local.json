@@ -4,7 +4,9 @@
       "Bash(npm install:*)",
       "Bash(tail -5 \"c:\\\\Users\\\\Admin\\\\Desktop\\\\groomly \\(2\\)\\\\groomly\\\\app\\\\globals.css\")",
       "Bash(\"c:\\\\Users\\\\Admin\\\\Desktop\\\\groomly \\(2\\)\\\\groomly\\\\app\\\\globals.css\")",
-      "Bash(tail -4 \"c:\\\\Users\\\\Admin\\\\Desktop\\\\groomly \\(2\\)\\\\groomly\\\\app\\\\globals.css\")"
+      "Bash(tail -4 \"c:\\\\Users\\\\Admin\\\\Desktop\\\\groomly \\(2\\)\\\\groomly\\\\app\\\\globals.css\")",
+      "Bash(rm -rf \"c:/Users/Admin/Desktop/groomly \\(2\\)/groomly/app/view-times/[barberId]\")",
+      "Bash(rm -rf \"c:/Users/Admin/Desktop/groomly \\(2\\)/groomly/app/provider/[id]\")"
     ]
   }
 }

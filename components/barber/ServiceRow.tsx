@@ -19,11 +19,14 @@ function getTodayLabel(): string {
 interface ServiceRowProps {
   service: Service;
   barberId: string;
+  numericBusinessId?: string;
+  barberSlug?: string;
   businessName?: string;
   businessAddress?: string;
   hideBadge?: boolean;
   expanded?: boolean;
   onToggle?: () => void;
+  serviceMode?: "onsite" | "mobile";
 }
 
 function todayISO(): string {
@@ -46,7 +49,7 @@ function toRawSlot(displayTime: string, durationMins: number): string {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}-${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}`;
 }
 
-export default function ServiceRow({ service, barberId, businessName = "", businessAddress = "", hideBadge = false, expanded: externalExpanded, onToggle }: ServiceRowProps) {
+export default function ServiceRow({ service, barberId, numericBusinessId, barberSlug = "", businessName = "", businessAddress = "", hideBadge = false, expanded: externalExpanded, onToggle, serviceMode = "onsite" }: ServiceRowProps) {
   const [internalExpanded, setInternalExpanded] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
 
@@ -58,7 +61,8 @@ export default function ServiceRow({ service, barberId, businessName = "", busin
   function handleSlotClick(staff: { staffId: string; staffInitials: string; staffName: string }, slot: string) {
     setSelectedSlot(slot);
     setSelection({
-      barberId,
+      barberId: numericBusinessId ?? barberId,
+      barberEncodedId: barberId,
       serviceName:    service.name,
       serviceId:      service.id,
       staffName:      staff.staffName,
@@ -73,8 +77,9 @@ export default function ServiceRow({ service, barberId, businessName = "", busin
       rawTimeSlot:    toRawSlot(slot, service.duration),
       bookingDate:    todayISO(),
       serviceType:    service.serviceType ?? "walkin",
+      barberSlug,
     });
-    router.push(`/payment/${barberId}`);
+    router.push(`/confirm-booking`);
   }
 
   const isWalkIn = service.paymentType === "WALK_IN_ONLY";
@@ -112,7 +117,9 @@ export default function ServiceRow({ service, barberId, businessName = "", busin
           ) : (
             <>
               <span>🏠</span>
-              {getPaymentLabel(service.paymentType)}
+              <span>
+                {getPaymentLabel(service.paymentType)}
+                </span>
             </>
           )}
         </div>
@@ -219,7 +226,11 @@ export default function ServiceRow({ service, barberId, businessName = "", busin
             {/* "View other times" — only for non-walk-in */}
             {showViewMore && (
               <Link
-                href={`/view-times/${barberId}?service=${service.id}&businessName=${encodeURIComponent(businessName)}&businessAddress=${encodeURIComponent(businessAddress)}`}
+                href={
+                  barberSlug && (numericBusinessId || barberId)
+                    ? `/view-times/${encodeURIComponent(barberSlug)}/${numericBusinessId || barberId}?service=${service.id}&businessName=${encodeURIComponent(businessName)}&businessAddress=${encodeURIComponent(businessAddress)}&mode=${serviceMode}&encId=${encodeURIComponent(barberId)}`
+                    : `#`
+                }
                 className={styles.viewMore}
               >
                 View other times →

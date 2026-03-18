@@ -1,78 +1,143 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Calendar, Clock, CreditCard, Timer } from "lucide-react";
 import styles from "./page.module.css";
 
-type BookingStatus = "upcoming" | "completed" | "cancelled";
-type BookingType   = "Appointment" | "Pay Onsite" | "Walk-in";
+type BookingStatus = "upcoming" | "cancelled";
 
 interface Booking {
-  id: string;
+  id: number;
   service: string;
   provider: string;
-  date: string;          // e.g. "Mar 6, 2025"
-  dateGroup: string;     // e.g. "Thursday, March 6, 2025"
-  time: string;          // e.g. "2:30 PM"
-  duration: string;      // e.g. "45 min"
-  paymentMethod: string; // e.g. "Apple Pay"
-  price: string;         // e.g. "$35"
-  bookingType: BookingType;
+  businessId: string;
+  date: string;
+  dateGroup: string;
+  time: string;
+  duration: string;
+  paymentMethod: string;
+  price: string;
+  bookingType: string;
   verificationCode: string;
   status: BookingStatus;
 }
 
-const BOOKINGS: Booking[] = [
-  {
-    id: "1",
-    service: "The Works",
-    provider: "VV's Barbershop",
-    date: "Mar 6, 2025",
-    dateGroup: "Thursday, March 6, 2025",
-    time: "2:30 PM",
-    duration: "45 min",
-    paymentMethod: "Apple Pay",
-    price: "$35",
-    bookingType: "Appointment",
-    verificationCode: "4821",
-    status: "upcoming",
-  },
-  {
-    id: "2",
-    service: "Shape Up",
-    provider: "VV's Barbershop",
-    date: "Feb 22, 2025",
-    dateGroup: "Saturday, February 22, 2025",
-    time: "11:00 AM",
-    duration: "30 min",
-    paymentMethod: "Apple Pay",
-    price: "$25",
-    bookingType: "Pay Onsite",
-    verificationCode: "3310",
-    status: "cancelled",
-  },
-];
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+function formatDate(dateStr: string): { short: string; full: string } {
+  const d = new Date(dateStr + "T00:00:00");
+  const short = d.toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
+  const full  = d.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  return { short, full };
+}
+
+function formatTime(timeSlot: string): string {
+  const start = timeSlot.split("-")[0];
+  const [h, m] = start.split(":").map(Number);
+  const ampm = h >= 12 ? "PM" : "AM";
+  const h12  = h > 12 ? h - 12 : h === 0 ? 12 : h;
+  return `${h12}:${String(m).padStart(2, "0")} ${ampm}`;
+}
+
+function formatPaymentMode(mode: string | null): string {
+  if (!mode) return "—";
+  const map: Record<string, string> = {
+    cash: "Cash", card: "Card", apple_pay: "Apple Pay", upi: "UPI",
+  };
+  return map[mode] ?? mode;
+}
+
+function mapApiStatus(status: string): BookingStatus {
+  return status === "cancelled" || status === "cancel" ? "cancelled" : "upcoming";
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapApiBooking(data: any): Booking {
+  const { short, full } = formatDate(data.booking_date ?? "");
+  const svc = data.services?.[0];
+  return {
+    id:               data.id,
+    service:          svc?.business_services?.service_name ?? "—",
+    provider:         data.business?.business_display_name ?? "—",
+    businessId:       String(data.business?.id ?? ""),
+    date:             short,
+    dateGroup:        full,
+    time:             formatTime(data.time_slot ?? "00:00-00:00"),
+    duration:         svc?.business_services?.time ? `${svc.business_services.time} min` : "—",
+    paymentMethod:    formatPaymentMode(data.payment_mode),
+    price:            `$${parseFloat(data.total_amount ?? "0").toFixed(2).replace(/\.00$/, "")}`,
+    bookingType:      data.payment_mode && data.payment_mode !== "cash" ? "Appointment" : "Pay Onsite",
+    verificationCode: data.booking_otp ?? "—",
+    status:           mapApiStatus(data.status ?? ""),
+  };
+}
+
+// ── Page ────────────────────────────────────────────────────────────────────
 
 export default function BookingsPage() {
   const router = useRouter();
-  const [bookings,       setBookings]       = useState<Booking[]>(BOOKINGS);
-  const [confirmingId,   setConfirmingId]   = useState<string | null>(null);
-  const [cancellingId,   setCancellingId]   = useState<string | null>(null);
 
-  const upcoming  = bookings.filter((b) => b.status === "upcoming");
-  const cancelled = bookings.filter((b) => b.status === "cancelled");
+  const searchParams = useSearchParams();
 
-  const handleConfirmCancel = (id: string) => {
+  const [bookings,     setBookings]     = useState<Booking[]>([]);
+  const [loading,      setLoading]      = useState(true);
+  const [confirmingId, setConfirmingId] = useState<number | null>(null);
+  const [cancellingId, setCancellingId] = useState<number | null>(null);
+  const [cancelError,  setCancelError]  = useState<string | null>(null);
+
+  // Read booking IDs from query params (?id=1&id=2 or ?id=1)
+  useEffect(() => {
+    async function load() {
+      const ids = searchParams.getAll("id").map(Number).filter(Boolean);
+      console.log("[Bookings] IDs from query params:", ids);
+      if (ids.length === 0) { setLoading(false); return; }
+
+      try {
+        const results = await Promise.all(
+          ids.map(async (id) => {
+            try {
+              const res  = await fetch(`/api/booking/details/${id}`);
+              const json = await res.json();
+              console.log("[Bookings] Raw API response for id", id, ":", json);
+              if (json.status && json.data) {
+                const mapped = mapApiBooking(json.data);
+                console.log("[Bookings] Mapped booking:", mapped);
+                return mapped;
+              }
+              return null;
+            } catch { return null; }
+          })
+        );
+        setBookings(results.filter(Boolean) as Booking[]);
+      } catch { /* ignore */ } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, [searchParams]);
+
+  // Cancel a booking via API
+  async function handleConfirmCancel(id: number) {
     setCancellingId(id);
     setConfirmingId(null);
-    setTimeout(() => {
-      setBookings((prev) =>
-        prev.map((b) => (b.id === id ? { ...b, status: "cancelled" as BookingStatus } : b))
+    setCancelError(null);
+    try {
+      const res  = await fetch(`/api/booking/cancel/${id}`);
+      const json = await res.json();
+      if (!json.status) throw new Error(json.message ?? "Cancel failed");
+      setBookings(prev =>
+        prev.map(b => b.id === id ? { ...b, status: "cancelled" as BookingStatus } : b)
       );
+    } catch (err) {
+      setCancelError((err as Error).message ?? "Could not cancel booking. Please try again.");
+    } finally {
       setCancellingId(null);
-    }, 500);
-  };
+    }
+  }
+
+  const upcoming  = bookings.filter(b => b.status === "upcoming");
+  const cancelled = bookings.filter(b => b.status === "cancelled");
 
   return (
     <div className={styles.pageShell}>
@@ -86,18 +151,34 @@ export default function BookingsPage() {
         </div>
 
         <div className={styles.content}>
-          {/* Upcoming section */}
+          {loading && (
+            <div className={styles.empty}>
+              <div className={styles.spinner} />
+            </div>
+          )}
+
+          {!loading && bookings.length === 0 && (
+            <div className={styles.empty}>
+              <p className={styles.emptyText}>No bookings yet.</p>
+            </div>
+          )}
+
+          {cancelError && (
+            <p className={styles.cancelError}>{cancelError}</p>
+          )}
+
+          {/* Upcoming */}
           {upcoming.length > 0 && (
             <section className={styles.section}>
               <p className={styles.sectionLabelUpcoming}>Upcoming</p>
-              {upcoming.map((b) => (
+              {upcoming.map(b => (
                 <div key={b.id}>
                   <p className={styles.dateGroup}>{b.dateGroup}</p>
                   <BookingCard
                     booking={b}
                     cancelling={cancellingId === b.id}
                     confirming={confirmingId === b.id}
-                    onRequestCancel={() => setConfirmingId(b.id)}
+                    onRequestCancel={() => { setConfirmingId(b.id); setCancelError(null); }}
                     onKeep={() => setConfirmingId(null)}
                     onConfirmCancel={() => handleConfirmCancel(b.id)}
                   />
@@ -106,28 +187,24 @@ export default function BookingsPage() {
             </section>
           )}
 
-          {/* Cancelled section */}
+          {/* Cancelled */}
           {cancelled.length > 0 && (
             <section className={styles.section}>
               <p className={styles.sectionLabelCancelled}>Cancelled</p>
-              {cancelled.map((b) => (
+              {cancelled.map(b => (
                 <div key={b.id}>
                   <BookingCard booking={b} />
                 </div>
               ))}
             </section>
           )}
-
-          {bookings.length === 0 && (
-            <div className={styles.empty}>
-              <p className={styles.emptyText}>No bookings yet.</p>
-            </div>
-          )}
         </div>
       </div>
     </div>
   );
 }
+
+// ── BookingCard ─────────────────────────────────────────────────────────────
 
 function BookingCard({
   booking,
@@ -193,13 +270,9 @@ function BookingCard({
         <span className={styles.verificationCode}>{booking.verificationCode}</span>
       </div>
 
-      {/* Upcoming: cancel button or inline confirmation */}
+      {/* Cancel button / inline confirm */}
       {isUpcoming && !confirming && (
-        <button
-          className={styles.cancelBtn}
-          onClick={onRequestCancel}
-          disabled={cancelling}
-        >
+        <button className={styles.cancelBtn} onClick={onRequestCancel} disabled={cancelling}>
           {cancelling ? "Cancelling…" : "Cancel Booking"}
         </button>
       )}
