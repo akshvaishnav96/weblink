@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, use, useEffect, useCallback } from "react";
+import { useState, use, useEffect, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { User } from "lucide-react";
 import BackHeader from "@/components/layout/BackHeader";
@@ -8,9 +8,10 @@ import ExpertSelector from "@/components/booking/ExpertSelector";
 import BookingCalendar from "@/components/booking/BookingCalendar";
 import TimeSlotButton from "@/components/ui/TimeSlotButton";
 import {
-  fetchBusinessProfile,
+  fetchBusinessProfileBySlug,
   checkStaffAvailability,
   type ApiBusinessProfile,
+  type ApiStaff,
 } from "@/lib/api";
 import { useBookingStore } from "@/store/bookingStore";
 import styles from "./page.module.css";
@@ -42,24 +43,22 @@ function formatSlotStart(slot: string): string {
   return minutes === "00" ? `${h12}:00 ${ampm}` : `${h12}:${minutes} ${ampm}`;
 }
 
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ViewTimesPage({
   params,
 }: {
-  params: Promise<{ id: string,slug: string}>;
+  params: Promise<{ id: string; slug: string }>;
 }) {
-  const { slug,id } = use(params);
+  const { slug, id } = use(params);
   const router = useRouter();
   const searchParams = useSearchParams();
   const setSelection = useBookingStore((s) => s.setSelection);
-  const serviceId       = searchParams.get("service")         ?? "";
-  const businessName    = searchParams.get("businessName")    ?? "";
+  const serviceId = searchParams.get("service") ?? "";
+  const businessName = searchParams.get("businessName") ?? "";
   const businessAddress = searchParams.get("businessAddress") ?? "";
-  const mode            = (searchParams.get("mode") ?? "onsite") as "onsite" | "mobile";
-  const isMobileMode    = mode === "mobile";
-  const encId           = searchParams.get("encId")           ?? id;
+  const mode = (searchParams.get("mode") ?? "onsite") as "onsite" | "mobile";
+  const isMobileMode = mode === "mobile";
 
   const [profile, setProfile] = useState<ApiBusinessProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
@@ -67,6 +66,8 @@ export default function ViewTimesPage({
 
   const [selectedExpert, setSelectedExpert] = useState("anyone");
   const [randomStaffId, setRandomStaffId] = useState<string | null>(null);
+  // staff_id returned by checkStaffAvailability — used for booking when no real IDs
+  const [resolvedStaffId, setResolvedStaffId] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
@@ -77,58 +78,109 @@ export default function ViewTimesPage({
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [, setSlotsError] = useState<string | null>(null);
 
-  // Pick a random staff whenever profile loads or "anyone" is selected
-  useEffect(() => {
-    if (!profile) return;
-    const allStaff = Object.values(
-      profile.services.flatMap((svc) => svc.staff)
-        .reduce<Record<number, typeof profile.services[0]["staff"][0]>>((acc, s) => {
+  // Staff from services — have real numeric IDs usable for specific availability checks
+  const serviceStaff = useMemo((): ApiStaff[] => {
+    if (!profile) return [];
+    return Object.values(
+      profile.services
+        .flatMap((svc) => svc.staff)
+        .reduce<Record<number, ApiStaff>>((acc, s) => {
           if (!acc[s.id]) acc[s.id] = s;
           return acc;
-        }, {})
+        }, {}),
     );
-    if (allStaff.length > 0 && selectedExpert === "anyone") {
-      const random = allStaff[Math.floor(Math.random() * allStaff.length)];
-      setRandomStaffId(random.id.toString());
+  }, [profile]);
+
+  // Whether we have real staff IDs for specific availability lookups
+  const hasRealIds = serviceStaff.length > 0;
+
+  // Build expert cards:
+  //  - If services have staff with real IDs → use those (supports specific availability)
+  //  - Otherwise → fall back to profile.staff summary (display only)
+  const experts = useMemo(() => {
+    if (!profile) return [];
+    if (serviceStaff.length > 0) {
+      return serviceStaff.map((s) => ({
+        id: s.id.toString(),
+        initials: getInitials(s.name),
+        name: s.name,
+        picture: s.picture ?? undefined,
+      }));
     }
-  }, [profile, selectedExpert]);
+    // Fallback: profile.staff summary — use index as display-only ID
+    return (profile.staff ?? []).map((s, i) => ({
+      id: `s${i}`,
+      initials: getInitials(s.name),
+      name: s.name,
+      picture: s.picture ?? undefined,
+    }));
+  }, [profile, serviceStaff]);
 
   useEffect(() => {
-    console.log("[ViewTimes] params:", { slug, id, encId });
-    fetchBusinessProfile(slug, encId)
-      .then((data) => { console.log("[ViewTimes] profile loaded:", data); setProfile(data); setProfileLoading(false); })
-      .catch((err: Error) => { console.error("[ViewTimes] profile error:", err.message); setProfileError(err.message ?? "Failed to load profile"); setProfileLoading(false); });
-  }, [id, slug, encId]);
+    console.log("[ViewTimes] params:", { slug, id });
+    fetchBusinessProfileBySlug(slug)
+      .then((data) => {
+        console.log("[ViewTimes] profile loaded:", data);
+        setProfile(data);
+        setProfileLoading(false);
+      })
+      .catch((err: Error) => {
+        console.error("[ViewTimes] profile error:", err.message);
+        setProfileError(err.message ?? "Failed to load profile");
+        setProfileLoading(false);
+      });
+  }, [slug]);
 
-const fetchSlots = useCallback(async () => {
-    console.log("[ViewTimes] fetchSlots called:", { selectedExpert, randomStaffId, selectedDate, serviceId, profileId: profile?.id });
+  // Pick a random staff for "anyone" selection (only when real IDs are available)
+  useEffect(() => {
+    if (!profile || !hasRealIds) return;
+    if (selectedExpert === "anyone" && serviceStaff.length > 0) {
+      const random = serviceStaff[Math.floor(Math.random() * serviceStaff.length)];
+      setRandomStaffId(random.id.toString());
+    }
+  }, [profile, selectedExpert, hasRealIds, serviceStaff]);
+
+  const fetchSlots = useCallback(async () => {
     if (!selectedDate || !serviceId || !profile) return;
-    const effectiveStaffId = selectedExpert === "anyone" ? randomStaffId : selectedExpert;
-    if (!effectiveStaffId) return;
+
+    let callType: "anyone" | "specific";
+    let staffIdParam: string | undefined;
+
+    if (hasRealIds) {
+      const effectiveStaffId =
+        selectedExpert === "anyone" ? randomStaffId : selectedExpert;
+      if (!effectiveStaffId) return; // waiting for random staff to be picked
+      callType = "specific";
+      staffIdParam = effectiveStaffId;
+    } else {
+      // No real staff IDs — use "anyone" type, API picks available staff
+      callType = "anyone";
+      staffIdParam = undefined;
+    }
+
     setSlotsLoading(true);
     setSlotsError(null);
     setSelectedTime(null);
     try {
-      console.log("[ViewTimes] checkStaffAvailability params:", {
-        business_id: profile.id,
-        type: "specific",
-        staff_id: effectiveStaffId,
-        date: toISODate(selectedDate),
-        business_service_id: serviceId,
-      });
       const result = await checkStaffAvailability({
         business_id: profile.id,
-        type: "specific",
-        staff_id: effectiveStaffId,
+        type: callType,
+        staff_id: staffIdParam,
         date: toISODate(selectedDate),
         business_service_id: serviceId,
       });
       console.log("[ViewTimes] checkStaffAvailability response:", result);
+      // Store the staff_id from response for booking when no real IDs
+      if (result.staff_id) {
+        setResolvedStaffId(result.staff_id.toString());
+      }
       const rawSlots: string[] = result.slots ?? [];
       const sorted = [...new Set(rawSlots)].sort();
       const displaySlotsList = sorted.map(formatSlotStart);
       const map: Record<string, string> = {};
-      sorted.forEach((raw, i) => { map[displaySlotsList[i]] = raw; });
+      sorted.forEach((raw, i) => {
+        map[displaySlotsList[i]] = raw;
+      });
       setSlots(displaySlotsList);
       setRawSlotsMap(map);
     } catch (err) {
@@ -137,25 +189,11 @@ const fetchSlots = useCallback(async () => {
     } finally {
       setSlotsLoading(false);
     }
-  },[profile, selectedDate, selectedExpert, randomStaffId, serviceId]);
+  }, [profile, selectedDate, selectedExpert, randomStaffId, serviceId, hasRealIds]);
 
-  useEffect(() => { fetchSlots(); }, [fetchSlots]);
-
-  const experts = profile
-    ? Object.values(
-        profile.services
-          .flatMap((svc) => svc.staff)
-          .reduce<Record<number, typeof profile.services[0]["staff"][0]>>((acc, s) => {
-            if (!acc[s.id]) acc[s.id] = s;
-            return acc;
-          }, {})
-      ).map((s) => ({
-        id: s.id.toString(),
-        initials: getInitials(s.name),
-        name: s.name,
-        picture: s.picture ?? undefined,
-      }))
-    : [];
+  useEffect(() => {
+    fetchSlots();
+  }, [fetchSlots]);
 
   const service = profile?.services.find((s) => s.id.toString() === serviceId);
   const servicePrice = (() => {
@@ -166,20 +204,29 @@ const fetchSlots = useCallback(async () => {
         return Math.round(base * (1 - discountPct / 100) * 100) / 100;
       return base;
     };
-    // Use mobile price when mode=mobile or service is mobile-only
-    if (service.service_type === "mobile" || (service.service_type === "both" && isMobileMode)) {
-      return applyDiscount(parseFloat(service.mobile_price) || 0, service.is_mobile_discount, service.mobile_discount_percentage);
+    if (
+      service.service_type === "mobile" ||
+      (service.service_type === "both" && isMobileMode)
+    ) {
+      return applyDiscount(
+        parseFloat(service.mobile_price) || 0,
+        service.is_mobile_discount,
+        service.mobile_discount_percentage,
+      );
     }
-    return applyDiscount(parseFloat(service.walk_price) || 0, service.is_walk_discount, service.walk_discount_percentage);
+    return applyDiscount(
+      parseFloat(service.walk_price) || 0,
+      service.is_walk_discount,
+      service.walk_discount_percentage,
+    );
   })();
-  console.log("[ViewTimes] Selection from store:", { serviceId, serviceName: service?.service_name, price: servicePrice, serviceType: service?.service_type });
 
   const canBook = !!(selectedDate && selectedTime);
 
   const selectedExpertName =
     selectedExpert === "anyone"
       ? "Anyone"
-      : experts.find((e) => e.id === selectedExpert)?.name ?? "Anyone";
+      : (experts.find((e) => e.id === selectedExpert)?.name ?? "Anyone");
 
   if (profileLoading) {
     return (
@@ -199,7 +246,9 @@ const fetchSlots = useCallback(async () => {
         <BackHeader title="Select Your Expert" />
         <div className={styles.centeredMsg}>
           <p className={styles.errorText}>{profileError}</p>
-          <button onClick={() => router.back()} className={styles.backBtn}>Go back</button>
+          <button onClick={() => router.back()} className={styles.backBtn}>
+            Go back
+          </button>
         </div>
       </div>
     );
@@ -213,11 +262,16 @@ const fetchSlots = useCallback(async () => {
       <ExpertSelector
         experts={experts}
         selectedId={selectedExpert}
-        onSelect={(id) => { setSelectedExpert(id); setSelectedTime(null); }}
+        onSelect={(id) => {
+          setSelectedExpert(id);
+          setSelectedTime(null);
+        }}
       />
 
       {/* Progress line + selected expert chip */}
-      <div className={`${styles.progressLine}${slotsLoading ? ` ${styles.progressLineLoading}` : ""}`} />
+      <div
+        className={`${styles.progressLine}${slotsLoading ? ` ${styles.progressLineLoading}` : ""}`}
+      />
       <div className={styles.selectedExpertRow}>
         <div className={styles.selectedExpertChip}>
           <User size={12} />
@@ -228,7 +282,10 @@ const fetchSlots = useCallback(async () => {
       {/* Calendar */}
       <BookingCalendar
         selectedDate={selectedDate}
-        onDateSelect={(d) => { setSelectedDate(d); setSelectedTime(null); }}
+        onDateSelect={(d) => {
+          setSelectedDate(d);
+          setSelectedTime(null);
+        }}
       />
 
       {/* Time slots */}
@@ -251,7 +308,9 @@ const fetchSlots = useCallback(async () => {
             ))}
           </div>
         ) : (
-          <p className={styles.noSlots}>No availability for this date — try another day</p>
+          <p className={styles.noSlots}>
+            No availability for this date — try another day
+          </p>
         )}
       </div>
 
@@ -267,58 +326,70 @@ const fetchSlots = useCallback(async () => {
         />
       </div>
 
-      {/* Meet Up Address — only for mobile mode */}
-      {/* {(service?.service_type === "mobile" || (service?.service_type === "both" && isMobileMode)) && (
-        <div className={styles.formSection}>
-          <label className={styles.formLabel}>Meet Up Address</label>
-          <div className={styles.addressWrapper}>
-            <input
-              className={styles.addressInput}
-              placeholder="Enter your address..."
-              value={meetUpAddress}
-              onChange={(e) => setMeetUpAddress(e.target.value)}
-            />
-            <MapPin size={16} className={styles.addressIcon} />
-          </div>
-        </div>
-      )} */}
-
       {/* Book button */}
       <div className={styles.ctaSection}>
         <button
           onClick={() => {
             if (!canBook) return;
-            const effectiveId = selectedExpert === "anyone" ? (randomStaffId ?? "anyone") : selectedExpert;
-            const expertObj = experts.find((e) => e.id === effectiveId);
-            const staffName      = expertObj?.name     ?? "Anyone";
-            const staffInitials  = expertObj?.initials ?? "??";
-            const staffId        = expertObj?.id       ?? effectiveId;
-            const staffPicture   = expertObj?.picture  ?? "";
+
+            // Determine staff ID and display info for the booking payload
+            let bookingStaffId: string;
+            let expertObj: (typeof experts)[0] | undefined;
+
+            if (hasRealIds) {
+              const effectiveId =
+                selectedExpert === "anyone"
+                  ? (randomStaffId ?? "0")
+                  : selectedExpert;
+              expertObj = experts.find((e) => e.id === effectiveId);
+              bookingStaffId = effectiveId;
+            } else {
+              expertObj =
+                selectedExpert !== "anyone"
+                  ? experts.find((e) => e.id === selectedExpert)
+                  : undefined;
+              bookingStaffId = resolvedStaffId ?? "0";
+            }
+
+            const staffName = expertObj?.name ?? "Anyone";
+            const staffInitials = expertObj?.initials ?? "AN";
+            const staffPicture = expertObj?.picture ?? "";
             const dateStr = selectedDate
-              ? selectedDate.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })
+              ? selectedDate.toLocaleDateString("en-US", {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })
               : "";
-            const rawTimeSlot = selectedTime ? (rawSlotsMap[selectedTime] ?? "") : "";
-            const bookingDate  = selectedDate ? toISODate(selectedDate) : "";
+            const rawTimeSlot = selectedTime
+              ? (rawSlotsMap[selectedTime] ?? "")
+              : "";
+            const bookingDate = selectedDate ? toISODate(selectedDate) : "";
             const selectionPayload = {
-              barberId:       String(profile?.id ?? ""),
-              barberSlug:     slug,
-              barberEncodedId: encId,
-              serviceName:    service?.service_name ?? serviceId,
+              barberId: String(profile?.id ?? ""),
+              barberSlug: slug,
+              serviceName: service?.service_name ?? serviceId,
               serviceId,
               staffName,
-              staffId,
+              staffId: bookingStaffId,
               staffInitials,
               staffPicture,
-              displayTime:    `${dateStr}, ${selectedTime}`,
-              duration:       String(service?.time ?? ""),
-              price:          String(servicePrice),
+              displayTime: `${dateStr}, ${selectedTime}`,
+              duration: String(service?.time ?? ""),
+              price: String(servicePrice),
               businessName,
               businessAddress,
               rawTimeSlot,
               bookingDate,
-              serviceType:    service?.service_type === "both" ? (isMobileMode ? "mobile" : "walkin") : (service?.service_type ?? "walkin"),
-              notes:          notes || undefined,
-              meetUpAddress:  meetUpAddress || undefined,
+              serviceType:
+                service?.service_type === "both"
+                  ? isMobileMode
+                    ? "mobile"
+                    : "walkin"
+                  : (service?.service_type ?? "walkin"),
+              notes: notes || undefined,
+              meetUpAddress: meetUpAddress || undefined,
             };
             console.log("[ViewTimes] setSelection payload:", selectionPayload);
             setSelection(selectionPayload);
@@ -329,7 +400,6 @@ const fetchSlots = useCallback(async () => {
           Book Appointment
         </button>
       </div>
-
     </div>
   );
 }

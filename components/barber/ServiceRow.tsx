@@ -18,8 +18,7 @@ function getTodayLabel(): string {
 
 interface ServiceRowProps {
   service: Service;
-  barberId: string;
-  numericBusinessId?: string;
+  businessId: string;        // numeric business ID (profile.id)
   barberSlug?: string;
   businessName?: string;
   businessAddress?: string;
@@ -49,7 +48,7 @@ function toRawSlot(displayTime: string, durationMins: number): string {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}-${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}`;
 }
 
-export default function ServiceRow({ service, barberId, numericBusinessId, barberSlug = "", businessName = "", businessAddress = "", hideBadge = false, expanded: externalExpanded, onToggle, serviceMode = "onsite" }: ServiceRowProps) {
+export default function ServiceRow({ service, businessId, barberSlug = "", businessName = "", businessAddress = "", hideBadge = false, expanded: externalExpanded, onToggle, serviceMode = "onsite" }: ServiceRowProps) {
   const [internalExpanded, setInternalExpanded] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
 
@@ -61,8 +60,8 @@ export default function ServiceRow({ service, barberId, numericBusinessId, barbe
   function handleSlotClick(staff: { staffId: string; staffInitials: string; staffName: string }, slot: string) {
     setSelectedSlot(slot);
     setSelection({
-      barberId: numericBusinessId ?? barberId,
-      barberEncodedId: barberId,
+      barberId: businessId,
+      barberSlug,
       serviceName:    service.name,
       serviceId:      service.id,
       staffName:      staff.staffName,
@@ -77,7 +76,6 @@ export default function ServiceRow({ service, barberId, numericBusinessId, barbe
       rawTimeSlot:    toRawSlot(slot, service.duration),
       bookingDate:    todayISO(),
       serviceType:    service.serviceType ?? "walkin",
-      barberSlug,
     });
     router.push(`/confirm-booking`);
   }
@@ -223,12 +221,12 @@ export default function ServiceRow({ service, barberId, numericBusinessId, barbe
               </div>
             ))}
 
-            {/* "View other times" — only for non-walk-in */}
+            {/* "View other times" */}
             {showViewMore && (
               <Link
                 href={
-                  barberSlug && (numericBusinessId || barberId)
-                    ? `/view-times/${encodeURIComponent(barberSlug)}/${numericBusinessId || barberId}?service=${service.id}&businessName=${encodeURIComponent(businessName)}&businessAddress=${encodeURIComponent(businessAddress)}&mode=${serviceMode}&encId=${encodeURIComponent(barberId)}`
+                  barberSlug && businessId
+                    ? `/view-times/${encodeURIComponent(barberSlug)}/${businessId}?service=${service.id}&businessName=${encodeURIComponent(businessName)}&businessAddress=${encodeURIComponent(businessAddress)}&mode=${serviceMode}&businessId=${businessId}`
                     : `#`
                 }
                 className={styles.viewMore}

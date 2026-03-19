@@ -78,7 +78,6 @@ function ConfirmBookingInner() {
   const [confirmedBookingId,    setConfirmedBookingId]    = useState<number | null>(null);
   const [confirmedServiceId,    setConfirmedServiceId]    = useState<number>(0);
   const [confirmedBarberSlug,     setConfirmedBarberSlug]     = useState<string>("");
-  const [confirmedBarberEncodedId, setConfirmedBarberEncodedId] = useState<string>("");
   const [confirmedServicePrice, setConfirmedServicePrice] = useState<number>(0);
   const [customerSnapshot,      setCustomerSnapshot]      = useState<{ firstName: string; phone: string; email: string; countryCode: string } | null>(null);
 
@@ -214,7 +213,6 @@ function ConfirmBookingInner() {
         setConfirmedServiceId(Number(selection.serviceId ?? 0));
         setConfirmedServicePrice(parseFloat(selection.price ?? "0") || 0);
         setConfirmedBarberSlug(selection.barberSlug ?? "");
-        setConfirmedBarberEncodedId(selection.barberEncodedId ?? "");
         clearBooking();
         setConfirmedPin(pin);
         setShowModal(true);
@@ -240,7 +238,6 @@ function ConfirmBookingInner() {
   const price        = selection.price           ?? "0";
   const barberId          = selection.barberId          ?? "";
   const barberSlug        = selection.barberSlug        ?? "";
-  const barberEncodedId   = selection.barberEncodedId   ?? "";
   const serviceId    = selection.serviceId       ?? "";
 
   const fallbackPin = useMemo(() => String(Math.floor(PIN_MIN + Math.random() * (PIN_MAX - PIN_MIN + 1))), []);
@@ -439,7 +436,6 @@ function ConfirmBookingInner() {
       setConfirmedServiceId(Number(serviceId));
       setConfirmedServicePrice(parseFloat(price) || 0);
       setConfirmedBarberSlug(barberSlug);
-      setConfirmedBarberEncodedId(barberEncodedId);
       saveBookingId(bookingId);
       clearBooking();
       setConfirmedPin(pin);
@@ -697,7 +693,7 @@ function ConfirmBookingInner() {
           bookingId={confirmedBookingId ?? undefined}
           serviceId={confirmedServiceId}
           servicePrice={confirmedServicePrice}
-          onSkip={() => router.push(confirmedBarberSlug && confirmedBarberEncodedId ? `/business-profile/${confirmedBarberSlug}/${confirmedBarberEncodedId}` : "/")}
+          onSkip={() => router.push(confirmedBarberSlug ? `/bookme/${confirmedBarberSlug}` : "/")}
           onSaveDetails={() => {
             try {
               if (customerSnapshot) localStorage.setItem(SAVED_KEY, JSON.stringify(customerSnapshot));

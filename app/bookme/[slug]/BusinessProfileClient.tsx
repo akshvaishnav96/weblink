@@ -1,6 +1,6 @@
 "use client";
 
-import React, { use, useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -21,7 +21,7 @@ import BarberAvatar from "@/components/ui/BarberAvatar";
 import StarRating from "@/components/ui/StarRating";
 import ServiceRow from "@/components/barber/ServiceRow";
 import {
-  fetchBusinessProfile,
+  fetchBusinessProfileBySlug,
   type ApiBusinessProfile,
   type ApiService,
 } from "@/lib/api";
@@ -151,14 +151,9 @@ function mapApiService(apiService: ApiService, mode: ServiceMode): Service {
   };
 }
 
-// ─── Page ──────────────────────────────────────────────────────────────────────
+// ─── Component ─────────────────────────────────────────────────────────────────
 
-export default function BusinessProfilePage({
-  params,
-}: {
-  params: Promise<{ slug: string; id: string }>;
-}) {
-  const { slug, id } = use(params);
+export default function BusinessProfileClient({ slug }: { slug: string }) {
   const router = useRouter();
 
   const [profile, setProfile] = useState<ApiBusinessProfile | null>(null);
@@ -170,9 +165,11 @@ export default function BusinessProfilePage({
     null,
   );
   const [serviceMode, setServiceMode] = useState<ServiceMode>("onsite");
-  console.log("BusinessProfilePage rendered with slug:", slug, "id:", id);
+
+  console.log("BusinessProfileClient rendered with slug:", slug);
+
   useEffect(() => {
-    fetchBusinessProfile(slug, id)
+    fetchBusinessProfileBySlug(slug)
       .then((data) => {
         setProfile(data);
         setLoading(false);
@@ -181,7 +178,7 @@ export default function BusinessProfilePage({
         setError(err.message ?? "Failed to load profile");
         setLoading(false);
       });
-  }, [slug, id]);
+  }, [slug]);
 
   const hasMobileServices = useMemo(
     () =>
@@ -316,11 +313,16 @@ export default function BusinessProfilePage({
         <h1 className={styles.infoName}>
           {profile.business_display_name ?? profile.business_name}
         </h1>
-        {/* {profile.business_address && (
-          <p className={styles.infoAddress}>
+        {profile.business_address && (
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(profile.business_address)}`}
+            target="_blank"
+            rel="noreferrer"
+            className={styles.infoAddress}
+          >
             <MapPin /> {profile.business_address}
-          </p>
-        )} */}
+          </a>
+        )}
         <div className={styles.infoRating}>
           <StarRating
             rating={profile.average_rating}
@@ -446,8 +448,7 @@ export default function BusinessProfilePage({
                     </div>
                     <ServiceRow
                       service={s}
-                      barberId={id}
-                      numericBusinessId={String(profile.id)}
+                      businessId={String(profile.id)}
                       barberSlug={slug}
                       businessName={
                         profile.business_display_name ?? profile.business_name
@@ -577,6 +578,34 @@ export default function BusinessProfilePage({
           )}
         </div>
       )}
+
+      
+
+      {/* ── JSON-LD ── */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "LocalBusiness",
+            name: profile.business_display_name ?? profile.business_name,
+            address: {
+              "@type": "PostalAddress",
+              streetAddress: profile.business_address,
+            },
+            telephone: profile.business_phone ?? undefined,
+            url: profile.website_url ?? `https://valetvault.com.au/bookme/${slug}`,
+            image: profile.business_banner ?? undefined,
+            ...(profile.latitude && profile.longitude ? {
+              geo: {
+                "@type": "GeoCoordinates",
+                latitude: profile.latitude,
+                longitude: profile.longitude,
+              }
+            } : {}),
+          }),
+        }}
+      />
     </div>
   );
 }

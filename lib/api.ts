@@ -103,6 +103,7 @@ export interface ApiBusinessProfile {
   business_display_name: string;
   business_banner: string;
   business_address: string;
+  business_phone?: string | null;
   latitude: string;
   longitude: string;
   total_reviews: number;
@@ -132,18 +133,12 @@ export interface StaffAvailabilityParams {
 export type AvailabilityResult = ApiStaffAvailability;
 
 // ─── API Functions ─────────────────────────────────────────────────────────────
-export async function fetchBusinessProfile(
-  businessSlug: string,
-  businessId: string | number
-): Promise<ApiBusinessProfile> {
-  const res = await fetch(
-    `${API_BASE}/business-profile/${businessSlug}/${businessId}?search=`,
-    { headers: { Accept: "application/json" } }
-  );
-  
+export async function fetchBusinessProfileBySlug(slug: string): Promise<ApiBusinessProfile> {
+  const url = `${API_BASE}/bookme/${slug}?search=`;
+  const res = await fetch(url, { headers: { Accept: "application/json" } });
   if (!res.ok) throw new Error(`Failed to fetch business profile (${res.status})`);
   const json: ApiResponse<ApiBusinessProfile> = await res.json();
-  console.log("[API] Business profile fetched:", json);
+  console.log("[API] Business profile fetched by slug:", json);
   if (!json.status) throw new Error(json.message);
   return json.data;
 }

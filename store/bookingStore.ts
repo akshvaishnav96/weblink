@@ -5,7 +5,6 @@ import { STORAGE_KEYS } from "@/lib/constants";
 export interface BookingSelection {
   barberId: string;
   barberSlug: string;
-  barberEncodedId: string;
   serviceName: string;
   serviceId: string;
   staffName: string;
