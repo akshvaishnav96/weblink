@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Calendar, Clock, CreditCard, Timer } from "lucide-react";
 import styles from "./page.module.css";
@@ -76,6 +76,14 @@ function mapApiBooking(data: any): Booking {
 // ── Page ────────────────────────────────────────────────────────────────────
 
 export default function BookingsPage() {
+  return (
+    <Suspense fallback={<div />}>
+      <BookingsInner />
+    </Suspense>
+  );
+}
+
+function BookingsInner() {
   const router = useRouter();
 
   const searchParams = useSearchParams();

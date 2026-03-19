@@ -270,9 +270,7 @@ export default function BusinessProfileClient({ slug }: { slug: string }) {
     return (
       <div className={styles.errorState}>
         <p className={styles.errorMsg}>{error ?? "Profile not found"}</p>
-        <button onClick={() => router.back()} className={styles.errorBackBtn}>
-          Go back
-        </button>
+       
       </div>
     );
 
@@ -291,9 +289,7 @@ export default function BusinessProfileClient({ slug }: { slug: string }) {
             : undefined
         }
       >
-        <button className={styles.heroBack} onClick={() => router.back()}>
-          <ArrowLeft />
-        </button>
+        
         <div className={styles.heroCenter}>
           <p className={styles.heroName}>{profile.business_name}</p>
           {profile.business_type && (

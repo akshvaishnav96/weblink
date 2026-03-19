@@ -226,7 +226,7 @@ export default function ServiceRow({ service, businessId, barberSlug = "", busin
               <Link
                 href={
                   barberSlug && businessId
-                    ? `/view-times/${encodeURIComponent(barberSlug)}/${businessId}?service=${service.id}&businessName=${encodeURIComponent(businessName)}&businessAddress=${encodeURIComponent(businessAddress)}&mode=${serviceMode}&businessId=${businessId}`
+                    ? `/view-times/${encodeURIComponent(barberSlug)}?service=${service.id}&businessName=${encodeURIComponent(businessName)}&businessAddress=${encodeURIComponent(businessAddress)}&mode=${serviceMode}`
                     : `#`
                 }
                 className={styles.viewMore}
