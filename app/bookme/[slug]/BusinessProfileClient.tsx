@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -153,7 +154,7 @@ function mapApiService(apiService: ApiService, mode: ServiceMode): Service {
 
 // ─── Component ─────────────────────────────────────────────────────────────────
 
-export default function BusinessProfileClient({ slug }: { slug: string }) {
+export default function BusinessProfileClient({ slug, userId }: { slug: string; userId?: string | null }) {
   const router = useRouter();
 
   const [profile, setProfile] = useState<ApiBusinessProfile | null>(null);
@@ -307,7 +308,14 @@ export default function BusinessProfileClient({ slug }: { slug: string }) {
       {/* ── Info ── */}
       <div className={styles.info}>
         <h1 className={styles.infoName}>
-          {profile.business_display_name ?? profile.business_name}
+          {(() => {
+            const name = profile.business_display_name ?? profile.business_name;
+            const parts = (profile.business_address ?? "").split(",").map(s => s.trim());
+            const suburb = parts[1] ?? "";
+            const state = parts[2]?.split(" ")[0] ?? "";
+            const location = [suburb, state].filter(Boolean).join(" ");
+            return location ? `${name} \u2014 Walk-ins Welcome, ${location}` : name;
+          })()}
         </h1>
         {profile.business_address && (
           <a
@@ -450,6 +458,7 @@ export default function BusinessProfileClient({ slug }: { slug: string }) {
                         profile.business_display_name ?? profile.business_name
                       }
                       businessAddress={profile.business_address}
+                      userId={userId}
                       hideBadge
                       expanded={expandedServiceId === s.id}
                       onToggle={() =>
@@ -480,13 +489,19 @@ export default function BusinessProfileClient({ slug }: { slug: string }) {
           {profile.portfolio?.images?.length > 0 && (
             <div className={styles.portfolioGrid}>
               {profile.portfolio.images.map((img) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+                <div
                   key={img.id}
-                  src={img.portfolio_url}
-                  alt="Portfolio"
                   className={styles.portfolioImg}
-                />
+                  style={{ position: "relative" }}
+                >
+                  <Image
+                    src={img.portfolio_url}
+                    alt="Portfolio"
+                    fill
+                    style={{ objectFit: "cover" }}
+                    sizes="(max-width: 600px) 50vw, 33vw"
+                  />
+                </div>
               ))}
             </div>
           )}
@@ -551,10 +566,11 @@ export default function BusinessProfileClient({ slug }: { slug: string }) {
                 {profile.staff.map((member, i) => (
                   <div key={i} className={styles.teamCard}>
                     {member.picture ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
+                      <Image
                         src={member.picture}
                         alt={member.name}
+                        width={60}
+                        height={60}
                         className={styles.teamAvatar}
                       />
                     ) : (

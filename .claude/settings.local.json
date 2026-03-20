@@ -18,7 +18,16 @@
       "Bash(ls \"C:/Users/Admin/Desktop/groomly \\(2\\)/groomly/.claude/worktrees/agent-aa92fa39/app/business-profile/[slug]/[id]/\")",
       "Bash(ls \"C:/Users/Admin/Desktop/groomly \\(2\\)/groomly/app/bookme/[slug]/\")",
       "Bash(ls \"C:/Users/Admin/Desktop/groomly \\(2\\)/groomly/.claude/worktrees/agent-aa92fa39/app/bookme/[slug]/\" ls \"C:/Users/Admin/Desktop/groomly \\(2\\)/groomly/.claude/worktrees/agent-aa92fa39/lib/\" ls \"C:/Users/Admin/Desktop/groomly \\(2\\)/groomly/.claude/worktrees/agent-aa92fa39/app/\")",
-      "Bash(ls \"/c/Users/Admin/Desktop/groomly \\(2\\)/groomly/app/business-profile/\")"
+      "Bash(ls \"/c/Users/Admin/Desktop/groomly \\(2\\)/groomly/app/business-profile/\")",
+      "Bash(find \"c:/Users/Admin/Desktop/groomly \\(2\\)/groomly/app\" -type f -name \"*.tsx\" -o -name \"*.ts\")",
+      "Bash(find \"c:/Users/Admin/Desktop/groomly \\(2\\)/groomly/app/view-times\" -type f)",
+      "Bash(find \"c:/Users/Admin/Desktop/groomly \\(2\\)/groomly/app/confirm-booking\" -type f)",
+      "Bash(find \"c:/Users/Admin/Desktop/groomly \\(2\\)/groomly/app/bookme\" -type f)",
+      "Bash(find 'c:/Users/Admin/Desktop/groomly \\(2\\)/groomly/app/bookings' -type f)",
+      "Bash(find 'c:/Users/Admin/Desktop/groomly \\(2\\)/groomly/app' -name *.tsx -o -name *.ts)",
+      "Bash(find \"c:/Users/Admin/Desktop/groomly \\(2\\)/groomly/app\" -type f)",
+      "Bash(cp \"c:/Users/Admin/Desktop/groomly \\(2\\)/groomly/app/bookme/[slug]/booking/page.module.css\" \"c:/Users/Admin/Desktop/groomly \\(2\\)/groomly/app/bookme/[slug]/booking/[id]/page.module.css\")",
+      "Bash(rm \"c:/Users/Admin/Desktop/groomly \\(2\\)/groomly/app/bookme/[slug]/booking/page.tsx\" \"c:/Users/Admin/Desktop/groomly \\(2\\)/groomly/app/bookme/[slug]/booking/page.module.css\")"
     ]
   }
 }

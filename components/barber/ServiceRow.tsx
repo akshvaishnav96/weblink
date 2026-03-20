@@ -22,6 +22,7 @@ interface ServiceRowProps {
   barberSlug?: string;
   businessName?: string;
   businessAddress?: string;
+  userId?: string | null;
   hideBadge?: boolean;
   expanded?: boolean;
   onToggle?: () => void;
@@ -48,7 +49,7 @@ function toRawSlot(displayTime: string, durationMins: number): string {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}-${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}`;
 }
 
-export default function ServiceRow({ service, businessId, barberSlug = "", businessName = "", businessAddress = "", hideBadge = false, expanded: externalExpanded, onToggle, serviceMode = "onsite" }: ServiceRowProps) {
+export default function ServiceRow({ service, businessId, barberSlug = "", businessName = "", businessAddress = "", userId = null, hideBadge = false, expanded: externalExpanded, onToggle, serviceMode = "onsite" }: ServiceRowProps) {
   const [internalExpanded, setInternalExpanded] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
 
@@ -76,8 +77,9 @@ export default function ServiceRow({ service, businessId, barberSlug = "", busin
       rawTimeSlot:    toRawSlot(slot, service.duration),
       bookingDate:    todayISO(),
       serviceType:    service.serviceType ?? "walkin",
+      userId,
     });
-    router.push(`/confirm-booking`);
+    router.push(`/bookme/${barberSlug}/confirm-booking`);
   }
 
   const isWalkIn = service.paymentType === "WALK_IN_ONLY";
@@ -226,7 +228,7 @@ export default function ServiceRow({ service, businessId, barberSlug = "", busin
               <Link
                 href={
                   barberSlug && businessId
-                    ? `/view-times/${encodeURIComponent(barberSlug)}?service=${service.id}&businessName=${encodeURIComponent(businessName)}&businessAddress=${encodeURIComponent(businessAddress)}&mode=${serviceMode}`
+                    ? `/bookme/${encodeURIComponent(barberSlug)}/view-times?service=${service.id}&businessName=${encodeURIComponent(businessName)}&businessAddress=${encodeURIComponent(businessAddress)}&mode=${serviceMode}${userId ? `&user_id=${encodeURIComponent(userId)}` : ""}`
                     : `#`
                 }
                 className={styles.viewMore}

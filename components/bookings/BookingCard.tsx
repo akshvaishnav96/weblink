@@ -74,7 +74,7 @@ export default function BookingCard({ booking }: BookingCardProps) {
                 Cancel
               </button>
               <Link
-                href={`/view-times/${booking.barberId}`}
+                href={`/bookme/${booking.barberId}/view-times`}
                 className={`${styles.btn} ${styles.btnPrimary}`}
               >
                 Reschedule
@@ -83,7 +83,7 @@ export default function BookingCard({ booking }: BookingCardProps) {
           )}
           {isCompleted && (
             <Link
-              href={`/view-times/${booking.barberId}`}
+              href={`/bookme/${booking.barberId}/view-times`}
               className={`${styles.btn} ${styles.btnPrimary}`}
             >
               Book Again
@@ -91,7 +91,7 @@ export default function BookingCard({ booking }: BookingCardProps) {
           )}
           {isCancelled && (
             <Link
-              href={`/view-times/${booking.barberId}`}
+              href={`/bookme/${booking.barberId}/view-times`}
               className={`${styles.btn} ${styles.btnGhost}`}
             >
               Rebook

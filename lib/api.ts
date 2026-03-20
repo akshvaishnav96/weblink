@@ -133,9 +133,9 @@ export interface StaffAvailabilityParams {
 export type AvailabilityResult = ApiStaffAvailability;
 
 // ─── API Functions ─────────────────────────────────────────────────────────────
-export async function fetchBusinessProfileBySlug(slug: string): Promise<ApiBusinessProfile> {
+export async function fetchBusinessProfileBySlug(slug: string, signal?: AbortSignal): Promise<ApiBusinessProfile> {
   const url = `${API_BASE}/bookme/${slug}?search=`;
-  const res = await fetch(url, { headers: { Accept: "application/json" } });
+  const res = await fetch(url, { headers: { Accept: "application/json" }, cache: "no-store", signal });
   if (!res.ok) throw new Error(`Failed to fetch business profile (${res.status})`);
   const json: ApiResponse<ApiBusinessProfile> = await res.json();
   console.log("[API] Business profile fetched by slug:", json);

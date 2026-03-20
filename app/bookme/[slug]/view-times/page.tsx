@@ -48,9 +48,9 @@ function formatSlotStart(slot: string): string {
 export default function ViewTimesPage({
   params,
 }: {
-  params: Promise<{ id: string; slug: string }>;
+  params: Promise<{ slug: string }>;
 }) {
-  const { slug, id } = use(params);
+  const { slug } = use(params);
   const router = useRouter();
   const searchParams = useSearchParams();
   const setSelection = useBookingStore((s) => s.setSelection);
@@ -58,6 +58,7 @@ export default function ViewTimesPage({
   const businessName = searchParams.get("businessName") ?? "";
   const businessAddress = searchParams.get("businessAddress") ?? "";
   const mode = (searchParams.get("mode") ?? "onsite") as "onsite" | "mobile";
+  const userId = searchParams.get("user_id");
   const isMobileMode = mode === "mobile";
 
   const [profile, setProfile] = useState<ApiBusinessProfile | null>(null);
@@ -117,15 +118,12 @@ export default function ViewTimesPage({
   }, [profile, serviceStaff]);
 
   useEffect(() => {
-    console.log("[ViewTimes] params:", { slug, id });
     fetchBusinessProfileBySlug(slug)
       .then((data) => {
-        console.log("[ViewTimes] profile loaded:", data);
         setProfile(data);
         setProfileLoading(false);
       })
       .catch((err: Error) => {
-        console.error("[ViewTimes] profile error:", err.message);
         setProfileError(err.message ?? "Failed to load profile");
         setProfileLoading(false);
       });
@@ -169,7 +167,6 @@ export default function ViewTimesPage({
         date: toISODate(selectedDate),
         business_service_id: serviceId,
       });
-      console.log("[ViewTimes] checkStaffAvailability response:", result);
       // Store the staff_id from response for booking when no real IDs
       if (result.staff_id) {
         setResolvedStaffId(result.staff_id.toString());
@@ -326,6 +323,13 @@ export default function ViewTimesPage({
         />
       </div>
 
+      {/* Powered by */}
+      <div className={styles.poweredBy}>
+        <a href="https://valetvault.com.au" rel="noopener" style={{ color: "inherit", textDecoration: "none" }}>
+          Powered by Valet Vault
+        </a>
+      </div>
+
       {/* Book button */}
       <div className={styles.ctaSection}>
         <button
@@ -390,10 +394,10 @@ export default function ViewTimesPage({
                   : (service?.service_type ?? "walkin"),
               notes: notes || undefined,
               meetUpAddress: meetUpAddress || undefined,
+              userId: userId ?? null,
             };
-            console.log("[ViewTimes] setSelection payload:", selectionPayload);
             setSelection(selectionPayload);
-            router.push(`/confirm-booking`);
+            router.push(`/bookme/${slug}/confirm-booking`);
           }}
           className={`${styles.ctaBtn}${!canBook ? ` ${styles.ctaBtnDisabled}` : ""}`}
         >

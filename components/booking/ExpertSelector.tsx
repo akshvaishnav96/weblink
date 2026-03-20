@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { User } from "lucide-react";
 import styles from "./ExpertSelector.module.css";
 
@@ -22,10 +23,11 @@ function ExpertAvatar({ picture, initials }: { picture?: string; initials: strin
 
   if (picture && !imgFailed) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
+      <Image
         src={picture}
         alt={initials}
+        width={60}
+        height={60}
         className={styles.avatarImg}
         onError={() => setImgFailed(true)}
       />

@@ -8,6 +8,11 @@ interface BusinessEntry {
   updated_at?: string;
 }
 
+const STATIC_PAGES: MetadataRoute.Sitemap = [
+  { url: SITE_URL, lastModified: new Date(), changeFrequency: "monthly", priority: 0.8 },
+  { url: `${SITE_URL}/bookings`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.8 },
+];
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const res = await fetch(`${API_BASE}/marketplace-preview?search=`, {
@@ -20,15 +25,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ? json.data
       : (json.data as { data: BusinessEntry[] }).data ?? [];
 
-    return businesses
+    const profilePages: MetadataRoute.Sitemap = businesses
       .filter(b => b.slug)
       .map(b => ({
         url: `${SITE_URL}/bookme/${b.slug}`,
         lastModified: b.updated_at ? new Date(b.updated_at) : new Date(),
-        changeFrequency: "weekly" as const,
-        priority: 0.8,
+        changeFrequency: "daily" as const,
+        priority: 0.9,
       }));
+
+    return [...STATIC_PAGES, ...profilePages];
   } catch {
-    return [];
+    return STATIC_PAGES;
   }
 }

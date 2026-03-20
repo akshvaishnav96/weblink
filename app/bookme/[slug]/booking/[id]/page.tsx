@@ -1,7 +1,7 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, use, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, Calendar, Clock, CreditCard, Timer } from "lucide-react";
 import styles from "./page.module.css";
 
@@ -75,77 +75,65 @@ function mapApiBooking(data: any): Booking {
 
 // ── Page ────────────────────────────────────────────────────────────────────
 
-export default function BookingsPage() {
+export default function BookingDetailPage({
+  params,
+}: {
+  params: Promise<{ slug: string; id: string }>;
+}) {
   return (
     <Suspense fallback={<div />}>
-      <BookingsInner />
+      <BookingDetailInner params={params} />
     </Suspense>
   );
 }
 
-function BookingsInner() {
+function BookingDetailInner({
+  params,
+}: {
+  params: Promise<{ slug: string; id: string }>;
+}) {
+  const { id } = use(params);
   const router = useRouter();
 
-  const searchParams = useSearchParams();
-
-  const [bookings,     setBookings]     = useState<Booking[]>([]);
+  const [booking,      setBooking]      = useState<Booking | null>(null);
   const [loading,      setLoading]      = useState(true);
   const [confirmingId, setConfirmingId] = useState<number | null>(null);
   const [cancellingId, setCancellingId] = useState<number | null>(null);
   const [cancelError,  setCancelError]  = useState<string | null>(null);
 
-  // Read booking IDs from query params (?id=1&id=2 or ?id=1)
   useEffect(() => {
     async function load() {
-      const ids = searchParams.getAll("id").map(Number).filter(Boolean);
-      console.log("[Bookings] IDs from query params:", ids);
-      if (ids.length === 0) { setLoading(false); return; }
-
+      if (!id) { setLoading(false); return; }
       try {
-        const results = await Promise.all(
-          ids.map(async (id) => {
-            try {
-              const res  = await fetch(`/api/booking/details/${id}`);
-              const json = await res.json();
-              console.log("[Bookings] Raw API response for id", id, ":", json);
-              if (json.status && json.data) {
-                const mapped = mapApiBooking(json.data);
-                console.log("[Bookings] Mapped booking:", mapped);
-                return mapped;
-              }
-              return null;
-            } catch { return null; }
-          })
-        );
-        setBookings(results.filter(Boolean) as Booking[]);
+        
+        const res  = await fetch(`/api/booking/details/${id}`);
+        const json = await res.json();
+        if (json.status && json.data) {
+          setBooking(mapApiBooking(json.data));
+        }
       } catch { /* ignore */ } finally {
         setLoading(false);
       }
     }
     load();
-  }, [searchParams]);
+  }, [id]);
 
-  // Cancel a booking via API
-  async function handleConfirmCancel(id: number) {
-    setCancellingId(id);
+  async function handleConfirmCancel() {
+    if (!booking) return;
+    setCancellingId(booking.id);
     setConfirmingId(null);
     setCancelError(null);
     try {
       const res  = await fetch(`/api/booking/cancel/${id}`);
       const json = await res.json();
       if (!json.status) throw new Error(json.message ?? "Cancel failed");
-      setBookings(prev =>
-        prev.map(b => b.id === id ? { ...b, status: "cancelled" as BookingStatus } : b)
-      );
+      setBooking(prev => prev ? { ...prev, status: "cancelled" as BookingStatus } : prev);
     } catch (err) {
       setCancelError((err as Error).message ?? "Could not cancel booking. Please try again.");
     } finally {
       setCancellingId(null);
     }
   }
-
-  const upcoming  = bookings.filter(b => b.status === "upcoming");
-  const cancelled = bookings.filter(b => b.status === "cancelled");
 
   return (
     <div className={styles.pageShell}>
@@ -155,7 +143,7 @@ function BookingsInner() {
           <button className={styles.backBtn} onClick={() => router.back()} aria-label="Back">
             <ArrowLeft size={18} />
           </button>
-          <h1 className={styles.title}>My Bookings</h1>
+          <h1 className={styles.title}>My Booking</h1>
         </div>
 
         <div className={styles.content}>
@@ -165,9 +153,9 @@ function BookingsInner() {
             </div>
           )}
 
-          {!loading && bookings.length === 0 && (
+          {!loading && !booking && (
             <div className={styles.empty}>
-              <p className={styles.emptyText}>No bookings yet.</p>
+              <p className={styles.emptyText}>Booking not found.</p>
             </div>
           )}
 
@@ -175,36 +163,18 @@ function BookingsInner() {
             <p className={styles.cancelError}>{cancelError}</p>
           )}
 
-          {/* Upcoming */}
-          {upcoming.length > 0 && (
-            <section className={styles.section}>
-              <p className={styles.sectionLabelUpcoming}>Upcoming</p>
-              {upcoming.map(b => (
-                <div key={b.id}>
-                  <p className={styles.dateGroup}>{b.dateGroup}</p>
-                  <BookingCard
-                    booking={b}
-                    cancelling={cancellingId === b.id}
-                    confirming={confirmingId === b.id}
-                    onRequestCancel={() => { setConfirmingId(b.id); setCancelError(null); }}
-                    onKeep={() => setConfirmingId(null)}
-                    onConfirmCancel={() => handleConfirmCancel(b.id)}
-                  />
-                </div>
-              ))}
-            </section>
-          )}
-
-          {/* Cancelled */}
-          {cancelled.length > 0 && (
-            <section className={styles.section}>
-              <p className={styles.sectionLabelCancelled}>Cancelled</p>
-              {cancelled.map(b => (
-                <div key={b.id}>
-                  <BookingCard booking={b} />
-                </div>
-              ))}
-            </section>
+          {booking && (
+            <>
+              <p className={styles.dateGroup}>{booking.dateGroup}</p>
+              <BookingCard
+                booking={booking}
+                cancelling={cancellingId === booking.id}
+                confirming={confirmingId === booking.id}
+                onRequestCancel={() => { setConfirmingId(booking.id); setCancelError(null); }}
+                onKeep={() => setConfirmingId(null)}
+                onConfirmCancel={() => handleConfirmCancel()}
+              />
+            </>
           )}
         </div>
       </div>

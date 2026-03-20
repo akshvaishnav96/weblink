@@ -204,10 +204,11 @@ function ConfirmBookingInner() {
         if (!json.status) { event.complete("fail"); return; }
         const clientSecret: string = json.client_secret ?? "";
         const paymentIntentId: string = json.payment_intent_id ?? "";
+        const intentUserId: number | null = json.user_id ?? null;
         const { error } = await stripe.confirmCardPayment(clientSecret, { payment_method: event.paymentMethod.id });
         if (error) { event.complete("fail"); setPaymentError(error.message ?? "Payment failed"); return; }
         event.complete("success");
-        const { pin, bookingId } = await createBooking(paymentIntentId, "apple_pay", fn, ph, em, gn, fse, ct.dial_code, formRef.current.address);
+        const { pin, bookingId } = await createBooking(paymentIntentId, "apple_pay", fn, ph, em, gn, fse, ct.dial_code, formRef.current.address, intentUserId);
         saveBookingId(bookingId);
         setCustomerSnapshot({ firstName: fn, phone: ph, email: em, countryCode: ct.dial_code });
         setConfirmedServiceId(Number(selection.serviceId ?? 0));
@@ -279,6 +280,7 @@ function ConfirmBookingInner() {
       customer_phone_number: ph,
       customer_email:        em,
       payment_mode:          pm,
+      user_id:               pm === "cash" ? null : (selection.userId ?? null),
       ...(addr ? { drop_address: addr } : {}),
     };
     console.log("[ConfirmBooking] Booking payload to send:", payload);
@@ -286,8 +288,8 @@ function ConfirmBookingInner() {
   }
 
   // ── Create booking on backend ─────────────────────────────────────────────
-  async function createBooking(piId: string, pm: string, fn: string, ph: string, em: string, gn: string, fse: boolean, cc: string, addr?: string): Promise<{ pin: string; bookingId: number | null }> {
-    const payload = { ...buildBasePayload({ firstName: fn, phone: ph, email: em, guestName: gn, isBookingSomeone: fse, countryCode: cc, paymentMode: pm, addr }), payment_intent_id: piId };
+  async function createBooking(piId: string, pm: string, fn: string, ph: string, em: string, gn: string, fse: boolean, cc: string, addr?: string, userId?: number | null): Promise<{ pin: string; bookingId: number | null }> {
+    const payload = { ...buildBasePayload({ firstName: fn, phone: ph, email: em, guestName: gn, isBookingSomeone: fse, countryCode: cc, paymentMode: pm, addr }), payment_intent_id: piId, user_id: pm === "cash" ? null : (userId ?? null) };
     console.log("[ConfirmBooking] POST /api/booking/create payload:", payload);
     const res = await fetch("/api/booking/create", {
       method: "POST",
@@ -406,9 +408,10 @@ function ConfirmBookingInner() {
         if (!intentJson.status) throw new Error(intentJson.message ?? "Payment intent failed");
         const clientSecret: string = intentJson.client_secret ?? "";
         const piId: string = intentJson.payment_intent_id ?? "";
+        const intentUserId: number | null = intentJson.user_id ?? null;
         const { error: stripeError } = await stripe.confirmCardPayment(clientSecret, { payment_method: paymentMethod!.id });
         if (stripeError) throw new Error(stripeError.message ?? "Card payment failed");
-        ({ pin, bookingId } = await createBooking(piId, "card", firstName, phone, email, guestName, forSomeoneElse, cc, address));
+        ({ pin, bookingId } = await createBooking(piId, "card", firstName, phone, email, guestName, forSomeoneElse, cc, address, intentUserId));
 
       } else if (payment === "upi" && upiId) {
         const upiPayload = buildBasePayload({ firstName, phone, email, guestName, isBookingSomeone: forSomeoneElse, countryCode: cc, paymentMode: "upi", addr: address });
@@ -421,12 +424,13 @@ function ConfirmBookingInner() {
         if (!intentJson.status) throw new Error(intentJson.message ?? "UPI payment intent failed");
         const clientSecret: string = intentJson.client_secret ?? "";
         const piId: string = intentJson.payment_intent_id ?? "";
+        const intentUserId: number | null = intentJson.user_id ?? null;
         if (!stripe) throw new Error("Stripe failed to load");
         setUpiStatus("pending");
         const succeeded = await pollUpiPayment(stripe, clientSecret);
         if (!succeeded) { setUpiStatus("failed"); throw new Error("UPI payment was not completed. Please approve it in your UPI app and try again."); }
         setUpiStatus("success");
-        ({ pin, bookingId } = await createBooking(piId, "upi", firstName, phone, email, guestName, forSomeoneElse, cc, address));
+        ({ pin, bookingId } = await createBooking(piId, "upi", firstName, phone, email, guestName, forSomeoneElse, cc, address, intentUserId));
 
       } else {
         ({ pin, bookingId } = await createBooking("", "cash", firstName, phone, email, guestName, forSomeoneElse, cc, address));
@@ -685,6 +689,13 @@ function ConfirmBookingInner() {
         )}
       </div>
 
+      {/* Powered by */}
+      <div className={styles.poweredBy}>
+        <a href="https://valetvault.com.au" rel="noopener" style={{ color: "inherit", textDecoration: "none" }}>
+          Powered by Valet Vault
+        </a>
+      </div>
+
       {/* Success modal */}
       {showModal && (
         <AppDownloadModal
@@ -693,7 +704,15 @@ function ConfirmBookingInner() {
           bookingId={confirmedBookingId ?? undefined}
           serviceId={confirmedServiceId}
           servicePrice={confirmedServicePrice}
-          onSkip={() => router.push(confirmedBarberSlug ? `/bookme/${confirmedBarberSlug}` : "/")}
+          onSkip={() => {
+            if (confirmedBarberSlug && confirmedBookingId) {
+              router.push(`/bookme/${confirmedBarberSlug}/booking/${confirmedBookingId}`);
+            } else if (confirmedBarberSlug) {
+              router.push(`/bookme/${confirmedBarberSlug}`);
+            } else {
+              router.push("/");
+            }
+          }}
           onSaveDetails={() => {
             try {
               if (customerSnapshot) localStorage.setItem(SAVED_KEY, JSON.stringify(customerSnapshot));
