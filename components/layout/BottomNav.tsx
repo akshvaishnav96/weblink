@@ -33,7 +33,9 @@ export default function BottomNav() {
       })} */}
      {/* ── Powered by ── */}
       <div className={styles.poweredBy}>
-        <a href="https://valetvault.com.au">Powered by Valet Vault</a>
+        <a href="https://valetvault.com.au" rel="noopener" style={{ color: "inherit", textDecoration: "none" }}>
+          Powered by Valet Vault
+        </a>
       </div>
     </nav>
   );

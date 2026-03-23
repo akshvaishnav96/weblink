@@ -16,14 +16,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const name = profile.business_display_name ?? profile.business_name;
     const suburb = profile.business_address?.split(",")[1]?.trim() ?? "";
 
-    // Spec: '[Shop Name] Barber | Book or Walk In | [Suburb]' (under 60 chars)
-    const title = `${name} Barber | Book or Walk In | ${suburb}`;
-
-    // Spec: 'Visit [Shop Name] in [Suburb]. Walk-ins welcome — check live wait times, view services and book online via Valet Vault.' (under 150 chars)
+    const businessType = profile.business_type ?? "Business";
+    const title = `${name} ${businessType} | Book or Walk In | ${suburb}`;
     const description = `Visit ${name} in ${suburb}. Walk-ins welcome \u2014 check live wait times, view services and book online via Valet Vault.`;
-
-    // Spec: canonical tag
     const canonical = `https://valetvault.com.au/bookme/${slug}`;
+    const ogImage = profile.business_banner
+      ? [{ url: profile.business_banner, width: 1200, height: 630, alt: `${name} banner` }]
+      : [];
 
     return {
       title,
@@ -33,8 +32,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         title,
         description,
         url: canonical,
-        images: profile.business_banner ? [{ url: profile.business_banner }] : [],
+        siteName: "Valet Vault",
+        images: ogImage,
         type: "website",
+        locale: "en_AU",
+      },
+      twitter: {
+        card: "summary_large_image",
+        title,
+        description,
+        images: profile.business_banner ? [profile.business_banner] : [],
       },
     };
   } catch {

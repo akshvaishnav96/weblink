@@ -21,6 +21,7 @@ interface Booking {
   bookingType: string;
   verificationCode: string;
   status: BookingStatus;
+  bookedFor?: string;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -70,6 +71,7 @@ function mapApiBooking(data: any): Booking {
     bookingType:      data.payment_mode && data.payment_mode !== "cash" ? "Appointment" : "Pay Onsite",
     verificationCode: data.booking_otp ?? "—",
     status:           mapApiStatus(data.status ?? ""),
+    bookedFor:        data.members?.[0]?.member_name ?? undefined,
   };
 }
 
@@ -92,7 +94,7 @@ function BookingDetailInner({
 }: {
   params: Promise<{ slug: string; id: string }>;
 }) {
-  const { id } = use(params);
+  const { id, slug } = use(params);
   const router = useRouter();
 
   const [booking,      setBooking]      = useState<Booking | null>(null);
@@ -140,7 +142,7 @@ function BookingDetailInner({
       <div className={styles.scrollArea}>
         {/* Header */}
         <div className={styles.header}>
-          <button className={styles.backBtn} onClick={() => router.back()} aria-label="Back">
+          <button className={styles.backBtn} onClick={() => router.push(`/bookme/${slug}`)} aria-label="Back">
             <ArrowLeft size={18} />
           </button>
           <h1 className={styles.title}>My Booking</h1>
@@ -192,7 +194,7 @@ function BookingCard({
   onKeep,
   onConfirmCancel,
 }: {
-  booking: Booking;
+  booking: Booking & { bookedFor?: string };
   cancelling?: boolean;
   confirming?: boolean;
   onRequestCancel?: () => void;
@@ -241,6 +243,14 @@ function BookingCard({
         <span className={styles.typeBadge}>{booking.bookingType}</span>
         <span className={styles.price}>{booking.price}</span>
       </div>
+
+      {/* Booked for (member) */}
+      {/* {booking.bookedFor && (
+        <div className={styles.verificationRow}>
+          <span className={styles.verificationLabel}>Booked for</span>
+          <span className={styles.verificationCode}>{booking.bookedFor}</span>
+        </div>
+      )} */}
 
       {/* Verification code */}
       <div className={styles.verificationRow}>

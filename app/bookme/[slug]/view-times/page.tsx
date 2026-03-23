@@ -323,12 +323,7 @@ export default function ViewTimesPage({
         />
       </div>
 
-      {/* Powered by */}
-      <div className={styles.poweredBy}>
-        <a href="https://valetvault.com.au" rel="noopener" style={{ color: "inherit", textDecoration: "none" }}>
-          Powered by Valet Vault
-        </a>
-      </div>
+     
 
       {/* Book button */}
       <div className={styles.ctaSection}>

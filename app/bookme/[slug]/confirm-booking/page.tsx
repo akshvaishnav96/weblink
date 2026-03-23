@@ -79,7 +79,7 @@ function ConfirmBookingInner() {
   const [confirmedServiceId,    setConfirmedServiceId]    = useState<number>(0);
   const [confirmedBarberSlug,     setConfirmedBarberSlug]     = useState<string>("");
   const [confirmedServicePrice, setConfirmedServicePrice] = useState<number>(0);
-  const [customerSnapshot,      setCustomerSnapshot]      = useState<{ firstName: string; phone: string; email: string; countryCode: string } | null>(null);
+  const [customerSnapshot,      setCustomerSnapshot]      = useState<{ firstName: string; phone: string; email: string; countryCode: string; guestName: string; forSomeoneElse: boolean; address: string } | null>(null);
 
   // ── Form state ────────────────────────────────────────────────────────────
   const [firstName,      setFirstName]      = useState("");
@@ -129,7 +129,7 @@ function ConfirmBookingInner() {
     try {
       const raw = localStorage.getItem(SAVED_KEY);
       if (!raw) return;
-      const saved = JSON.parse(raw) as { firstName?: string; phone?: string; email?: string; countryCode?: string };
+      const saved = JSON.parse(raw) as { firstName?: string; phone?: string; email?: string; countryCode?: string; guestName?: string; forSomeoneElse?: boolean; address?: string };
       if (saved.firstName) setFirstName(saved.firstName);
       if (saved.phone) setPhone(saved.phone);
       if (saved.email) setEmail(saved.email);
@@ -137,6 +137,9 @@ function ConfirmBookingInner() {
         const found = COUNTRIES.find(c => c.dial_code === saved.countryCode);
         if (found) setCountry(found);
       }
+      if (saved.guestName) setGuestName(saved.guestName);
+      if (saved.forSomeoneElse) setForSomeoneElse(saved.forSomeoneElse);
+      if (saved.address) setAddress(saved.address);
       setSavedBanner(true);
     } catch { /* ignore */ }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -145,6 +148,7 @@ function ConfirmBookingInner() {
   function clearSavedDetails() {
     localStorage.removeItem(SAVED_KEY);
     setFirstName(""); setPhone(""); setEmail("");
+    setGuestName(""); setForSomeoneElse(false); setAddress("");
     setCountry(COUNTRIES.find(c => c.code === DEFAULT_COUNTRY_CODE) ?? COUNTRIES[0]);
     setSavedBanner(false);
   }
@@ -210,7 +214,7 @@ function ConfirmBookingInner() {
         event.complete("success");
         const { pin, bookingId } = await createBooking(paymentIntentId, "apple_pay", fn, ph, em, gn, fse, ct.dial_code, formRef.current.address, intentUserId);
         saveBookingId(bookingId);
-        setCustomerSnapshot({ firstName: fn, phone: ph, email: em, countryCode: ct.dial_code });
+        setCustomerSnapshot({ firstName: fn, phone: ph, email: em, countryCode: ct.dial_code, guestName: gn, forSomeoneElse: fse, address: formRef.current.address });
         setConfirmedServiceId(Number(selection.serviceId ?? 0));
         setConfirmedServicePrice(parseFloat(selection.price ?? "0") || 0);
         setConfirmedBarberSlug(selection.barberSlug ?? "");
@@ -436,7 +440,7 @@ function ConfirmBookingInner() {
         ({ pin, bookingId } = await createBooking("", "cash", firstName, phone, email, guestName, forSomeoneElse, cc, address));
       }
 
-      setCustomerSnapshot({ firstName, phone, email, countryCode: cc });
+      setCustomerSnapshot({ firstName, phone, email, countryCode: cc, guestName, forSomeoneElse, address });
       setConfirmedServiceId(Number(serviceId));
       setConfirmedServicePrice(parseFloat(price) || 0);
       setConfirmedBarberSlug(barberSlug);
@@ -689,12 +693,7 @@ function ConfirmBookingInner() {
         )}
       </div>
 
-      {/* Powered by */}
-      <div className={styles.poweredBy}>
-        <a href="https://valetvault.com.au" rel="noopener" style={{ color: "inherit", textDecoration: "none" }}>
-          Powered by Valet Vault
-        </a>
-      </div>
+      
 
       {/* Success modal */}
       {showModal && (
@@ -705,9 +704,7 @@ function ConfirmBookingInner() {
           serviceId={confirmedServiceId}
           servicePrice={confirmedServicePrice}
           onSkip={() => {
-            if (confirmedBarberSlug && confirmedBookingId) {
-              router.push(`/bookme/${confirmedBarberSlug}/booking/${confirmedBookingId}`);
-            } else if (confirmedBarberSlug) {
+           if (confirmedBarberSlug) {
               router.push(`/bookme/${confirmedBarberSlug}`);
             } else {
               router.push("/");
@@ -715,7 +712,18 @@ function ConfirmBookingInner() {
           }}
           onSaveDetails={() => {
             try {
-              if (customerSnapshot) localStorage.setItem(SAVED_KEY, JSON.stringify(customerSnapshot));
+              if (customerSnapshot) {
+                const toSave = {
+                  firstName:   customerSnapshot.firstName,
+                  phone:       customerSnapshot.phone,
+                  countryCode: customerSnapshot.countryCode,
+                  ...(customerSnapshot.email          ? { email:          customerSnapshot.email }          : {}),
+                  ...(customerSnapshot.guestName      ? { guestName:      customerSnapshot.guestName }      : {}),
+                  ...(customerSnapshot.forSomeoneElse ? { forSomeoneElse: customerSnapshot.forSomeoneElse } : {}),
+                  ...(customerSnapshot.address        ? { address:        customerSnapshot.address }        : {}),
+                };
+                localStorage.setItem(SAVED_KEY, JSON.stringify(toSave));
+              }
             } catch { /* ignore */ }
           }}
         />

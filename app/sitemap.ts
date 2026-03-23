@@ -1,6 +1,6 @@
 import { MetadataRoute } from "next";
 
-const API_BASE = process.env.API_BASE_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://valetvaultdev.24livehost.com/api/v2/weblink";
+const API_BASE = process.env.API_BASE_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL ;
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://valetvault.com.au";
 
 interface BusinessEntry {
