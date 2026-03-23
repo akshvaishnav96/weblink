@@ -192,6 +192,7 @@ export interface BookingPayload {
   customer_phone_number: string;
   customer_email: string;
   payment_mode: string;        // "cash" | "card" | "apple_pay"
+  comment?: string;
 }
 
 export interface BookingResult {

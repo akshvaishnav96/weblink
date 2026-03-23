@@ -286,6 +286,7 @@ function ConfirmBookingInner() {
       payment_mode:          pm,
       user_id:               pm === "cash" ? null : (selection.userId ?? null),
       ...(addr ? { drop_address: addr } : {}),
+      ...(selection.notes ? { comment: selection.notes } : {}),
     };
     console.log("[ConfirmBooking] Booking payload to send:", payload);
     return payload;
