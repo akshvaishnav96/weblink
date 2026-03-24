@@ -55,5 +55,44 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function BookmePage({ params, searchParams }: PageProps) {
   const { slug } = await params;
   const { user_id } = await searchParams;
-  return <BusinessProfileClient slug={slug} userId={user_id ?? null} />;
+
+  let initialProfile = null;
+  try {
+    initialProfile = await fetchBusinessProfileBySlug(slug);
+  } catch {
+    // client will retry
+  }
+
+  const address = initialProfile?.business_address ?? "";
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: [
+      {
+        "@type": "Question",
+        name: "Do you accept walk-ins?",
+        acceptedAnswer: { "@type": "Answer", text: "Yes, walk-ins are welcome. Check live wait times online." },
+      },
+      {
+        "@type": "Question",
+        name: "How do I book online?",
+        acceptedAnswer: { "@type": "Answer", text: "Book instantly via our online booking page — no app needed." },
+      },
+      {
+        "@type": "Question",
+        name: "Where are you located?",
+        acceptedAnswer: { "@type": "Answer", text: address || "Check our profile page for the full address." },
+      },
+    ],
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+      <BusinessProfileClient slug={slug} userId={user_id ?? null} initialProfile={initialProfile} />
+    </>
+  );
 }

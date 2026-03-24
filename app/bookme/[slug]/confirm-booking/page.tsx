@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft, CheckCircle2, User, Phone, Building2,
-  Smartphone, CreditCard, Lock, ChevronDown, Search, Wallet,
+  Smartphone, CreditCard, Lock, ChevronDown, Search,
 } from "lucide-react";
 import {
   Elements,
@@ -34,8 +34,6 @@ import {
 
 type Country = { name: string; flag: string; code: string; dial_code: string };
 const COUNTRIES = COUNTRIES_RAW as Country[];
-
-type UpiStatus = "idle" | "pending" | "success" | "failed";
 
 const CARD_ELEMENT_OPTIONS: StripeCardElementOptions = {
   style: {
@@ -87,10 +85,9 @@ function ConfirmBookingInner() {
   const [guestName,      setGuestName]      = useState("");
   const [address,        setAddress]        = useState("");
   const [phone,          setPhone]          = useState("");
-  const [payment,        setPayment]        = useState<"onsite" | "apple" | "card" | "upi">("onsite");
+  const [payment,        setPayment]        = useState<"onsite" | "apple" | "card">("onsite");
   const [email,          setEmail]          = useState("");
   const [cardName,       setCardName]       = useState("");
-  const [upiId,          setUpiId]          = useState("");
   const [country,        setCountry]        = useState<Country>(
     COUNTRIES.find(c => c.code === DEFAULT_COUNTRY_CODE) ?? COUNTRIES[0]
   );
@@ -98,7 +95,6 @@ function ConfirmBookingInner() {
   const [countrySearch, setCountrySearch] = useState("");
   const [isProcessing,  setIsProcessing]  = useState(false);
   const [paymentError,  setPaymentError]  = useState<string | null>(null);
-  const [upiStatus,     setUpiStatus]     = useState<UpiStatus>("idle");
   const [cardComplete,  setCardComplete]  = useState(false);
   const [savedBanner,   setSavedBanner]   = useState(false);
   const countryRef = useRef<HTMLDivElement>(null);
@@ -198,8 +194,8 @@ function ConfirmBookingInner() {
     const handler = async (event: Parameters<Parameters<PaymentRequest["on"]>[1]>[0] & { complete: (s: string) => void; paymentMethod: { id: string } }) => {
       const { firstName: fn, phone: ph, email: em, guestName: gn, forSomeoneElse: fse, country: ct } = formRef.current;
       try {
-        const basePayload = buildBasePayload({ firstName: fn, phone: ph, email: em, guestName: gn, isBookingSomeone: fse, countryCode: ct.dial_code, paymentMode: "apple_pay", addr: formRef.current.address });
-        const res = await fetch("/api/booking/payment-intent", {
+        const basePayload = buildBasePayload({ firstName: fn, phone: ph, email: em, guestName: gn, isBookingSomeone: fse, countryCode: ct.dial_code, paymentMode: "upi", addr: formRef.current.address });
+        const res = await fetch("/bookme/api/booking/payment-intent", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ...basePayload, total_amount: Math.round(basePayload.total_amount * 100), services: basePayload.services.map((s: { service_id: number; price: number }) => ({ ...s, price: Math.round(s.price * 100) })), payment_intent_id: "" }),
@@ -212,7 +208,7 @@ function ConfirmBookingInner() {
         const { error } = await stripe.confirmCardPayment(clientSecret, { payment_method: event.paymentMethod.id });
         if (error) { event.complete("fail"); setPaymentError(error.message ?? "Payment failed"); return; }
         event.complete("success");
-        const { pin, bookingId } = await createBooking(paymentIntentId, "apple_pay", fn, ph, em, gn, fse, ct.dial_code, formRef.current.address, intentUserId);
+        const { pin, bookingId } = await createBooking(paymentIntentId, "upi", fn, ph, em, gn, fse, ct.dial_code, formRef.current.address, intentUserId);
         saveBookingId(bookingId);
         setCustomerSnapshot({ firstName: fn, phone: ph, email: em, countryCode: ct.dial_code, guestName: gn, forSomeoneElse: fse, address: formRef.current.address });
         setConfirmedServiceId(Number(selection.serviceId ?? 0));
@@ -259,7 +255,6 @@ function ConfirmBookingInner() {
     { key: "onsite" as const, Icon: Building2,  label: "Pay on site" },
     { key: "apple"  as const, Icon: Smartphone, label: "Apple Pay / Google Pay" },
     { key: "card"   as const, Icon: CreditCard, label: "Card details" },
-    { key: "upi"    as const, Icon: Wallet,     label: "UPI" },
   ];
 
   // ── Build base booking payload ────────────────────────────────────────────
@@ -295,14 +290,14 @@ function ConfirmBookingInner() {
   // ── Create booking on backend ─────────────────────────────────────────────
   async function createBooking(piId: string, pm: string, fn: string, ph: string, em: string, gn: string, fse: boolean, cc: string, addr?: string, userId?: number | null): Promise<{ pin: string; bookingId: number | null }> {
     const payload = { ...buildBasePayload({ firstName: fn, phone: ph, email: em, guestName: gn, isBookingSomeone: fse, countryCode: cc, paymentMode: pm, addr }), payment_intent_id: piId, user_id: pm === "cash" ? null : (userId ?? null) };
-    console.log("[ConfirmBooking] POST /api/booking/create payload:", payload);
-    const res = await fetch("/api/booking/create", {
+    console.log("[ConfirmBooking] POST /bookme/api/booking/create payload:", payload);
+    const res = await fetch("/bookme/api/booking/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
     const json = await res.json();
-    console.log("[ConfirmBooking] POST /api/booking/create response:", json);
+    console.log("[ConfirmBooking] POST /bookme/api/booking/create response:", json);
     if (!json.status) throw new Error(json.message ?? "Booking creation failed");
     const bId = json.data?.booking_id ?? json.data?.id ?? json.booking_id ?? json.id ?? null;
     const bookingId = bId ? Number(bId) : null;
@@ -325,8 +320,6 @@ function ConfirmBookingInner() {
     if (digits.length < 9 || digits.length > 11) return "Phone number must be between 9 to 11 digits.";
     if (email.trim() && email.trim().length > 255) return "Email must not exceed 255 characters.";
     if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return "Please enter a valid email address.";
-    if (payment === "upi" && !upiId.trim()) return "Please enter your UPI ID";
-    if (payment === "upi" && !upiId.trim().includes("@")) return "UPI ID must contain '@' (e.g. yourname@upi)";
     return null;
   }
 
@@ -345,24 +338,11 @@ function ConfirmBookingInner() {
     !!country.dial_code &&
     (!forSomeoneElse || (guestName.trim().length >= 3 && guestName.trim().length <= 100)) &&
     (payment !== "card" || cardComplete) &&
-    (payment !== "upi" || upiId.trim().includes("@"));
-
-  // ── UPI polling helper ─────────────────────────────────────────────────────
-  async function pollUpiPayment(s: Awaited<ReturnType<typeof getStripe>>, clientSecret: string): Promise<boolean> {
-    if (!s) return false;
-    for (let i = 0; i < UPI_POLL_MAX_ATTEMPTS; i++) {
-      await new Promise(r => setTimeout(r, UPI_POLL_INTERVAL_MS));
-      const { paymentIntent } = await s.retrievePaymentIntent(clientSecret);
-      if (paymentIntent?.status === "succeeded") return true;
-      if (paymentIntent?.status === "canceled" || paymentIntent?.status === "requires_payment_method") return false;
-    }
-    return false;
-  }
+    true;
 
   // ── CTA label ─────────────────────────────────────────────────────────────
   function getCtaLabel() {
     if (!isProcessing) return "Confirm Booking";
-    if (payment === "upi" && upiStatus === "pending") return "Waiting for UPI approval…";
     return "Processing…";
   }
 
@@ -404,7 +384,7 @@ function ConfirmBookingInner() {
         if (pmError) throw new Error(pmError.message);
 
         const cardPayload = buildBasePayload({ firstName, phone, email, guestName, isBookingSomeone: forSomeoneElse, countryCode: cc, paymentMode: "card", addr: address });
-        const intentRes = await fetch("/api/booking/payment-intent", {
+        const intentRes = await fetch("/bookme/api/booking/payment-intent", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ...cardPayload, total_amount: Math.round(cardPayload.total_amount * 100), services: cardPayload.services.map(s => ({ ...s, price: Math.round(s.price * 100) })) }),
@@ -417,25 +397,6 @@ function ConfirmBookingInner() {
         const { error: stripeError } = await stripe.confirmCardPayment(clientSecret, { payment_method: paymentMethod!.id });
         if (stripeError) throw new Error(stripeError.message ?? "Card payment failed");
         ({ pin, bookingId } = await createBooking(piId, "card", firstName, phone, email, guestName, forSomeoneElse, cc, address, intentUserId));
-
-      } else if (payment === "upi" && upiId) {
-        const upiPayload = buildBasePayload({ firstName, phone, email, guestName, isBookingSomeone: forSomeoneElse, countryCode: cc, paymentMode: "upi", addr: address });
-        const intentRes = await fetch("/api/booking/payment-intent", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...upiPayload, total_amount: Math.round(upiPayload.total_amount * 100), services: upiPayload.services.map(s => ({ ...s, price: Math.round(s.price * 100) })) }),
-        });
-        const intentJson = await intentRes.json();
-        if (!intentJson.status) throw new Error(intentJson.message ?? "UPI payment intent failed");
-        const clientSecret: string = intentJson.client_secret ?? "";
-        const piId: string = intentJson.payment_intent_id ?? "";
-        const intentUserId: number | null = intentJson.user_id ?? null;
-        if (!stripe) throw new Error("Stripe failed to load");
-        setUpiStatus("pending");
-        const succeeded = await pollUpiPayment(stripe, clientSecret);
-        if (!succeeded) { setUpiStatus("failed"); throw new Error("UPI payment was not completed. Please approve it in your UPI app and try again."); }
-        setUpiStatus("success");
-        ({ pin, bookingId } = await createBooking(piId, "upi", firstName, phone, email, guestName, forSomeoneElse, cc, address, intentUserId));
 
       } else {
         ({ pin, bookingId } = await createBooking("", "cash", firstName, phone, email, guestName, forSomeoneElse, cc, address));
@@ -647,19 +608,6 @@ function ConfirmBookingInner() {
                 </div>
               )}
 
-              {payment === "upi" && (
-                <div className={styles.cardForm}>
-                  <input className={styles.upiInput} placeholder="Enter UPI ID (e.g. yourname@upi)" type="text" value={upiId} onChange={e => setUpiId(e.target.value)} autoComplete="off" inputMode="email" />
-                  <p className={styles.upiHint}>You will be prompted to approve the payment in your UPI app after confirming.</p>
-                </div>
-              )}
-
-              {upiStatus === "pending" && (
-                <div style={{ marginTop: 10, padding: "12px 14px", background: "#FFF8E7", border: "1px solid #E2C98A", borderRadius: 10, fontSize: 13, color: "#7A5800", lineHeight: 1.5 }}>
-                  <strong>Waiting for UPI approval</strong><br />
-                  Please open your UPI app and approve the payment of ${price}.
-                </div>
-              )}
 
               {payment !== "onsite" && (
                 <input className={styles.inputNoIcon} placeholder="Email for receipt (optional)" type="email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" />

@@ -174,7 +174,6 @@ export async function checkStaffAvailability(
 }
 
 // ─── Booking API ───────────────────────────────────────────────────────────────
-const BOOKING_TOKEN = process.env.BOOKING_API_TOKEN ?? "";
 
 export interface BookingPayload {
   business_id: string | number;
@@ -207,7 +206,6 @@ export async function createBookingPayment(payload: BookingPayload): Promise<Boo
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${BOOKING_TOKEN}`,
     },
     body: JSON.stringify(payload),
   });

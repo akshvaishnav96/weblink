@@ -32,6 +32,11 @@ import styles from "./page.module.css";
 type Tab = "services" | "portfolio" | "about";
 type ServiceMode = "onsite" | "mobile";
 
+function toAbsoluteUrl(url: string): string {
+  if (!url) return url;
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
+}
+
 function getInitials(name: string): string {
   return name
     .split(" ")
@@ -157,14 +162,16 @@ function mapApiService(apiService: ApiService, mode: ServiceMode): Service {
 export default function BusinessProfileClient({
   slug,
   userId,
+  initialProfile,
 }: {
   slug: string;
   userId?: string | null;
+  initialProfile?: ApiBusinessProfile | null;
 }) {
   const router = useRouter();
 
-  const [profile, setProfile] = useState<ApiBusinessProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<ApiBusinessProfile | null>(initialProfile ?? null);
+  const [loading, setLoading] = useState(!initialProfile);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("services");
   const [searchQuery, setSearchQuery] = useState("");
@@ -174,6 +181,7 @@ export default function BusinessProfileClient({
   const [serviceMode, setServiceMode] = useState<ServiceMode>("onsite");
 
   useEffect(() => {
+    if (initialProfile) return;
     fetchBusinessProfileBySlug(slug)
       .then((data) => {
         setProfile(data);
@@ -183,7 +191,7 @@ export default function BusinessProfileClient({
         setError(err.message ?? "Failed to load profile");
         setLoading(false);
       });
-  }, [slug]);
+  }, [slug, initialProfile]);
 
   const hasMobileServices = useMemo(
     () =>
@@ -377,7 +385,7 @@ export default function BusinessProfileClient({
           {profile.website_url && (
             /* socialLink class MUST stay: CSS module uses .socialLink:hover .socialBtn selector */
             <a
-              href={profile.website_url}
+              href={toAbsoluteUrl(profile.website_url)}
               target="_blank"
               rel="noreferrer"
               className={styles.socialLink}
@@ -390,7 +398,7 @@ export default function BusinessProfileClient({
           )}
           {profile.instagram_url && (
             <a
-              href={profile.instagram_url}
+              href={toAbsoluteUrl(profile.instagram_url)}
               target="_blank"
               rel="noreferrer"
               className={styles.socialLink}
@@ -403,7 +411,7 @@ export default function BusinessProfileClient({
           )}
           {profile.facebook_url && (
             <a
-              href={profile.facebook_url}
+              href={toAbsoluteUrl(profile.facebook_url)}
               target="_blank"
               rel="noreferrer"
               className={styles.socialLink}
@@ -416,7 +424,7 @@ export default function BusinessProfileClient({
           )}
           {profile.tiktok_url && (
             <a
-              href={profile.tiktok_url}
+              href={toAbsoluteUrl(profile.tiktok_url)}
               target="_blank"
               rel="noreferrer"
               className={styles.socialLink}
@@ -454,7 +462,7 @@ export default function BusinessProfileClient({
               Services
             </h2>
             <button className="flex items-center gap-1 text-xs font-semibold text-[var(--color-primary)] bg-transparent border-none ">
-              <Zap className="w-2 h-2" /> Book in 20 seconds
+              <Zap height={14} width={14} className="w-2 h-2" /> Book in 20 seconds
             </button>
           </div>
 

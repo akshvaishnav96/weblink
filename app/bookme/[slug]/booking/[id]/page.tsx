@@ -108,7 +108,7 @@ function BookingDetailInner({
       if (!id) { setLoading(false); return; }
       try {
         
-        const res  = await fetch(`/api/booking/details/${id}`);
+        const res  = await fetch(`/bookme/api/booking/details/${id}`);
         const json = await res.json();
         if (json.status && json.data) {
           setBooking(mapApiBooking(json.data));
@@ -126,7 +126,7 @@ function BookingDetailInner({
     setConfirmingId(null);
     setCancelError(null);
     try {
-      const res  = await fetch(`/api/booking/cancel/${id}`);
+      const res  = await fetch(`/bookme/api/booking/cancel/${id}`);
       const json = await res.json();
       if (!json.status) throw new Error(json.message ?? "Cancel failed");
       setBooking(prev => prev ? { ...prev, status: "cancelled" as BookingStatus } : prev);

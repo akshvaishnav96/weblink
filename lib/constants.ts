@@ -9,7 +9,7 @@ export const STORAGE_KEYS = {
 } as const;
 
 // ── Regional defaults ─────────────────────────────────────────────────────────
-export const DEFAULT_COUNTRY_CODE = "IN";   // ISO 3166-1 alpha-2  (e.g. "AU", "IN", "US")
+export const DEFAULT_COUNTRY_CODE = "AU";   // ISO 3166-1 alpha-2  (e.g. "AU", "IN", "US")
 export const DEFAULT_CURRENCY     = "aud";  // Stripe currency code (lowercase)
 export const APPLE_PAY_COUNTRY    = "AU";   // Stripe paymentRequest country (ISO 3166-1)
 
@@ -23,3 +23,8 @@ export const COUNTRY_SEARCH_FOCUS_DELAY_MS = 50; // Delay before focusing countr
 // ── Booking PIN fallback ──────────────────────────────────────────────────────
 export const PIN_MIN = 1000;  // Fallback PIN random range (inclusive)
 export const PIN_MAX = 9999;
+
+// ── Base path (subdirectory hosting) ─────────────────────────────────────────
+// Set NEXT_PUBLIC_BASE_PATH=/bookme in .env when hosted at a subdirectory.
+// Used to prefix internal /api/ fetch calls so they resolve correctly.
+export const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";

@@ -33,7 +33,7 @@ export default function AppDownloadModal({ name, pin, bookingId, serviceId, serv
     setCalLoading(true);
     setCalError(null);
     try {
-      const res = await fetch("/api/booking/add-to-calendar", {
+      const res = await fetch("/bookme/api/booking/add-to-calendar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
