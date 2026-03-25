@@ -4,6 +4,7 @@ import { Suspense, use, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Calendar, Clock, CreditCard, Timer } from "lucide-react";
 import styles from "./page.module.css";
+import { API_ENDPOINTS } from "@/lib/api-endpoints";
 
 type BookingStatus = "upcoming" | "cancelled";
 
@@ -68,7 +69,7 @@ function mapApiBooking(data: any): Booking {
     duration:         svc?.business_services?.time ? `${svc.business_services.time} min` : "—",
     paymentMethod:    formatPaymentMode(data.payment_mode),
     price:            `$${parseFloat(data.total_amount ?? "0").toFixed(2).replace(/\.00$/, "")}`,
-    bookingType:      data.payment_mode && data.payment_mode !== "cash" ? "Appointment" : "Pay Onsite",
+    bookingType:      data.payment_mode && data.payment_mode !== "cash" ? "Appointment" : "Pay On Arrival",
     verificationCode: data.booking_otp ?? "—",
     status:           mapApiStatus(data.status ?? ""),
     bookedFor:        data.members?.[0]?.member_name ?? undefined,
@@ -108,7 +109,7 @@ function BookingDetailInner({
       if (!id) { setLoading(false); return; }
       try {
         
-        const res  = await fetch(`/bookme/api/booking/details/${id}`);
+        const res  = await fetch(API_ENDPOINTS.BOOKING_DETAILS(id));
         const json = await res.json();
         if (json.status && json.data) {
           setBooking(mapApiBooking(json.data));
@@ -126,7 +127,7 @@ function BookingDetailInner({
     setConfirmingId(null);
     setCancelError(null);
     try {
-      const res  = await fetch(`/bookme/api/booking/cancel/${id}`);
+      const res  = await fetch(API_ENDPOINTS.BOOKING_CANCEL(id));
       const json = await res.json();
       if (!json.status) throw new Error(json.message ?? "Cancel failed");
       setBooking(prev => prev ? { ...prev, status: "cancelled" as BookingStatus } : prev);
@@ -268,7 +269,9 @@ function BookingCard({
       {isUpcoming && confirming && (
         <div className={styles.cancelConfirm}>
           <p className={styles.cancelConfirmTitle}>Cancel this booking?</p>
-          <p className={styles.cancelConfirmSub}>50% fee applies within 12 hrs of appointment.</p>
+          {booking.paymentMethod !== "Cash" && (
+            <p className={styles.cancelConfirmSub}>50% fee applies within 12 hrs of appointment.</p>
+          )}
           <div className={styles.cancelConfirmBtns}>
             <button className={styles.keepBtn} onClick={onKeep}>Keep</button>
             <button className={styles.confirmCancelBtn} onClick={onConfirmCancel}>Confirm Cancel</button>

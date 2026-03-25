@@ -17,7 +17,7 @@ const cormorant = Cormorant_Garamond({
 
 
 export const metadata: Metadata = {
-  title: "Groomly",
+  title: "valetvault - Book top barbers near you",
   description: "Book top barbers near you.",
 };
 

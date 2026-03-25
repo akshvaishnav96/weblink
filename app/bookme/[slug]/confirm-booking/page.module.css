@@ -9,6 +9,12 @@
   padding-bottom: env(safe-area-inset-bottom, 24px);
 }
 
+.pageBlurred {
+  filter: blur(4px);
+  pointer-events: none;
+  user-select: none;
+}
+
 /* ── Header ── */
 .header {
   display: flex;
@@ -207,6 +213,7 @@
   -webkit-appearance: none;
 }
 .input::placeholder { color: var(--color-text-placeholder); }
+.inputError { border-color: #e53e3e !important; box-shadow: 0 0 0 3px rgba(229,62,62,0.1); }
 .input:focus {
   border-color: var(--color-primary-border);
   box-shadow: 0 0 0 3px rgba(184,134,11,0.08);

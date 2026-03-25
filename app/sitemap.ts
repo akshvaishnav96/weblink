@@ -1,6 +1,6 @@
 import { MetadataRoute } from "next";
+import { API_ENDPOINTS } from "@/lib/api-endpoints";
 
-const API_BASE = process.env.API_BASE_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL ;
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://valetvault.com.au";
 
 interface BusinessEntry {
@@ -15,7 +15,7 @@ const STATIC_PAGES: MetadataRoute.Sitemap = [
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
-    const res = await fetch(`${API_BASE}/marketplace-preview?search=`, {
+    const res = await fetch(API_ENDPOINTS.SITEMAP_BUSINESSES, {
       headers: { Accept: "application/json" },
       next: { revalidate: 3600 },
     });

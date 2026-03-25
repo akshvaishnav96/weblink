@@ -47,7 +47,7 @@ export default function NotFound() {
       </div>
 
       {/* Brand watermark */}
-      <p className={styles.brand}>Groomly<span className={styles.brandDot}>.</span></p>
+      <p className={styles.brand}>valet vault<span className={styles.brandDot}>.</span></p>
     </div>
   );
 }

@@ -48,7 +48,7 @@
 }
 
 @media (min-width: 768px) {
-  .pill { padding: 12px 22px; font-size: 14px; }
+  .pill { padding: 12px 22px; font-size: 14px; font-weight: bolder; }
 }
 
 @media (min-width: 768px) {

@@ -17,6 +17,7 @@ import {
   Home,
   User,
   Car,
+  X,
 } from "lucide-react";
 import BarberAvatar from "@/components/ui/BarberAvatar";
 import StarRating from "@/components/ui/StarRating";
@@ -28,6 +29,8 @@ import {
 } from "@/lib/api";
 import type { Service, StaffAvailability } from "@/types";
 import styles from "./page.module.css";
+import { LuFootprints, LuWallet } from "react-icons/lu";
+import { FaFacebookF,FaTiktok } from "react-icons/fa";
 
 type Tab = "services" | "portfolio" | "about";
 type ServiceMode = "onsite" | "mobile";
@@ -170,7 +173,9 @@ export default function BusinessProfileClient({
 }) {
   const router = useRouter();
 
-  const [profile, setProfile] = useState<ApiBusinessProfile | null>(initialProfile ?? null);
+  const [profile, setProfile] = useState<ApiBusinessProfile | null>(
+    initialProfile ?? null,
+  );
   const [loading, setLoading] = useState(!initialProfile);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("services");
@@ -232,7 +237,7 @@ export default function BusinessProfileClient({
     { label: string; variant: "amber" | "gray"; icon: React.ReactNode }
   > = {
     PAY_ONLINE: { label: "PAY ONLINE", variant: "amber", icon: <CreditCard /> },
-    PAY_ONSITE: { label: "PAY ONSITE", variant: "amber", icon: <Home /> },
+    PAY_ONSITE: { label: "PAY ONSITE", variant: "amber", icon: <LuWallet /> },
     PAY_ONLINE_OR_ONSITE: {
       label: "",
       variant: "amber",
@@ -243,19 +248,19 @@ export default function BusinessProfileClient({
             style={{
               fontWeight: 700,
               letterSpacing: "0.06em",
-              fontSize: 10,
+              fontSize: ".875rem",
               marginLeft: 4,
             }}
           >
             PAY ONLINE
           </span>
           <span style={{ margin: "0 5px", opacity: 0.35 }}>·</span>
-          <Home />
+          <LuWallet />
           <span
             style={{
               fontWeight: 700,
               letterSpacing: "0.06em",
-              fontSize: 10,
+              fontSize: ".875rem",
               marginLeft: 4,
             }}
           >
@@ -264,7 +269,11 @@ export default function BusinessProfileClient({
         </>
       ),
     },
-    WALK_IN_ONLY: { label: "WALK-IN ONLY", variant: "gray", icon: <User /> },
+    WALK_IN_ONLY: {
+      label: "WALK-IN ONLY",
+      variant: "gray",
+      icon: <LuFootprints width={1} height={1} />,
+    },
   };
 
   const hasAvailableSlots = mappedServices.some((s) =>
@@ -313,8 +322,6 @@ export default function BusinessProfileClient({
             : undefined
         }
       >
-     
-
         {/* heroCenter — CSS module: z-index:5 must sit above ::after z-index:1 */}
         <div className={styles.heroCenter}>
           <p className={styles.heroName}>{profile.business_name}</p>
@@ -366,19 +373,22 @@ export default function BusinessProfileClient({
             }
             target="_blank"
             rel="noreferrer"
-            className={styles.infoAddress}
+            className={`${styles.infoAddress} text-[22px]`}
           >
-            <MapPin /> {profile.business_address}
+            <MapPin />{" "}
+            <span className="text-[0.875rem]">{profile.business_address}</span>
           </a>
         )}
 
         {/* infoRating */}
-        <div className="mt-[5px]">
-          <StarRating
-            rating={profile.average_rating}
-            count={profile.total_reviews}
-          />
-        </div>
+        {profile.average_rating > 0 && (
+          <div className="mt-[5px]">
+            <StarRating
+              rating={profile.average_rating}
+              count={profile.total_reviews}
+            />
+          </div>
+        )}
 
         {/* infoSocials */}
         <div className="flex gap-[var(--sp-5)] mt-[var(--sp-3)]">
@@ -417,7 +427,7 @@ export default function BusinessProfileClient({
               className={styles.socialLink}
             >
               <div className={styles.socialBtn}>
-                <ExternalLink />
+                <FaFacebookF />
               </div>
               <span className={styles.socialLabel}>Facebook</span>
             </a>
@@ -430,7 +440,7 @@ export default function BusinessProfileClient({
               className={styles.socialLink}
             >
               <div className={styles.socialBtn}>
-                <ExternalLink />
+                <FaTiktok />
               </div>
               <span className={styles.socialLabel}>TikTok</span>
             </a>
@@ -438,7 +448,7 @@ export default function BusinessProfileClient({
         </div>
 
         {/* tabs */}
-        <div className={`flex gap-4 mt-[var(--sp-4)] ${styles.tabBtnMain}`}>
+        <div className={`flex gap-4 mt-[var(--sp-4)]  ${styles.tabBtnMain}`}>
           {TABS.map(({ id: tabId, label }, i) => (
             <button
               key={tabId}
@@ -455,14 +465,15 @@ export default function BusinessProfileClient({
       {/* ── Services Tab ── */}
       {activeTab === "services" && (
         /* servicesSection: bg #F5F2ED */
-        <div className="bg-[#F5F2ED] pb-[var(--sp-6)] relative z-[1]">
+        <div className=" pb-[var(--sp-6)] relative z-[1]">
           {/* servicesTop */}
           <div className="flex items-center justify-between px-[var(--sp-4)] pt-[var(--sp-4)] pb-[var(--sp-3)] md:px-[var(--sp-8)]">
             <h2 className="text-base font-bold text-[var(--color-text-primary)]">
               Services
             </h2>
             <button className="flex items-center gap-1 text-xs font-semibold text-[var(--color-primary)] bg-transparent border-none ">
-              <Zap height={14} width={14} className="w-2 h-2" /> Book in 20 seconds
+              <Zap height={14} width={14} className="w-2 h-2" /> Book in 20
+              seconds
             </button>
           </div>
 
@@ -494,6 +505,15 @@ export default function BusinessProfileClient({
               onChange={(e) => setSearchQuery(e.target.value)}
               className={styles.serviceSearchInput}
             />
+            {searchQuery && (
+              <button
+                className={styles.serviceSearchClear}
+                onClick={() => setSearchQuery("")}
+                aria-label="Clear search"
+              >
+                <X />
+              </button>
+            )}
           </div>
 
           {/* servicesList */}
@@ -503,12 +523,18 @@ export default function BusinessProfileClient({
                 const { label, variant, icon } = SECTION_CONFIG[s.paymentType];
                 return (
                   /* serviceCard: border #E2C97A, box-shadow rgba — kept in CSS module */
-                  <div key={s.id} className={styles.serviceCard}>
+                  <div
+                    key={s.id}
+                    className={`${styles.serviceCard}${expandedServiceId === s.id ? ` ${styles.serviceCardActive}` : ""}`}
+                  >
                     <div
                       className={`${styles.sectionHeader} ${variant === "amber" ? styles.sectionHeaderAmber : styles.sectionHeaderGray}`}
                     >
                       <span className={styles.sectionHeaderIcon}>{icon}</span>
-                      {label}
+                      <span className={styles.sectionHeaderLabel}>
+                        {" "}
+                        {label}
+                      </span>
                     </div>
                     <ServiceRow
                       service={s}

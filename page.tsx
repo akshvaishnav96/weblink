@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useMemo } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft, CheckCircle2, User, Phone, Building2,
   Smartphone, CreditCard, Lock, ChevronDown, Search,
@@ -61,8 +61,6 @@ export default function ConfirmBookingPage() {
 // ─── Inner component ───────────────────────────────────────────────────────
 function ConfirmBookingInner() {
   const router = useRouter();
-  const params = useParams<{ slug: string }>();
-  const pageSlug = params?.slug ?? "";
   const { selection, clearBooking } = useBookingStore();
   console.log("[ConfirmBooking] Store selection:", selection);
   console.log("[ConfirmBooking] Price from store:", { price: selection.price, discountedPrice: (selection as Record<string, unknown>).discountedPrice ?? "none" });
@@ -100,7 +98,6 @@ function ConfirmBookingInner() {
   const [paymentError,  setPaymentError]  = useState<string | null>(null);
   const [cardComplete,  setCardComplete]  = useState(false);
   const [savedBanner,   setSavedBanner]   = useState(false);
-  const [fieldErrors,   setFieldErrors]   = useState<{ firstName?: boolean; guestName?: boolean; phone?: boolean }>({});
   const countryRef = useRef<HTMLDivElement>(null);
   const searchRef  = useRef<HTMLInputElement>(null);
 
@@ -121,8 +118,8 @@ function ConfirmBookingInner() {
   useEffect(() => {
     if (!hydrated) return;
     if (confirmedPin) return;
-    if (!selection.serviceId) router.replace(pageSlug ? `/bookme/${pageSlug}` : "/bookme/not-found");
-  }, [hydrated, confirmedPin, selection.serviceId, router, pageSlug]);
+    if (!selection.serviceId) router.replace("/");
+  }, [hydrated, confirmedPin, selection.serviceId, router]);
 
   // ── Load saved details ────────────────────────────────────────────────────
   useEffect(() => {
@@ -364,12 +361,6 @@ function ConfirmBookingInner() {
   // ── Main confirm handler ───────────────────────────────────────────────────
   async function handleConfirm() {
     if (isProcessing) return;
-    const errors = {
-      firstName: !firstName.trim() || firstName.trim().length < 3,
-      guestName: forSomeoneElse && (!guestName.trim() || guestName.trim().length < 3),
-      phone: !phone.trim() || phone.replace(/\D/g, "").length < 9 || phone.replace(/\D/g, "").length > 11,
-    };
-    setFieldErrors(errors);
     const validationError = validateForm();
     if (validationError) { setPaymentError(validationError); return; }
     console.log("[ConfirmBooking] Payment method chosen:", payment);
@@ -447,8 +438,7 @@ function ConfirmBookingInner() {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <>
-    <div className={`${styles.page}${showModal ? ` ${styles.pageBlurred}` : ""}`}>
+    <div className={styles.page}>
       {/* Header */}
       <div className={styles.header}>
         <button className={styles.backBtn} onClick={() => router.back()} aria-label="Go back"><ArrowLeft /></button>
@@ -515,7 +505,7 @@ function ConfirmBookingInner() {
               <p className={styles.sectionSub}>So we can send your booking confirmation</p>
               <div className={styles.inputRow}>
                 <User className={styles.inputIcon} />
-                <input className={`${styles.input}${fieldErrors.firstName ? ` ${styles.inputError}` : ""}`} placeholder="First name" value={firstName} onChange={e => { setFirstName(e.target.value); setFieldErrors(prev => ({ ...prev, firstName: false })); }} autoComplete="given-name" />
+                <input className={styles.input} placeholder="First name" value={firstName} onChange={e => setFirstName(e.target.value)} autoComplete="given-name" />
               </div>
               <div className={styles.toggleRow} onClick={() => setForSomeoneElse(v => !v)}>
                 <button className={`${styles.toggle} ${forSomeoneElse ? styles.toggleOn : ""}`} onClick={e => { e.stopPropagation(); setForSomeoneElse(v => !v); }} aria-label="Booking for someone else" type="button">
@@ -527,7 +517,7 @@ function ConfirmBookingInner() {
                 <>
                   <div className={styles.inputRow}>
                     <User className={styles.inputIcon} />
-                    <input className={`${styles.input}${fieldErrors.guestName ? ` ${styles.inputError}` : ""}`} placeholder="Guest name (who's showing up)" value={guestName} onChange={e => { setGuestName(e.target.value); setFieldErrors(prev => ({ ...prev, guestName: false })); }} />
+                    <input className={styles.input} placeholder="Guest name (who's showing up)" value={guestName} onChange={e => setGuestName(e.target.value)} />
                   </div>
                   <p className={styles.guestHint}>This name will appear on the check-in list</p>
                 </>
@@ -575,7 +565,7 @@ function ConfirmBookingInner() {
                 </div>
                 <div className={styles.inputRow} style={{ flex: 1, marginBottom: 0 }}>
                   <Phone className={styles.inputIcon} />
-                  <input className={`${styles.input}${fieldErrors.phone ? ` ${styles.inputError}` : ""}`} placeholder="4XX XXX XXX" type="tel" inputMode="numeric" value={phone} onChange={e => { setPhone(e.target.value.replace(/\D/g, "")); setFieldErrors(prev => ({ ...prev, phone: false })); }} maxLength={11} autoComplete="tel" />
+                  <input className={styles.input} placeholder="4XX XXX XXX" type="tel" inputMode="numeric" value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g, ""))} maxLength={11} autoComplete="tel" />
                 </div>
               </div>
               <p className={styles.phoneNote}>
@@ -620,7 +610,9 @@ function ConfirmBookingInner() {
               )}
 
 
-              <input className={styles.inputNoIcon} placeholder="Email for receipt (optional)" type="email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" />
+              {payment !== "onsite" && (
+                <input className={styles.inputNoIcon} placeholder="Email for receipt (optional)" type="email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" />
+              )}
             </div>
 
             {/* Error */}
@@ -638,8 +630,8 @@ function ConfirmBookingInner() {
               <div className={styles.ctaWrap}>
                 <button
                   type="button"
-                  className={`${styles.ctaBtn} `}
-                  // disabled={!canConfirm || isProcessing}
+                  className={`${styles.ctaBtn} ${(!canConfirm || isProcessing) ? styles.ctaBtnDisabled : ""}`}
+                  disabled={!canConfirm || isProcessing}
                   onClick={handleConfirm}
                 >
                   {isProcessing ? <><span className={styles.btnSpinner} />Processing…</> : getCtaLabel()}
@@ -653,9 +645,7 @@ function ConfirmBookingInner() {
 
       
 
-    </div>
-
-      {/* Success modal — outside blurred div so it stays sharp */}
+      {/* Success modal */}
       {showModal && (
         <AppDownloadModal
           name={firstName}
@@ -667,7 +657,7 @@ function ConfirmBookingInner() {
            if (confirmedBarberSlug) {
               router.push(`/bookme/${confirmedBarberSlug}`);
             } else {
-                            router.push(`/bookme/${confirmedBarberSlug}`);
+              router.push(`/bookme/notfound`);
             }
           }}
           onSaveDetails={() => {
@@ -688,6 +678,6 @@ function ConfirmBookingInner() {
           }}
         />
       )}
-    </>
+    </div>
   );
 }
