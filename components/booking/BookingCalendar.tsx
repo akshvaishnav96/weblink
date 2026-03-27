@@ -28,11 +28,9 @@ export default function BookingCalendar({ selectedDate, onDateSelect }: BookingC
 
   const days = getDaysInMonth(viewYear, viewMonth);
 
-  // Format: "March, 2026"
   const monthLabel = new Date(viewYear, viewMonth).toLocaleString("default", { month: "long" });
   const monthName  = `${monthLabel}, ${viewYear}`;
 
-  // Today's weekday index (Mon=0 … Sun=6) — used to amber-highlight that column header
   const todayWeekdayIndex = (today.getDay() + 6) % 7;
   const isCurrentViewMonth =
     viewMonth === today.getMonth() && viewYear === today.getFullYear();
@@ -62,33 +60,36 @@ export default function BookingCalendar({ selectedDate, onDateSelect }: BookingC
   };
 
   return (
-    <div className={styles.calendar}>
+    <div className="pt-6 px-4 pb-5 border-b border-[#F0EFED] bg-white md:pt-7 md:px-8 md:pb-6 lg:pt-8 lg:px-10 lg:pb-7">
+      {/* calendarTitle: uses --font-heading custom font var — kept in CSS module */}
       <h2 className={styles.calendarTitle}>Book Appointment</h2>
 
-      <div className={styles.nav}>
+      <div className="flex items-center justify-between mb-5 px-1 md:mb-[22px]">
+        {/* navBtn: :hover + svg child selector — kept in CSS module */}
         <button className={styles.navBtn} onClick={prevMonth} aria-label="Previous month">
           <ChevronLeft />
         </button>
-        <span className={styles.navMonth}>{monthName}</span>
+        <span style={{fontWeight:"bold"}} className="text-[15px] font-black text-[#1a1a1a] tracking-[0.01em] md:text-[16px]">{monthName}</span>
         <button className={styles.navBtn} onClick={nextMonth} aria-label="Next month">
           <ChevronRight />
         </button>
       </div>
 
-      <div className={styles.weekdays}>
+      <div className="grid grid-cols-7 mb-1">
         {DAYS.map((d, i) => (
           <div
             key={d}
-            className={`${styles.weekday}${isCurrentViewMonth && i === todayWeekdayIndex ? ` ${styles.weekdayToday}` : ""}`}
+            style={{fontWeight:"bolder"}}
+            className={`text-center text-[11px] font-bold py-[6px] tracking-[0.02em] md:text-[12px] lg:text-[13px] lg:py-2 ${isCurrentViewMonth && i === todayWeekdayIndex ? "text-[#B8860B]" : "text-[#aaa]"}`}
           >
             {d}
           </div>
         ))}
       </div>
 
-      <div className={styles.grid}>
+      <div className="grid grid-cols-7">
         {days.map((day, i) => {
-          if (!day) return <div key={`e-${i}`} className={styles.cell} />;
+          if (!day) return <div key={`e-${i}`} className="flex items-center justify-center py-[6px]" />;
 
           const past     = isPast(day);
           const selected = isSelected(day);
@@ -102,7 +103,7 @@ export default function BookingCalendar({ selectedDate, onDateSelect }: BookingC
           ].filter(Boolean).join(" ");
 
           return (
-            <div key={`d-${day}`} className={styles.cell}>
+            <div key={`d-${day}`} className="flex items-center justify-center py-[6px]">
               <button
                 disabled={past}
                 onClick={() => onDateSelect(new Date(viewYear, viewMonth, day))}

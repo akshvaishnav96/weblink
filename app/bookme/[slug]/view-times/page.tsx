@@ -227,11 +227,12 @@ export default function ViewTimesPage({
 
   if (profileLoading) {
     return (
-      <div className={styles.page}>
+      <div className="min-h-screen bg-white">
         <BackHeader title="Select Your Expert" />
-        <div className={styles.centeredMsg}>
+        <div className="flex flex-col items-center justify-center min-h-[50vh] gap-[16px]">
+          {/* spinner: @keyframes — kept in CSS module */}
           <div className={styles.spinner} />
-          <p className={styles.msgText}>Loading…</p>
+          <p className="text-[13px] text-[#999]">Loading…</p>
         </div>
       </div>
     );
@@ -239,11 +240,14 @@ export default function ViewTimesPage({
 
   if (profileError) {
     return (
-      <div className={styles.page}>
+      <div className="min-h-screen bg-white">
         <BackHeader title="Select Your Expert" />
-        <div className={styles.centeredMsg}>
-          <p className={styles.errorText}>{profileError}</p>
-          <button onClick={() => router.back()} className={styles.backBtn}>
+        <div className="flex flex-col items-center justify-center min-h-[50vh] gap-[16px]">
+          <p className="text-[13px] text-[#999] text-center px-[16px]">{profileError}</p>
+          <button
+            onClick={() => router.back()}
+            className="py-[10px] px-[24px] rounded-[999px] bg-[#B8860B] text-white text-[13px] font-semibold cursor-pointer border-none"
+          >
             Go back
           </button>
         </div>
@@ -252,7 +256,7 @@ export default function ViewTimesPage({
   }
 
   return (
-    <div className={styles.page}>
+    <div className="min-h-screen bg-white">
       <BackHeader title="Select Your Expert" />
 
       {/* Expert selector */}
@@ -266,10 +270,10 @@ export default function ViewTimesPage({
       />
 
       {/* Progress line + selected expert chip */}
-      <div
-        className={`${styles.progressLine}${slotsLoading ? ` ${styles.progressLineLoading}` : ""}`}
-      />
-      <div className={styles.selectedExpertRow}>
+      {/* progressLineLoading: @keyframes + gradient — kept in CSS module */}
+      <div className={`h-[2px] w-full m-0 ${slotsLoading ? styles.progressLineLoading : "bg-[#B8860B]"}`} />
+      <div className="flex justify-center py-[14px] px-[16px] pb-[4px]">
+        {/* selectedExpertChip: svg child selector — kept in CSS module */}
         <div className={styles.selectedExpertChip}>
           <User size={12} />
           <span>{selectedExpertName}</span>
@@ -286,15 +290,16 @@ export default function ViewTimesPage({
       />
 
       {/* Time slots */}
-      <div className={styles.timeSlotsSection}>
+      {/* sectionTitle: font-family: var(--font-heading) — kept in CSS module */}
+      <div className="py-[24px] px-[16px] pb-[20px] border-b border-[#F0EFED] md:py-[28px] md:px-[32px] md:pb-[24px] lg:py-[32px] lg:px-[40px] lg:pb-[28px]">
         <p className={styles.sectionTitle}>Choose Time</p>
         {slotsLoading ? (
-          <div className={styles.slotsLoading}>
+          <div className="flex items-center gap-[12px] py-[16px]">
             <div className={styles.spinner} />
-            <span className={styles.msgText}>Checking availability…</span>
+            <span className="text-[13px] text-[#999]">Checking availability…</span>
           </div>
         ) : slots.length > 0 ? (
-          <div className={styles.timeSlotsGrid}>
+          <div className="grid grid-cols-3 sm:grid-cols-3 gap-[10px] md:gap-[12px]">
             {slots.map((slot) => (
               <TimeSlotButton
                 key={slot}
@@ -305,14 +310,15 @@ export default function ViewTimesPage({
             ))}
           </div>
         ) : (
-          <p className={styles.noSlots}>
+          <p className="text-[13px] text-[#999] text-center py-[20px] italic">
             No availability for this date — try another day
           </p>
         )}
       </div>
 
       {/* Additional Notes */}
-      <div className={styles.formSection}>
+      {/* formLabel: custom font — kept in CSS module; formTextarea: ::placeholder + :focus — kept in CSS module */}
+      <div className="py-[16px] px-[16px] pb-[4px] md:px-[32px] lg:px-[40px]">
         <label className={styles.formLabel}>Additional Notes (Optional)</label>
         <textarea
           className={styles.formTextarea}
@@ -323,10 +329,9 @@ export default function ViewTimesPage({
         />
       </div>
 
-     
-
       {/* Book button */}
-      <div className={styles.ctaSection}>
+      {/* ctaBtn: :hover — kept in CSS module */}
+      <div className="py-[20px] px-[16px] pb-[12px] md:py-[24px] md:px-[32px] md:pb-[16px] lg:py-[24px] lg:px-[40px] lg:pb-[20px]">
         <button
           onClick={() => {
             if (!canBook) return;

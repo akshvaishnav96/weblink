@@ -43,14 +43,6 @@
   
 }
 
-.poweredBy {
-  text-align: center;
-  font-size: 9px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--color-text-muted);
-  padding-top: 4px;
-}
 
 .active .icon       { color: var(--color-primary); }
 .active .icon svg   { stroke-width: 2.1; }

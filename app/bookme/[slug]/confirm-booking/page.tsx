@@ -5,6 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import {
   ArrowLeft, CheckCircle2, User, Phone, Building2,
   Smartphone, CreditCard, Lock, ChevronDown, Search,
+  Check,
 } from "lucide-react";
 import {
   Elements,
@@ -475,7 +476,7 @@ function ConfirmBookingInner() {
 
         {/* Cancellation policy */}
         <div className={styles.cancelBox}>
-          <CheckCircle2 className={styles.cancelIcon} />
+          <Check className={styles.cancelIcon} />
           <div>
             <p className={styles.cancelTitle}>Free cancellation up to 12 hours before</p>
             <ul className={styles.cancelList}>
@@ -503,7 +504,7 @@ function ConfirmBookingInner() {
             {/* Saved details banner */}
             {savedBanner && (
               <div className={styles.savedBanner}>
-                <CheckCircle2 size={15} className={styles.savedBannerIcon} />
+                <Check size={25} className={styles.savedBannerIcon} />
                 <span className={styles.savedBannerText}>Your details are pre-filled from your last booking.</span>
                 <button type="button" className={styles.savedBannerClear} onClick={clearSavedDetails}>Clear</button>
               </div>
@@ -515,7 +516,7 @@ function ConfirmBookingInner() {
               <p className={styles.sectionSub}>So we can send your booking confirmation</p>
               <div className={styles.inputRow}>
                 <User className={styles.inputIcon} />
-                <input className={`${styles.input}${fieldErrors.firstName ? ` ${styles.inputError}` : ""}`} placeholder="First name" value={firstName} onChange={e => { setFirstName(e.target.value); setFieldErrors(prev => ({ ...prev, firstName: false })); }} autoComplete="given-name" />
+                <input className={`${styles.input}${fieldErrors.firstName ? ` ${styles.inputError}` : ""}`} placeholder="Enter your name" value={firstName} onChange={e => { setFirstName(e.target.value); setFieldErrors(prev => ({ ...prev, firstName: false })); }} autoComplete="given-name" />
               </div>
               <div className={styles.toggleRow} onClick={() => setForSomeoneElse(v => !v)}>
                 <button className={`${styles.toggle} ${forSomeoneElse ? styles.toggleOn : ""}`} onClick={e => { e.stopPropagation(); setForSomeoneElse(v => !v); }} aria-label="Booking for someone else" type="button">

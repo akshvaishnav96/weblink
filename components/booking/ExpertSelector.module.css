@@ -19,6 +19,7 @@
   cursor: pointer;
   transition: all 0.25s ease;
   border: 2px solid transparent;
+  aspect-ratio: 1 / 1.2;
 }
 
 .card.active {
@@ -30,30 +31,3 @@
   transform: translateY(-2px);
 }
 
-.avatarImg {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  object-fit: cover;
-  margin: 0 auto 8px;
-  display: block;
-}
-
-.placeholder {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: #e0e0e0;
-  color: #777;
-  font-size: 22px;
-  margin: 0 auto 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.name {
-  font-size: 14px;
-  color: #333;
-  margin: 0;
-}

@@ -28,14 +28,14 @@ function ExpertAvatar({ picture, initials }: { picture?: string; initials: strin
         alt={initials}
         width={60}
         height={60}
-        className={styles.avatarImg}
+        className="w-[60px] h-[60px] rounded-full object-cover mx-auto mb-2 block"
         onError={() => setImgFailed(true)}
       />
     );
   }
 
   return (
-    <div className={styles.placeholder}>
+    <div className="w-[60px] h-[60px] rounded-full bg-[#e0e0e0] text-[#777] text-[22px] mx-auto mb-2 flex items-center justify-center">
       {initials}
     </div>
   );
@@ -49,10 +49,10 @@ export default function ExpertSelector({ experts, selectedId, onSelect }: Expert
         onClick={() => onSelect("anyone")}
         className={`${styles.card}${selectedId === "anyone" ? ` ${styles.active}` : ""}`}
       >
-        <div className={styles.placeholder}>
+        <div className="w-[60px] h-[60px] rounded-full bg-[#e0e0e0] text-[#777] text-[22px] mx-auto mb-2 flex items-center justify-center">
           <User size={22} strokeWidth={1.5} />
         </div>
-        <p className={styles.name}>Anyone</p>
+        <p className="text-[14px] text-[#333] m-0">Anyone</p>
       </button>
 
       {/* Named experts */}
@@ -63,7 +63,7 @@ export default function ExpertSelector({ experts, selectedId, onSelect }: Expert
           className={`${styles.card}${selectedId === expert.id ? ` ${styles.active}` : ""}`}
         >
           <ExpertAvatar picture={expert.picture} initials={expert.initials} />
-          <p className={styles.name}>{expert.name}</p>
+          <p className="text-[14px] text-[#333] m-0">{expert.name}</p>
         </button>
       ))}
     </div>

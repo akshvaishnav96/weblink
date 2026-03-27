@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/bookme/",
       disallow: ["/admin/", "/dashboard/", "/api/"],
     },
-    sitemap: "https://valetvaultstaging.24livehost.com/bookme/sitemap.xml",
+    sitemap: `${(process.env.NEXT_PUBLIC_SITE_URL ?? "https://valetvault.com.au").replace(/\/$/, "")}/bookme/sitemap.xml`,
   };
 }

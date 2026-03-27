@@ -15,43 +15,47 @@ const TIER_CONFIG: Record<RewardTier, { icon: string; color: string; next: Rewar
 };
 
 export default function RewardsHero({ points, tier, nextTierPoints }: RewardsHeroProps) {
-  const config   = TIER_CONFIG[tier];
-  const progress = Math.min((points / nextTierPoints) * 100, 100);
+  const config    = TIER_CONFIG[tier];
+  const progress  = Math.min((points / nextTierPoints) * 100, 100);
   const remaining = Math.max(nextTierPoints - points, 0);
 
   return (
     <div className={styles.hero}>
+      {/* inner: 3-stop dark gradient — kept in CSS module */}
       <div className={styles.inner}>
         {/* Tier badge */}
-        <div className={styles.tier}>
-          <span className={styles.tierIcon}>{config.icon}</span>
-          <span className={styles.tierLabel} style={{ color: config.color }}>
+        <div className="flex items-center gap-[var(--sp-2)]">
+          <span className="text-[20px]">{config.icon}</span>
+          <span className="text-[var(--text-sm)] font-bold tracking-[0.5px]" style={{ color: config.color }}>
             {tier} Member
           </span>
         </div>
 
         {/* Points */}
-        <div className={styles.pointsWrap}>
-          <span className={styles.points}>{points.toLocaleString()}</span>
-          <span className={styles.pointsLabel}>pts</span>
+        <div className="flex items-baseline gap-[6px]">
+          <span className="text-[56px] font-[800] text-white leading-none tracking-[-2px] md:text-[72px]">
+            {points.toLocaleString()}
+          </span>
+          <span className="text-[var(--text-md)] font-semibold text-white/55">pts</span>
         </div>
 
         {/* Progress to next tier */}
         {config.next && (
-          <div className={styles.progressArea}>
-            <div className={styles.progressBar}>
+          <div className="w-full max-w-[280px] md:max-w-[360px]">
+            <div className="h-[6px] bg-white/[.15] rounded-full overflow-hidden mb-[var(--sp-2)]">
               <div
-                className={styles.progressFill}
+                className="h-full bg-gradient-to-r from-[#B8860B] to-[#E2B860] rounded-full transition-[width] duration-[600ms] ease-in-out"
                 style={{ width: `${progress}%` }}
               />
             </div>
+            {/* progressText: strong child selector — kept in CSS module */}
             <p className={styles.progressText}>
               <strong>{remaining.toLocaleString()} pts</strong> to {config.next}
             </p>
           </div>
         )}
         {!config.next && (
-          <p className={styles.maxTier}>You&apos;ve reached the highest tier!</p>
+          <p className="text-[12px] text-white/55 italic">You&apos;ve reached the highest tier!</p>
         )}
       </div>
     </div>

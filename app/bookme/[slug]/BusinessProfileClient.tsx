@@ -6,16 +6,13 @@ import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Globe,
-  Instagram,
   MapPin,
   Zap,
   Search,
   Clock,
   Video,
-  ExternalLink,
   CreditCard,
   Home,
-  User,
   Car,
   X,
 } from "lucide-react";
@@ -30,7 +27,8 @@ import {
 import type { Service, StaffAvailability } from "@/types";
 import styles from "./page.module.css";
 import { LuFootprints, LuWallet } from "react-icons/lu";
-import { FaFacebookF,FaTiktok } from "react-icons/fa";
+import { FaFacebookF, FaTiktok, FaInstagram } from "react-icons/fa";
+import { FaGoogle } from "react-icons/fa6";
 
 type Tab = "services" | "portfolio" | "about";
 type ServiceMode = "onsite" | "mobile";
@@ -236,43 +234,33 @@ export default function BusinessProfileClient({
     PaymentType,
     { label: string; variant: "amber" | "gray"; icon: React.ReactNode }
   > = {
-    PAY_ONLINE: { label: "PAY ONLINE", variant: "amber", icon: <CreditCard /> },
-    PAY_ONSITE: { label: "PAY ONSITE", variant: "amber", icon: <LuWallet /> },
+    PAY_ONLINE: {
+      label: "PAY ONLINE",
+      variant: "amber",
+      icon: <CreditCard size={13} />,
+    },
+    PAY_ONSITE: {
+      label: "PAY ONSITE",
+      variant: "amber",
+      icon: <LuWallet size={13} />,
+    },
     PAY_ONLINE_OR_ONSITE: {
       label: "",
       variant: "amber",
       icon: (
         <>
-          <CreditCard />
-          <span
-            style={{
-              fontWeight: 700,
-              letterSpacing: "0.06em",
-              fontSize: ".875rem",
-              marginLeft: 4,
-            }}
-          >
-            PAY ONLINE
-          </span>
-          <span style={{ margin: "0 5px", opacity: 0.35 }}>·</span>
-          <LuWallet />
-          <span
-            style={{
-              fontWeight: 700,
-              letterSpacing: "0.06em",
-              fontSize: ".875rem",
-              marginLeft: 4,
-            }}
-          >
-            PAY ONSITE
-          </span>
+          <CreditCard size={13} />
+          <span style={{ marginLeft: 4 }}>PAY ONLINE</span>
+          <span style={{ margin: "0 4px", opacity: 0.35 }}>·</span>
+          <LuWallet size={13} />
+          <span style={{ marginLeft: 4 }}>PAY ONSITE</span>
         </>
       ),
     },
     WALK_IN_ONLY: {
       label: "WALK-IN ONLY",
       variant: "gray",
-      icon: <LuFootprints width={1} height={1} />,
+      icon: <LuFootprints size={13} />,
     },
   };
 
@@ -322,20 +310,30 @@ export default function BusinessProfileClient({
             : undefined
         }
       >
-        {/* heroCenter — CSS module: z-index:5 must sit above ::after z-index:1 */}
-        <div className={styles.heroCenter}>
-          <p className={styles.heroName}>{profile.business_name}</p>
-          {profile.business_type && (
-            <p className={styles.heroType}>{profile.business_type}</p>
-          )}
-        </div>
+        {/* heroName / heroType sit directly in hero flex container — z-[5] above ::after z-index:1 */}
+        <p className={`${styles.heroName} relative z-[5]`}>
+          {profile.business_name}
+        </p>
+        {profile.business_type && (
+          <p className={`${styles.heroType} relative z-[5]`}>
+            {profile.business_type}
+          </p>
+        )}
 
         {/* heroSeats: text-shadow, exact gap 6px, font-size 13px — kept in CSS module */}
         {hasAvailableSlots && (
-          <div className={styles.heroSeats}>
-            {/* heroSeatsDot: box-shadow ring rgba — kept in CSS module */}
-            <span className={styles.heroSeatsDot} />
-            Seats available today
+          <div className={`${styles.heroSeats} flex items-center gap-2`}>
+            <div
+              style={{
+                height: "8px",
+                width: "8px",
+                background: "#0eaf0e",
+                borderRadius: "50%",
+                boxShadow: "0px 0px 10px green",
+              }}
+              className="w-2 h-2 min-w-2 min-h-2 bg-green-500"
+            ></div>
+            <span>Seats available today</span>
           </div>
         )}
       </div>
@@ -346,21 +344,13 @@ export default function BusinessProfileClient({
         border-radius: 20px 20px 0 0 — Tailwind rounded-t-[20px] works but
         grouping with the negative top in same rule; kept in CSS module for precision.
       */}
-      <div className={styles.info}>
+      <div
+        style={{ background: "white" }}
+        className="p-[var(--sp-4)] border-b border-[var(--color-border-light)] relative top-[-1.6rem] mb-[-1.6rem] bg-white rounded-t-[20px] z-[2] w-full md:pt-[var(--sp-5)] md:px-[var(--sp-8)] md:pb-[var(--sp-6)] md:mx-auto md:border-b-0"
+      >
         {/* infoName: exact 22px, font-weight 700, letter-spacing -0.4px */}
         <h1 className="text-[22px] font-bold text-[var(--color-text-primary)] tracking-[-0.4px] mb-1 md:text-[28px]">
-          {(() => {
-            const name = profile.business_display_name ?? profile.business_name;
-            const parts = (profile.business_address ?? "")
-              .split(",")
-              .map((s) => s.trim());
-            const suburb = parts[1] ?? "";
-            const state = parts[2]?.split(" ")[0] ?? "";
-            const location = [suburb, state].filter(Boolean).join(" ");
-            return location
-              ? `${name} \u2014 Walk-ins Welcome, ${location}`
-              : name;
-          })()}
+          {profile.business_display_name ?? profile.business_name}
         </h1>
 
         {/* infoAddress: gap 4px, 13px, margin-top 3px — kept in CSS module (svg color token) */}
@@ -373,7 +363,7 @@ export default function BusinessProfileClient({
             }
             target="_blank"
             rel="noreferrer"
-            className={`${styles.infoAddress} text-[22px]`}
+            className={styles.infoAddress}
           >
             <MapPin />{" "}
             <span className="text-[0.875rem]">{profile.business_address}</span>
@@ -403,7 +393,9 @@ export default function BusinessProfileClient({
               <div className={styles.socialBtn}>
                 <Globe />
               </div>
-              <span className={styles.socialLabel}>Website</span>
+              <span className="text-[10px] text-[var(--color-text-muted)]">
+                Website
+              </span>
             </a>
           )}
           {profile.instagram_url && (
@@ -414,9 +406,11 @@ export default function BusinessProfileClient({
               className={styles.socialLink}
             >
               <div className={styles.socialBtn}>
-                <Instagram />
+                <FaInstagram />
               </div>
-              <span className={styles.socialLabel}>Instagram</span>
+              <span className="text-[10px] text-[var(--color-text-muted)]">
+                Instagram
+              </span>
             </a>
           )}
           {profile.facebook_url && (
@@ -429,7 +423,9 @@ export default function BusinessProfileClient({
               <div className={styles.socialBtn}>
                 <FaFacebookF />
               </div>
-              <span className={styles.socialLabel}>Facebook</span>
+              <span className="text-[10px] text-[var(--color-text-muted)]">
+                Facebook
+              </span>
             </a>
           )}
           {profile.tiktok_url && (
@@ -442,14 +438,34 @@ export default function BusinessProfileClient({
               <div className={styles.socialBtn}>
                 <FaTiktok />
               </div>
-              <span className={styles.socialLabel}>TikTok</span>
+              <span className="text-[10px] text-[var(--color-text-muted)]">
+                TikTok
+              </span>
+            </a>
+          )}
+          {profile.google_url && (
+            <a
+              href={toAbsoluteUrl(profile.google_url)}
+              target="_blank"
+              rel="noreferrer"
+              className={styles.socialLink}
+            >
+              <div className={styles.socialBtn}>
+                <FaGoogle />
+              </div>
+              <span className="text-[10px] text-[var(--color-text-muted)]">
+                Website
+              </span>
             </a>
           )}
         </div>
 
         {/* tabs */}
-        <div className={`flex gap-4 mt-[var(--sp-4)]  ${styles.tabBtnMain}`}>
-          {TABS.map(({ id: tabId, label }, i) => (
+        <div
+          style={{ gap: "0.5rem" }}
+          className="flex items-center justify-center gap-2 mt-[var(--sp-4)] pb-0"
+        >
+          {TABS.map(({ id: tabId, label }) => (
             <button
               key={tabId}
               onClick={() => setActiveTab(tabId)}
@@ -479,15 +495,43 @@ export default function BusinessProfileClient({
 
           {/* modeToggle: bg #EDE8E1, padding 4px, border-radius 999px — kept in CSS module */}
           {hasMobileServices && (
-            <div className={styles.modeToggle}>
+            <div className="flex mx-[var(--sp-4)] mb-[var(--sp-3)] bg-[#EDE8E1] rounded-[12px] p-[4px]">
               <button
-                className={`${styles.modeBtn}${serviceMode === "onsite" ? ` ${styles.modeBtnActive}` : ""}`}
+                className="flex-1 flex items-center justify-center gap-[6px] py-[9px] px-3 rounded-[9px] border-0 text-[13px] cursor-pointer transition-all duration-[180ms]"
+                style={
+                  serviceMode === "onsite"
+                    ? {
+                        backgroundColor: "#fff",
+                        fontWeight: 600,
+                        color: "#1a1a1a",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.12)",
+                      }
+                    : {
+                        backgroundColor: "transparent",
+                        fontWeight: 500,
+                        color: "#7a6f63",
+                      }
+                }
                 onClick={() => setServiceMode("onsite")}
               >
-                <Home size={13} /> Walk-in
+                <Home size={13} /> Onsite
               </button>
               <button
-                className={`${styles.modeBtn}${serviceMode === "mobile" ? ` ${styles.modeBtnActive}` : ""}`}
+                className="flex-1 flex items-center justify-center gap-[6px] py-[9px] px-3 rounded-[9px] border-0 text-[13px] cursor-pointer transition-all duration-[180ms]"
+                style={
+                  serviceMode === "mobile"
+                    ? {
+                        backgroundColor: "#fff",
+                        fontWeight: 600,
+                        color: "#1a1a1a",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.12)",
+                      }
+                    : {
+                        backgroundColor: "transparent",
+                        fontWeight: 500,
+                        color: "#7a6f63",
+                      }
+                }
                 onClick={() => setServiceMode("mobile")}
               >
                 <Car size={13} /> Mobile
@@ -522,19 +566,26 @@ export default function BusinessProfileClient({
               filteredServices.map((s) => {
                 const { label, variant, icon } = SECTION_CONFIG[s.paymentType];
                 return (
-                  /* serviceCard: border #E2C97A, box-shadow rgba — kept in CSS module */
                   <div
                     key={s.id}
-                    className={`${styles.serviceCard}${expandedServiceId === s.id ? ` ${styles.serviceCardActive}` : ""}`}
+                    className={
+                      expandedServiceId === s.id
+                        ? "border border-[rgba(167,166,166,0.358)] rounded-[12px] overflow-hidden bg-[#faf7f2] shadow-[0_0px_5px_0_rgba(201,138,1,0.849)] transition-[border-color] duration-[150ms]"
+                        : "border border-[rgba(167,166,166,0.358)] rounded-[12px] overflow-hidden bg-[#faf7f2] shadow-[0_1px_4px_rgba(184,134,11,0.07)] transition-[border-color] duration-[150ms]"
+                    }
                   >
                     <div
-                      className={`${styles.sectionHeader} ${variant === "amber" ? styles.sectionHeaderAmber : styles.sectionHeaderGray}`}
+                      style={{ fontWeight: "bolder", fontSize: "0.865rem" }}
+                      className={
+                        variant === "amber"
+                          ? "flex items-center gap-[6px] px-[14px] py-[6px] text-[11px] font-bold tracking-[0.08em] uppercase bg-[#FAF5EB] border-b border-[#EDE0BF] text-[#9B6B0A]"
+                          : "flex items-center gap-[6px] px-[14px] py-[6px] text-[11px] font-bold tracking-[0.08em] uppercase bg-[#F5F4F1] border-b border-[#E8E6E2] text-[#888888]"
+                      }
                     >
-                      <span className={styles.sectionHeaderIcon}>{icon}</span>
-                      <span className={styles.sectionHeaderLabel}>
-                        {" "}
-                        {label}
+                      <span className="inline-flex items-center flex-shrink-0">
+                        {icon}
                       </span>
+                      <span>{label}</span>
                     </div>
                     <ServiceRow
                       service={s}
@@ -576,12 +627,11 @@ export default function BusinessProfileClient({
           )}
           {/* portfolioGrid: gap 2px, 3-col — kept in CSS module */}
           {profile.portfolio?.images?.length > 0 && (
-            <div className={styles.portfolioGrid}>
+            <div className="grid grid-cols-3 gap-[2px] mt-[var(--sp-3)]">
               {profile.portfolio.images.map((img) => (
                 <div
                   key={img.id}
-                  className={styles.portfolioImg}
-                  style={{ position: "relative" }}
+                  className="w-full aspect-square block relative"
                 >
                   <Image
                     src={img.portfolio_url}
@@ -678,7 +728,7 @@ export default function BusinessProfileClient({
                         alt={member.name}
                         width={60}
                         height={60}
-                        className={styles.teamAvatar}
+                        className="w-[60px] h-[60px] rounded-full object-cover"
                       />
                     ) : (
                       <BarberAvatar
@@ -691,7 +741,9 @@ export default function BusinessProfileClient({
                     </p>
                     {/* teamBio: 11px — kept in CSS module (non-standard size) */}
                     {member.bio && (
-                      <p className={styles.teamBio}>{member.bio}</p>
+                      <p className="text-[11px] text-[var(--color-text-muted)] leading-[1.5]">
+                        {member.bio}
+                      </p>
                     )}
                   </div>
                 ))}

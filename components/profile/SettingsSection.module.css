@@ -1,18 +1,9 @@
-.section { padding: 0 var(--sp-4); margin-top: var(--sp-5); }
-.sectionTitle {
-  font-size: 12px; font-weight: 600; color: var(--color-text-muted);
-  text-transform: uppercase; letter-spacing: 0.8px;
-  margin-bottom: var(--sp-2); padding-left: 2px;
-}
-.card { background: var(--color-white); border: 1.5px solid var(--color-border); border-radius: var(--radius-lg); overflow: hidden; }
-
 .row {
   display: flex; align-items: center; gap: var(--sp-3);
   padding: 14px var(--sp-4); width: 100%; background: transparent;
   border: none; cursor: pointer; text-align: left; transition: background 0.12s;
 }
 .row:hover { background: var(--color-surface); }
-.rowBordered { border-bottom: 1px solid var(--color-border-light); }
 .rowDanger:hover { background: #FFF5F5; }
 
 .iconWrap { width: 34px; height: 34px; border-radius: var(--radius-md); background: var(--color-surface); border: 1px solid var(--color-border-light); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -21,17 +12,10 @@
 .iconWrapDanger svg { color: #D9534F; }
 
 .rowLabel { flex: 1; font-size: var(--text-sm); font-weight: 500; color: var(--color-text-primary); }
+/* rowDanger .rowLabel: descendant selector — kept in CSS module */
 .rowDanger .rowLabel { color: #D9534F; }
-.rowValue { font-size: 12px; color: var(--color-text-muted); margin-right: var(--sp-1); }
-.chevron  { width: 14px; height: 14px; color: var(--color-text-muted); flex-shrink: 0; }
 
 @media (min-width: 768px) {
-  .section { padding: 0 var(--sp-8); }
-  .sectionTitle { font-size: var(--text-sm); }
   .row { padding: 16px var(--sp-5); }
   .rowLabel { font-size: var(--text-base); }
-  .rowValue { font-size: var(--text-sm); }
-}
-@media (min-width: 1024px) {
-  .section { padding: 0 var(--content-padding); max-width: var(--content-max); margin-left: auto; margin-right: auto; }
 }

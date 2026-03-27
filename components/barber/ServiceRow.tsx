@@ -18,7 +18,7 @@ function getTodayLabel(): string {
 
 interface ServiceRowProps {
   service: Service;
-  businessId: string;        // numeric business ID (profile.id)
+  businessId: string;
   barberSlug?: string;
   businessName?: string;
   businessAddress?: string;
@@ -84,23 +84,20 @@ export default function ServiceRow({ service, businessId, barberSlug = "", busin
 
   const isWalkIn = service.paymentType === "WALK_IN_ONLY";
 
-  // Only show staff section if there are actual staff entries
   const hasStaff =
     Array.isArray(service.staffAvailability) && service.staffAvailability.length > 0;
 
-  // Only show the "Today — date" header for non-walk-in services that have staff
   const showDateHeader = !isWalkIn && hasStaff;
-
-  // Show "View other times" for all services including walk-in
   const showViewMore = true;
 
   return (
     <div className={styles.row}>
       {/* Badge */}
       {!hideBadge && (
-        <div
-          className={`${styles.badge}${isWalkIn ? ` ${styles.badgeWalkin}` : ` ${styles.badgePay}`}`}
-        >
+        <div className={isWalkIn
+          ? "flex items-center gap-[5px] pt-3 px-[18px] pb-1 text-[10px] font-semibold tracking-[0.05em] uppercase text-[#a09080] md:pt-[var(--sp-3)] md:px-[var(--sp-6)] md:pb-1 lg:pt-[var(--sp-4)] lg:px-[var(--sp-8)] lg:pb-[6px]"
+          : "flex items-center gap-[5px] pt-3 px-[18px] pb-1 text-[10px] font-bold tracking-[0.07em] uppercase text-[#b08040] md:pt-[var(--sp-3)] md:px-[var(--sp-6)] md:pb-1 lg:pt-[var(--sp-4)] lg:px-[var(--sp-8)] lg:pb-[6px]"
+        }>
           {isWalkIn ? (
             <>
               <svg
@@ -117,83 +114,84 @@ export default function ServiceRow({ service, businessId, barberSlug = "", busin
           ) : (
             <>
               <span>🏠</span>
-              <span>
-                {getPaymentLabel(service.paymentType)}
-                </span>
+              <span>{getPaymentLabel(service.paymentType)}</span>
             </>
           )}
         </div>
       )}
 
-      {/* Main row */}
+      {/* Main row — :hover kept in CSS module */}
       <div
         className={`${styles.main} ${styles.mainClickable}`}
         onClick={handleToggle}
       >
-        <div className={styles.left}>
-          <div className={styles.nameRow}>
+        <div className="flex-1 min-w-0 pr-3">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* name: --font-heading custom font — kept in CSS module */}
             <span className={styles.name}>{service.name}</span>
             {service.isMostPopular && (
-              <span className={styles.popular}>🔥 Most Popular</span>
+              <span className="inline-flex items-center gap-[3px] text-[10px] font-semibold bg-[#fff0d0] text-[#9a6a08] py-[2px] px-[9px] rounded-full border border-[#f0d88a]">🔥 Most Popular</span>
             )}
           </div>
+          {/* duration: svg child selector — kept in CSS module */}
           <div className={styles.duration}>
             <Clock />
             {formatDuration(service.duration)}
           </div>
           {service.nextAvailable && (
-            <p className={styles.avail}>{service.nextAvailable}</p>
+            <p className="text-[12px] font-medium text-[#c8901a] mt-1 md:text-[13px]">{service.nextAvailable}</p>
           )}
           {isWalkIn && !expanded && (
-            <p className={styles.walkinHint}>Tap to view worker hours</p>
+            <p className="text-sm text-[#a09080] italic mt-[3px]">Tap to view worker hours</p>
           )}
         </div>
 
-        <div className={styles.right}>
-          <div className={styles.priceBlock}>
+        <div className="flex items-center gap-2 flex-shrink-0 flex-col">
+          <div className="text-right">
             {service.originalPrice && (
-              <span className={styles.priceOriginal}>
+              <span className="text-[11px] text-[#b0a090] line-through block">
                 {formatPrice(service.originalPrice)}
               </span>
             )}
-            <span className={styles.price}>{formatPrice(service.price)}</span>
+            <span style={{fontWeight:"bolder"}} className="text-[17px] font-black text-[#c8901a] block md:text-[18px] lg:text-[1.125rem] lg:leading-7">{formatPrice(service.price)}</span>
           </div>
+          {/* chevron: svg child selector — kept in CSS module */}
           <span className={`${styles.chevron}${expanded ? ` ${styles.chevronOpen}` : ""}`}>
             <ChevronDown />
           </span>
         </div>
       </div>
 
-      {/* Animated panel */}
+      {/* Animated panel — grid animation kept in CSS module */}
       <div className={`${styles.panelWrapper}${expanded ? ` ${styles.panelWrapperOpen}` : ""}`}>
         <div className={styles.panelInner}>
-          <div className={styles.panel}>
+          <div className="pt-[var(--sp-3)] px-[18px] pb-[var(--sp-4)] md:pt-[var(--sp-3)] md:px-[var(--sp-6)] md:pb-[var(--sp-5)] lg:pt-[var(--sp-4)] lg:px-[var(--sp-8)] lg:pb-[var(--sp-6)]">
 
-            {/* Description — only if present */}
             {service.description && (
-              <p className={styles.panelDesc}>{service.description}</p>
+              <p className="text-sm text-[#7a6a55] leading-[1.5] mb-[var(--sp-3)] pb-[var(--sp-3)] border-b border-[#e8ddd0]">{service.description}</p>
             )}
 
-            {/* "Today — date" header — only if there are staff slots to show */}
             {showDateHeader && (
-              <p className={styles.panelDate}>Today — {getTodayLabel()}</p>
+              <p className="text-[13px] font-bold  mb-[var(--sp-3)] tracking-[0.01em]" style={{fontWeight:"bold"}}>Today — {getTodayLabel()}</p>
             )}
 
-            {/* No staff available message */}
             {!hasStaff && (
-              <p className={styles.noStaff}>No staff available at this time</p>
+              <p className="text-[13px] text-[#a09080] py-[var(--sp-2)]">No staff available at this time</p>
             )}
 
-            {/* Staff rows — only if staff exists */}
             {hasStaff && service.staffAvailability!.map((staff) => (
               <div
                 key={staff.staffId}
-                className={isWalkIn ? styles.staffRowWalkin : styles.staffBlock}
+                className={isWalkIn
+                  ? styles.staffRowWalkin
+                  : "mb-[var(--sp-3)] [&:last-of-type]:mb-0"
+                }
               >
-                <div className={styles.staffHeader}>
+                <div className="flex items-center gap-[var(--sp-2)] mb-[10px]">
                   <BarberAvatar initials={staff.staffInitials} size="sm" />
-                  <span className={styles.staffName}>{staff.staffName}</span>
+                  <span className="text-[16px] font-bold text-[#2a1f10] flex-1" style={{fontWeight:"bold"}}>{staff.staffName}</span>
                   {staff.isMostBooked && !isWalkIn && (
+                    /* staffMostBooked: svg child selector — kept in CSS module */
                     <span className={styles.staffMostBooked}>
                       <TrendingUp /> Most booked
                     </span>
@@ -202,12 +200,11 @@ export default function ServiceRow({ service, businessId, barberSlug = "", busin
 
                 {isWalkIn ? (
                   staff.hours && (
-                    <span className={styles.hoursRange}>{staff.hours}</span>
+                    <span className="text-[12px] text-bold text-[#a09080] bg-[#ede8df] rounded-[20px] py-1 px-[10px] whitespace-nowrap flex-shrink-0">{staff.hours}</span>
                   )
                 ) : (
-                  // Only render slots wrapper if there are actual slots
                   staff.slots && staff.slots.length > 0 && (
-                    <div className={styles.staffSlots}>
+                    <div style={{gap:"0.5rem"}} className="flex flex-wrap gap-2 pt-1">
                       {staff.slots.map((slot) => (
                         <TimeSlotButton
                           key={slot}
@@ -223,8 +220,8 @@ export default function ServiceRow({ service, businessId, barberSlug = "", busin
               </div>
             ))}
 
-            {/* "View other times" */}
             {showViewMore && (
+              /* viewMore: :hover — kept in CSS module */
               <Link
                 href={
                   barberSlug && businessId

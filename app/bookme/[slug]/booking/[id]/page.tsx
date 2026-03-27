@@ -108,7 +108,7 @@ function BookingDetailInner({
     async function load() {
       if (!id) { setLoading(false); return; }
       try {
-        
+
         const res  = await fetch(API_ENDPOINTS.BOOKING_DETAILS(id));
         const json = await res.json();
         if (json.status && json.data) {
@@ -139,36 +139,40 @@ function BookingDetailInner({
   }
 
   return (
-    <div className={styles.pageShell}>
-      <div className={styles.scrollArea}>
+    <div className="flex flex-col min-h-[100dvh] bg-[#F9F8F6]">
+      <div className="flex-1 overflow-y-auto [-webkit-overflow-scrolling:touch]">
         {/* Header */}
-        <div className={styles.header}>
+        <div className="flex items-center gap-[12px] py-[16px] px-[16px] pb-[14px] bg-white border-b border-[#EEEBE5] sticky top-0 z-[10] md:py-[20px] md:px-[24px] md:pb-[16px]">
+          {/* backBtn: :active state — kept in CSS module */}
           <button className={styles.backBtn} onClick={() => router.push(`/bookme/${slug}`)} aria-label="Back">
             <ArrowLeft size={18} />
           </button>
-          <h1 className={styles.title}>My Booking</h1>
+          <h1 className="text-[18px] font-bold text-[#1a1a1a] m-0 md:text-[20px]">My Booking</h1>
         </div>
 
-        <div className={styles.content}>
+        <div className="pt-[20px] px-[16px] pb-[32px] md:p-[24px] md:pb-[40px] lg:pt-[28px] lg:px-[32px] lg:pb-[48px]">
           {loading && (
-            <div className={styles.empty}>
+            <div className="flex items-center justify-center py-[80px] px-[16px]">
+              {/* spinner: @keyframes — kept in CSS module */}
               <div className={styles.spinner} />
             </div>
           )}
 
           {!loading && !booking && (
-            <div className={styles.empty}>
-              <p className={styles.emptyText}>Booking not found.</p>
+            <div className="flex items-center justify-center py-[80px] px-[16px]">
+              <p className="text-[14px] text-[#9a9080]">Booking not found.</p>
             </div>
           )}
 
           {cancelError && (
-            <p className={styles.cancelError}>{cancelError}</p>
+            <p className="text-[13px] text-[#c0392b] bg-[#fdf2f2] border border-[#f5c6cb] rounded-[8px] py-[10px] px-[14px] mx-[16px] mb-[8px] text-center">
+              {cancelError}
+            </p>
           )}
 
           {booking && (
             <>
-              <p className={styles.dateGroup}>{booking.dateGroup}</p>
+              <p className="text-[13px] font-semibold text-[#5a5a5a] text-center m-0 mb-[10px]">{booking.dateGroup}</p>
               <BookingCard
                 booking={booking}
                 cancelling={cancellingId === booking.id}
@@ -206,60 +210,62 @@ function BookingCard({
   const isCancelled = booking.status === "cancelled";
 
   return (
-    <div className={`${styles.card} ${isCancelled ? styles.cardCancelled : ""}`}>
+    <div className={isCancelled
+      ? "bg-[#FFF8F8] border border-[#FDDEDE] rounded-[14px] p-[16px] mb-[12px] md:p-[20px] md:rounded-[16px]"
+      : "bg-white border border-[#EEEBE5] rounded-[14px] p-[16px] mb-[12px] md:p-[20px] md:rounded-[16px]"
+    }>
       {/* Service + provider */}
-      <div className={styles.cardHeader}>
+      <div className="mb-[14px]">
         <div>
-          <p className={styles.cardService}>{booking.service}</p>
-          <p className={styles.cardProvider}>{booking.provider}</p>
+          <p className="text-[15px] font-bold text-[#1a1a1a] m-0 mb-[3px] leading-[1.3] md:text-[16px]">
+            {booking.service}
+          </p>
+          <p className="text-[13px] text-[#7a7060] m-0">{booking.provider}</p>
         </div>
       </div>
 
       {/* Meta grid: 2 columns */}
-      <div className={styles.metaGrid}>
-        <div className={styles.metaCol}>
-          <div className={styles.metaRow}>
-            <Calendar size={14} className={styles.metaIcon} />
+      <div className="grid grid-cols-2 gap-x-[12px] gap-y-[8px] mb-[14px]">
+        <div className="flex flex-col gap-[7px]">
+          <div className="flex items-center gap-[7px] text-[13px] text-[#5a5a5a] md:text-[14px]">
+            <Calendar size={14} className="text-[#B8860B] flex-shrink-0" />
             <span>{booking.date}</span>
           </div>
-          <div className={styles.metaRow}>
-            <CreditCard size={14} className={styles.metaIcon} />
+          <div className="flex items-center gap-[7px] text-[13px] text-[#5a5a5a] md:text-[14px]">
+            <CreditCard size={14} className="text-[#B8860B] flex-shrink-0" />
             <span>{booking.paymentMethod}</span>
           </div>
         </div>
-        <div className={styles.metaCol}>
-          <div className={styles.metaRow}>
-            <Clock size={14} className={styles.metaIcon} />
+        <div className="flex flex-col gap-[7px]">
+          <div className="flex items-center gap-[7px] text-[13px] text-[#5a5a5a] md:text-[14px]">
+            <Clock size={14} className="text-[#B8860B] flex-shrink-0" />
             <span>{booking.time}</span>
           </div>
-          <div className={styles.metaRow}>
-            <Timer size={14} className={styles.metaIcon} />
+          <div className="flex items-center gap-[7px] text-[13px] text-[#5a5a5a] md:text-[14px]">
+            <Timer size={14} className="text-[#B8860B] flex-shrink-0" />
             <span>{booking.duration}</span>
           </div>
         </div>
       </div>
 
       {/* Type badge + price */}
-      <div className={styles.cardFooterRow}>
-        <span className={styles.typeBadge}>{booking.bookingType}</span>
-        <span className={styles.price}>{booking.price}</span>
+      <div className="flex items-center justify-between mb-[12px]">
+        <span className="inline-flex items-center py-[3px] px-[11px] rounded-[20px] border-[1.5px] border-[#D1C9B8] bg-transparent text-[12px] font-medium text-[#5a5050]">
+          {booking.bookingType}
+        </span>
+        <span className="text-[17px] font-bold text-[#B8860B] md:text-[18px]">{booking.price}</span>
       </div>
 
-      {/* Booked for (member) */}
-      {/* {booking.bookedFor && (
-        <div className={styles.verificationRow}>
-          <span className={styles.verificationLabel}>Booked for</span>
-          <span className={styles.verificationCode}>{booking.bookedFor}</span>
-        </div>
-      )} */}
-
       {/* Verification code */}
-      <div className={styles.verificationRow}>
-        <span className={styles.verificationLabel}>Verification Code</span>
-        <span className={styles.verificationCode}>{booking.verificationCode}</span>
+      <div className="flex items-center justify-between py-[10px] px-[12px] bg-[#F7F5F1] rounded-[8px] mb-[12px]">
+        <span className="text-[13px] text-[#7a7060]">Verification Code</span>
+        <span className="text-[13px] font-semibold text-[#1a1a1a] tracking-[0.04em]">
+          {booking.verificationCode}
+        </span>
       </div>
 
       {/* Cancel button / inline confirm */}
+      {/* cancelBtn: :active:not(:disabled) + :disabled + @media hover — kept in CSS module */}
       {isUpcoming && !confirming && (
         <button className={styles.cancelBtn} onClick={onRequestCancel} disabled={cancelling}>
           {cancelling ? "Cancelling…" : "Cancel Booking"}
@@ -267,12 +273,13 @@ function BookingCard({
       )}
 
       {isUpcoming && confirming && (
-        <div className={styles.cancelConfirm}>
-          <p className={styles.cancelConfirmTitle}>Cancel this booking?</p>
+        <div className="bg-[#FFF5F5] border border-[#FDDEDE] rounded-[10px] p-[14px] pb-[12px]">
+          <p className="text-[14px] font-semibold text-[#1a1a1a] m-0 mb-[4px]">Cancel this booking?</p>
           {booking.paymentMethod !== "Cash" && (
-            <p className={styles.cancelConfirmSub}>50% fee applies within 12 hrs of appointment.</p>
+            <p className="text-[12.5px] text-[#7a6060] m-0 mb-[12px]">50% fee applies within 12 hrs of appointment.</p>
           )}
-          <div className={styles.cancelConfirmBtns}>
+          <div className="flex gap-[10px]">
+            {/* keepBtn/confirmCancelBtn: :active — kept in CSS module */}
             <button className={styles.keepBtn} onClick={onKeep}>Keep</button>
             <button className={styles.confirmCancelBtn} onClick={onConfirmCancel}>Confirm Cancel</button>
           </div>
@@ -280,7 +287,9 @@ function BookingCard({
       )}
 
       {isCancelled && (
-        <div className={styles.cancelledBtn}>Cancelled</div>
+        <div className="flex items-center justify-center w-full py-[13px] px-[16px] rounded-[10px] bg-[#FDDEDE] text-[#C0392B] text-[14px] font-medium min-h-[44px]">
+          Cancelled
+        </div>
       )}
     </div>
   );
