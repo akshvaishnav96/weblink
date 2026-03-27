@@ -91,6 +91,7 @@ export interface ApiOpenHour {
 }
 
 export interface ApiStaffSummary {
+  id: number;
   name: string;
   picture: string;
   bio: string | null;

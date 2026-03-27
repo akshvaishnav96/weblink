@@ -108,9 +108,9 @@ export default function ViewTimesPage({
         picture: s.picture ?? undefined,
       }));
     }
-    // Fallback: profile.staff summary — use index as display-only ID
-    return (profile.staff ?? []).map((s, i) => ({
-      id: `s${i}`,
+    // Fallback: profile.staff summary — use real id
+    return (profile.staff ?? []).map((s) => ({
+      id: s.id.toString(),
       initials: getInitials(s.name),
       name: s.name,
       picture: s.picture ?? undefined,
@@ -148,12 +148,11 @@ export default function ViewTimesPage({
       const effectiveStaffId =
         selectedExpert === "anyone" ? randomStaffId : selectedExpert;
       if (!effectiveStaffId) return; // waiting for random staff to be picked
-      callType = "specific";
+      callType = selectedExpert === "anyone" ? "anyone" : "specific";
       staffIdParam = effectiveStaffId;
     } else {
-      // No real staff IDs — use "anyone" type, API picks available staff
-      callType = "anyone";
-      staffIdParam = undefined;
+      callType = selectedExpert !== "anyone" ? "specific" : "anyone";
+      staffIdParam = selectedExpert !== "anyone" ? selectedExpert : undefined;
     }
 
     setSlotsLoading(true);
@@ -352,7 +351,10 @@ export default function ViewTimesPage({
                 selectedExpert !== "anyone"
                   ? experts.find((e) => e.id === selectedExpert)
                   : undefined;
-              bookingStaffId = resolvedStaffId ?? "0";
+              bookingStaffId =
+                selectedExpert !== "anyone"
+                  ? selectedExpert
+                  : (resolvedStaffId ?? "0");
             }
 
             const staffName = expertObj?.name ?? "Anyone";
