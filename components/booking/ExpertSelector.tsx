@@ -26,19 +26,27 @@ function ExpertAvatar({ picture, initials }: { picture?: string; initials: strin
       <Image
         src={picture}
         alt={initials}
-        width={60}
-        height={60}
-        className="w-[60px] h-[60px] rounded-full object-cover mx-auto mb-2 block"
+        width={54}
+        height={54}
+        className="w-[54px] h-[54px] rounded-full object-cover flex-shrink-0"
         onError={() => setImgFailed(true)}
       />
     );
   }
 
   return (
-    <div className="w-[60px] h-[60px] rounded-full bg-[#e0e0e0] text-[#777] text-[22px] mx-auto mb-2 flex items-center justify-center">
+    <div className="w-[54px] h-[54px] rounded-full bg-[#e0e0e0] text-[#777] text-[18px] flex items-center justify-center flex-shrink-0">
       {initials}
     </div>
   );
+}
+
+function abbreviateName(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length <= 1) return name;
+  const first = parts[0];
+  const rest = parts.slice(1).map((p) => p[0].toUpperCase() + ".").join(" ");
+  return `${first} ${rest}`;
 }
 
 export default function ExpertSelector({ experts, selectedId, onSelect }: ExpertSelectorProps) {
@@ -49,10 +57,10 @@ export default function ExpertSelector({ experts, selectedId, onSelect }: Expert
         onClick={() => onSelect("anyone")}
         className={`${styles.card}${selectedId === "anyone" ? ` ${styles.active}` : ""}`}
       >
-        <div className="w-[60px] h-[60px] rounded-full bg-[#e0e0e0] text-[#777] text-[22px] mx-auto mb-2 flex items-center justify-center">
-          <User size={22} strokeWidth={1.5} />
+        <div className="w-[54px] h-[54px] rounded-full bg-[#e0e0e0] text-[#777] flex items-center justify-center flex-shrink-0">
+          <User size={20} strokeWidth={1.5} />
         </div>
-        <p className="text-[14px] text-[#333] m-0">Anyone</p>
+        <p className="text-[13px] text-[#333] m-0 whitespace-nowrap">Anyone</p>
       </button>
 
       {/* Named experts */}
@@ -60,10 +68,13 @@ export default function ExpertSelector({ experts, selectedId, onSelect }: Expert
         <button
           key={expert.id}
           onClick={() => onSelect(expert.id)}
+          title={expert.name}
           className={`${styles.card}${selectedId === expert.id ? ` ${styles.active}` : ""}`}
         >
           <ExpertAvatar picture={expert.picture} initials={expert.initials} />
-          <p className="text-[14px] text-[#333] m-0">{expert.name}</p>
+          <p className="text-[13px] text-[#333] m-0 w-full overflow-hidden text-ellipsis whitespace-nowrap leading-tight">
+            {abbreviateName(expert.name)}
+          </p>
         </button>
       ))}
     </div>
