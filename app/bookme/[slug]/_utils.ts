@@ -4,6 +4,10 @@ import type { Service, StaffAvailability } from "@/types";
 export type Tab = "services" | "portfolio" | "about";
 export type ServiceMode = "onsite" | "mobile";
 
+// ─── Feature flag ──────────────────────────────────────────────────────────────
+// Set to true to re-enable discount pricing across all service cards & booking flow.
+export const DISCOUNTS_ENABLED = false;
+
 export function toAbsoluteUrl(url: string): string {
   if (!url) return url;
   return /^https?:\/\//i.test(url) ? url : `https://${url}`;
@@ -35,6 +39,7 @@ function applyDiscount(
   isDiscount: number,
   pct: string,
 ): { price: number; originalPrice?: number } {
+  if (!DISCOUNTS_ENABLED) return { price: base };
   const discountPct = parseFloat(pct) || 0;
   if (isDiscount && discountPct > 0) {
     return {

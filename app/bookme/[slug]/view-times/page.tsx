@@ -15,6 +15,7 @@ import {
   type ApiStaffSummary,
 } from "@/lib/api";
 import { useBookingStore } from "@/store/bookingStore";
+import { DISCOUNTS_ENABLED } from "../_utils";
 import styles from "./page.module.css";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -217,7 +218,9 @@ export default function ViewTimesPage({
   const service = profile?.services.find((s) => s.id.toString() === serviceId);
   const servicePrice = (() => {
     if (!service) return 0;
+    // Keep applyDiscount intact — re-enable via DISCOUNTS_ENABLED in _utils.ts
     const applyDiscount = (base: number, isDiscount: number, pct: string) => {
+      if (!DISCOUNTS_ENABLED) return base;
       const discountPct = parseFloat(pct) || 0;
       if (isDiscount && discountPct > 0)
         return Math.round(base * (1 - discountPct / 100) * 100) / 100;
