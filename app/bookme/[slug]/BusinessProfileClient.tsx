@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { fetchBusinessProfileBySlug, type ApiBusinessProfile } from "@/lib/api";
 import { type Tab, type ServiceMode, mapApiService } from "./_utils";
+import { trackPageVisit, trackServiceSelected } from "@/lib/analytics";
 import ProfileHero from "./_components/hero/ProfileHero";
 import ProfileInfo from "./_components/info/ProfileInfo";
 import ServicesTab from "./_components/services/ServicesTab";
@@ -29,6 +30,14 @@ export default function BusinessProfileClient({
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedServiceId, setExpandedServiceId] = useState<string | null>(null);
   const [serviceMode, setServiceMode] = useState<ServiceMode>("onsite");
+
+  // Page visit — once per session per slug
+  useEffect(() => {
+    if (profile) {
+      trackPageVisit(slug, profile.business_display_name ?? profile.business_name);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slug, profile?.id]);
 
   useEffect(() => {
     if (initialProfile) return;
@@ -121,7 +130,13 @@ export default function BusinessProfileClient({
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           expandedServiceId={expandedServiceId}
-          onExpandedChange={setExpandedServiceId}
+          onExpandedChange={(id) => {
+            setExpandedServiceId(id);
+            if (id !== null) {
+              const svc = filteredServices.find((s) => s.id === id);
+              if (svc) trackServiceSelected(String(id), svc.name, slug);
+            }
+          }}
         />
       )}
 

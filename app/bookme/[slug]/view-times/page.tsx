@@ -16,6 +16,7 @@ import {
 } from "@/lib/api";
 import { useBookingStore } from "@/store/bookingStore";
 import { DISCOUNTS_ENABLED } from "../_utils";
+import { trackStaffSelected } from "@/lib/analytics";
 import styles from "./page.module.css";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -297,6 +298,10 @@ export default function ViewTimesPage({
           onSelect={(id) => {
             setSelectedExpert(id);
             setSelectedTime(null);
+            if (id !== "anyone") {
+              const expert = experts.find((e) => e.id === id);
+              trackStaffSelected(id, expert?.name ?? id, slug);
+            }
           }}
         />
       )}

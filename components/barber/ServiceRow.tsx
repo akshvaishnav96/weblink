@@ -9,6 +9,7 @@ import BarberAvatar from "@/components/ui/BarberAvatar";
 import TimeSlotButton from "@/components/ui/TimeSlotButton";
 import Link from "next/link";
 import { useBookingStore } from "@/store/bookingStore";
+import { trackStaffSelected } from "@/lib/analytics";
 import styles from "./ServiceRow.module.css";
 
 function getTodayLabel(): string {
@@ -60,6 +61,7 @@ export default function ServiceRow({ service, businessId, barberSlug = "", busin
 
   function handleSlotClick(staff: { staffId: string; staffInitials: string; staffName: string }, slot: string) {
     setSelectedSlot(slot);
+    trackStaffSelected(staff.staffId, staff.staffName, barberSlug);
     setSelection({
       barberId: businessId,
       barberSlug,
