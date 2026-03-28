@@ -139,7 +139,7 @@ function BookingDetailInner({
   }
 
   return (
-    <div className="flex flex-col min-h-[100dvh] bg-[#F9F8F6]">
+    <div className="flex flex-col min-h-[100dvh]">
       <div className="flex-1 overflow-y-auto [-webkit-overflow-scrolling:touch]">
         {/* Header */}
         <div className="flex items-center gap-[12px] py-[16px] px-[16px] pb-[14px] bg-white border-b border-[#EEEBE5] sticky top-0 z-[10] md:py-[20px] md:px-[24px] md:pb-[16px]">
@@ -172,7 +172,7 @@ function BookingDetailInner({
 
           {booking && (
             <>
-              <p className="text-[13px] font-semibold text-[#5a5a5a] text-center m-0 mb-[10px]">{booking.dateGroup}</p>
+              <p className="text-[13px] font-semibold text-[#5a5a5a] text-center m-0 mb-[10px]" style={{fontWeight:"bold"}}>{booking.dateGroup}</p>
               <BookingCard
                 booking={booking}
                 cancelling={cancellingId === booking.id}
@@ -217,7 +217,7 @@ function BookingCard({
       {/* Service + provider */}
       <div className="mb-[14px]">
         <div>
-          <p className="text-[15px] font-bold text-[#1a1a1a] m-0 mb-[3px] leading-[1.3] md:text-[16px]">
+          <p style={{fontWeight:"bold"}} className="text-[15px] font-bold text-[#1a1a1a] m-0 mb-[3px] leading-[1.3] md:text-[16px]">
             {booking.service}
           </p>
           <p className="text-[13px] text-[#7a7060] m-0">{booking.provider}</p>
@@ -259,7 +259,7 @@ function BookingCard({
       {/* Verification code */}
       <div className="flex items-center justify-between py-[10px] px-[12px] bg-[#F7F5F1] rounded-[8px] mb-[12px]">
         <span className="text-[13px] text-[#7a7060]">Verification Code</span>
-        <span className="text-[13px] font-semibold text-[#1a1a1a] tracking-[0.04em]">
+        <span className="text-[13px] font-semibold text-[#1a1a1a] tracking-[0.04em]" style={{fontWeight:"bold"}}>
           {booking.verificationCode}
         </span>
       </div>
