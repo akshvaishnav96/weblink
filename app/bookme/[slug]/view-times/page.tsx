@@ -12,6 +12,7 @@ import {
   checkStaffAvailability,
   type ApiBusinessProfile,
   type ApiStaff,
+  type ApiStaffSummary,
 } from "@/lib/api";
 import { useBookingStore } from "@/store/bookingStore";
 import styles from "./page.module.css";
@@ -78,6 +79,8 @@ export default function ViewTimesPage({
   const [rawSlotsMap, setRawSlotsMap] = useState<Record<string, string>>({});
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [, setSlotsError] = useState<string | null>(null);
+  // Staff returned by the availability API — updates when date changes
+  const [availableStaff, setAvailableStaff] = useState<ApiStaffSummary[] | null>(null);
 
   // Staff from services — have real numeric IDs usable for specific availability checks
   const serviceStaff = useMemo((): ApiStaff[] => {
@@ -95,10 +98,19 @@ export default function ViewTimesPage({
   // Whether we have real staff IDs for specific availability lookups
   const hasRealIds = serviceStaff.length > 0;
 
-  // Build expert cards:
-  //  - If services have staff with real IDs → use those (supports specific availability)
-  //  - Otherwise → fall back to profile.staff summary (display only)
+  // Build expert cards from the availability API response (updates per date).
+  // Falls back to profile data only before the first API call returns.
   const experts = useMemo(() => {
+    // Prefer staff returned by the slot API (reflects actual date availability)
+    if (availableStaff !== null) {
+      return availableStaff.map((s) => ({
+        id: s.id.toString(),
+        initials: getInitials(s.name),
+        name: s.name,
+        picture: s.picture ?? undefined,
+      }));
+    }
+    // Initial load fallback before first API response arrives
     if (!profile) return [];
     if (serviceStaff.length > 0) {
       return serviceStaff.map((s) => ({
@@ -108,14 +120,13 @@ export default function ViewTimesPage({
         picture: s.picture ?? undefined,
       }));
     }
-    // Fallback: profile.staff summary — use real id
     return (profile.staff ?? []).map((s) => ({
       id: s.id.toString(),
       initials: getInitials(s.name),
       name: s.name,
       picture: s.picture ?? undefined,
     }));
-  }, [profile, serviceStaff]);
+  }, [availableStaff, profile, serviceStaff]);
 
   useEffect(() => {
     fetchBusinessProfileBySlug(slug)
@@ -166,6 +177,16 @@ export default function ViewTimesPage({
         date: toISODate(selectedDate),
         business_service_id: serviceId,
       });
+      // Only update the staff list on "anyone" calls (date-driven).
+      // When a specific staff is selected we only want to refresh slots, not the list.
+      if (callType === "anyone") {
+        const newStaff = result.staff ?? [];
+        setAvailableStaff(newStaff);
+        // Auto-select the single staff so it's sent correctly on booking
+        if (newStaff.length === 1) {
+          setSelectedExpert(newStaff[0].id.toString());
+        }
+      }
       // Store the staff_id from response for booking when no real IDs
       if (result.staff_id) {
         setResolvedStaffId(result.staff_id.toString());
@@ -182,6 +203,8 @@ export default function ViewTimesPage({
     } catch (err) {
       setSlotsError((err as Error).message ?? "Could not load time slots");
       setSlots([]);
+      // Only clear the staff list if this was a date-driven call — never on specific-staff errors
+      if (callType === "anyone") setAvailableStaff([]);
     } finally {
       setSlotsLoading(false);
     }
@@ -259,14 +282,21 @@ export default function ViewTimesPage({
       <BackHeader title="Select Your Expert" />
 
       {/* Expert selector */}
-      <ExpertSelector
-        experts={experts}
-        selectedId={selectedExpert}
-        onSelect={(id) => {
-          setSelectedExpert(id);
-          setSelectedTime(null);
-        }}
-      />
+      {availableStaff !== null && experts.length === 0 ? (
+        <div className="flex items-center gap-[8px] px-[16px] py-[14px] text-[13px] text-[#999] italic">
+          <User size={14} strokeWidth={1.5} className="shrink-0 text-[#ccc]" />
+          No staff available for this date
+        </div>
+      ) : (
+        <ExpertSelector
+          experts={experts}
+          selectedId={selectedExpert}
+          onSelect={(id) => {
+            setSelectedExpert(id);
+            setSelectedTime(null);
+          }}
+        />
+      )}
 
       {/* Progress line + selected expert chip */}
       {/* progressLineLoading: @keyframes + gradient — kept in CSS module */}
@@ -284,6 +314,7 @@ export default function ViewTimesPage({
         selectedDate={selectedDate}
         onDateSelect={(d) => {
           setSelectedDate(d);
+          setSelectedExpert("anyone");
           setSelectedTime(null);
         }}
       />

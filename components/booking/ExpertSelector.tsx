@@ -52,16 +52,18 @@ function abbreviateName(name: string): string {
 export default function ExpertSelector({ experts, selectedId, onSelect }: ExpertSelectorProps) {
   return (
     <div className={styles.selector}>
-      {/* Anyone */}
-      <button
-        onClick={() => onSelect("anyone")}
-        className={`${styles.card}${selectedId === "anyone" ? ` ${styles.active}` : ""}`}
-      >
-        <div className="w-[54px] h-[54px] rounded-full bg-[#e0e0e0] text-[#777] flex items-center justify-center flex-shrink-0">
-          <User size={20} strokeWidth={1.5} />
-        </div>
-        <p className="text-[13px] text-[#333] m-0 whitespace-nowrap">Anyone</p>
-      </button>
+      {/* Anyone — only shown when there are multiple staff to choose from */}
+      {experts.length > 1 && (
+        <button
+          onClick={() => onSelect("anyone")}
+          className={`${styles.card}${selectedId === "anyone" ? ` ${styles.active}` : ""}`}
+        >
+          <div className="w-[54px] h-[54px] rounded-full bg-[#e0e0e0] text-[#777] flex items-center justify-center flex-shrink-0">
+            <User size={20} strokeWidth={1.5} />
+          </div>
+          <p className="text-[13px] text-[#333] m-0 whitespace-nowrap">Anyone</p>
+        </button>
+      )}
 
       {/* Named experts */}
       {experts.map((expert) => (

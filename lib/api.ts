@@ -24,6 +24,7 @@ export interface ApiStaffAvailability {
   is_available: number;
   created_at: string;
   updated_at: string;
+  staff?: ApiStaffSummary[]; // available staff for the requested date
 }
 
 export interface ApiStaff {
