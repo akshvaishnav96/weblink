@@ -6,6 +6,7 @@ import "./globals.css";
 import "@/styles/tokens.css";
 import "@/styles/globals.css";
 import BottomNav from "@/components/layout/BottomNav";
+import FontLoader from "@/components/FontLoader";
 
 
 const cormorant = Cormorant_Garamond({
@@ -25,13 +26,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={cormorant.variable}>
       <head>
-        <link rel="preconnect" href="https://api.fontshare.com" />
-        <link
-          href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700&display=swap"
-          rel="stylesheet"
-        />
+        <link rel="preconnect" href="https://api.fontshare.com" crossOrigin="anonymous" />
       </head>
       <body>
+        <FontLoader />
         <div className="app-shell">
           {/* <TopNav /> */}
           <main className="page-content">{children}</main>

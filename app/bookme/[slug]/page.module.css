@@ -154,7 +154,7 @@
 }
 .serviceSearch:focus-within { border-color: var(--color-primary-border); }
 .serviceSearch svg { width: 15px; height: 15px; color: #b0a898; flex-shrink: 0; }
-.serviceSearchInput { flex: 1; background: transparent; border: none; outline: none; font-size: 13.5px; color: #2a1f10; }
+.serviceSearchInput { flex: 1; background: transparent; border: none; outline: none; font-size: 16px; color: #2a1f10; }
 .serviceSearchInput::placeholder { color: #707070; }
 .serviceSearchClear { display: flex; align-items: center; background: none; border: none; padding: 0; cursor: pointer; color: #b0a898; flex-shrink: 0; }
 .serviceSearchClear:hover { color: #2a1f10; }

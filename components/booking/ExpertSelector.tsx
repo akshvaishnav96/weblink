@@ -21,7 +21,7 @@ interface ExpertSelectorProps {
 function ExpertAvatar({ picture, initials }: { picture?: string; initials: string }) {
   const [imgFailed, setImgFailed] = useState(false);
 
-  if (picture && !imgFailed) {
+  if (picture && !picture.includes("undefined") && !imgFailed) {
     return (
       <Image
         src={picture}

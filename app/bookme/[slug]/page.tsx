@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { fetchBusinessProfileBySlug } from "@/lib/api";
+import { getCachedProfile } from "@/lib/profileCache";
 import BusinessProfileClient from "./BusinessProfileClient";
 
 interface PageProps {
@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 4000);
-    const profile = await fetchBusinessProfileBySlug(slug, controller.signal).finally(() => clearTimeout(timeout));
+    const profile = await getCachedProfile(slug, controller.signal).finally(() => clearTimeout(timeout));
     const name = profile.business_display_name ?? profile.business_name;
     const suburb = profile.business_address?.split(",")[1]?.trim() ?? "";
 
@@ -58,7 +58,7 @@ export default async function BookmePage({ params, searchParams }: PageProps) {
 
   let initialProfile = null;
   try {
-    initialProfile = await fetchBusinessProfileBySlug(slug);
+    initialProfile = await getCachedProfile(slug);
   } catch {
     // client will retry
   }
