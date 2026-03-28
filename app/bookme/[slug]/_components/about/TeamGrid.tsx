@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import BarberAvatar from "@/components/ui/BarberAvatar";
 import type { ApiStaffSummary } from "@/lib/api";
@@ -7,6 +8,25 @@ import { getInitials } from "../../_utils";
 
 interface TeamGridProps {
   staff: ApiStaffSummary[];
+}
+
+function TeamAvatar({ picture, name }: { picture?: string; name: string }) {
+  const [failed, setFailed] = useState(false);
+
+  if (picture && !failed) {
+    return (
+      <Image
+        src={picture}
+        alt={name}
+        width={60}
+        height={60}
+        className="w-[60px] h-[60px] rounded-full object-cover"
+        onError={() => setFailed(true)}
+      />
+    );
+  }
+
+  return <BarberAvatar initials={getInitials(name)} size="md" />;
 }
 
 export default function TeamGrid({ staff }: TeamGridProps) {
@@ -22,18 +42,8 @@ export default function TeamGrid({ staff }: TeamGridProps) {
             key={i}
             className="flex flex-col items-center gap-[var(--sp-2)] p-[var(--sp-4)] px-[var(--sp-3)] border border-[var(--color-border-light)] rounded-[var(--radius-lg)] bg-[var(--color-surface)] text-center"
           >
-            {member.picture && !member.picture.includes("undefined") ? (
-              /* teamAvatar: 60x60, rounded-full, object-cover — kept in CSS module */
-              <Image
-                src={member.picture}
-                alt={member.name}
-                width={60}
-                height={60}
-                className="w-[60px] h-[60px] rounded-full object-cover"
-              />
-            ) : (
-              <BarberAvatar initials={getInitials(member.name)} size="md" />
-            )}
+            {/* teamAvatar: 60x60, rounded-full, object-cover — kept in CSS module */}
+            <TeamAvatar picture={member.picture ?? undefined} name={member.name} />
             <p className="text-sm font-semibold text-[var(--color-text-primary)]">
               {member.name}
             </p>
