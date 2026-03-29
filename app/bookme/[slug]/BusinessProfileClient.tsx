@@ -67,7 +67,7 @@ export default function BusinessProfileClient({
       .filter((s) =>
         serviceMode === "mobile"
           ? s.service_type === "mobile" || s.service_type === "both"
-          : true,
+          : s.service_type === "walkin" || s.service_type === "both",
       )
       .map((s) => mapApiService(s, serviceMode))
       .filter((s) => s.price > 0);
