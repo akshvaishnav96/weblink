@@ -34,6 +34,35 @@ export function cn(...classes: (string | undefined | null | false)[]): string {
   return classes.filter(Boolean).join(" ");
 }
 
+// ─── Device / UA utilities ────────────────────────────────────────────────
+
+/** Returns true when running on iOS (iPhone / iPad / iPod). */
+export function isIOS(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
+/** Returns true when running on Android. */
+export function isAndroid(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return /Android/i.test(navigator.userAgent);
+}
+
+/**
+ * Returns the wallet label to show on the payment button:
+ * iOS / Mac Safari → "Apple Pay"
+ * Android         → "Google Pay"
+ * everything else → "Apple Pay / Google Pay"
+ */
+export function detectWalletLabel(): string {
+  if (typeof navigator === "undefined") return "Apple Pay / Google Pay";
+  const ua = navigator.userAgent;
+  const onApple = /iPhone|iPad|iPod/i.test(ua) || (/Macintosh/i.test(ua) && /Safari/i.test(ua) && !/Chrome/i.test(ua));
+  if (onApple) return "Apple Pay";
+  if (/Android/i.test(ua)) return "Google Pay";
+  return "Apple Pay / Google Pay";
+}
+
 // ─── Date / Time utilities ─────────────────────────────────────────────────
 
 /**

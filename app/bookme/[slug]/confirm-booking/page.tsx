@@ -33,6 +33,7 @@ import {
   PIN_MIN,
   PIN_MAX,
 } from "@/lib/constants";
+import { detectWalletLabel } from "@/lib/utils";
 
 type Country = { name: string; flag: string; code: string; dial_code: string };
 const COUNTRIES = COUNTRIES_RAW as Country[];
@@ -106,6 +107,9 @@ function ConfirmBookingInner() {
   // ── Apple/Google Pay state ─────────────────────────────────────────────
   const [paymentRequest, setPaymentRequest] = useState<PaymentRequest | null>(null);
   const [prBtnAvailable, setPrBtnAvailable] = useState(false);
+  const [prBtnLoading, setPrBtnLoading] = useState(false);
+  const [walletLabel, setWalletLabel] = useState(detectWalletLabel);
+  const [processingLabel, setProcessingLabel] = useState("Processing…");
 
   const isMobileBooking = selection.serviceType === "mobile" || selection.serviceType === "both";
 
@@ -186,8 +190,19 @@ function ConfirmBookingInner() {
       requestPayerEmail: false,
     });
     pr.canMakePayment().then(result => {
-      if (result) { setPaymentRequest(pr); setPrBtnAvailable(true); }
-      else { setPaymentRequest(null); setPrBtnAvailable(false); }
+      setPrBtnLoading(false);
+      if (result) {
+        setPaymentRequest(pr);
+        setPrBtnAvailable(true);
+        // Refine label from Stripe's authoritative result
+        const r = result as Record<string, boolean>;
+        if (r.applePay && r.googlePay) setWalletLabel("Apple Pay / Google Pay");
+        else if (r.applePay) setWalletLabel("Apple Pay");
+        else if (r.googlePay) setWalletLabel("Google Pay");
+      } else {
+        setPaymentRequest(null);
+        setPrBtnAvailable(false);
+      }
     });
   }, [stripe, payment, selection.price, selection.businessName]);
 
@@ -211,6 +226,8 @@ function ConfirmBookingInner() {
         const { error } = await stripe.confirmCardPayment(clientSecret, { payment_method: event.paymentMethod.id });
         if (error) { event.complete("fail"); setPaymentError(error.message ?? "Payment failed"); return; }
         event.complete("success");
+        setIsProcessing(true);
+        setProcessingLabel("Confirming your booking…");
         const { pin, bookingId } = await createBooking(paymentIntentId, "upi", fn, ph, em, gn, fse, ct.dial_code, formRef.current.address, intentUserId);
         saveBookingId(bookingId);
         setCustomerSnapshot({ firstName: fn, phone: ph, email: em, countryCode: ct.dial_code, guestName: gn, forSomeoneElse: fse, address: formRef.current.address });
@@ -223,6 +240,8 @@ function ConfirmBookingInner() {
       } catch {
         event.complete("fail");
         setPaymentError("Payment failed. Please try again.");
+      } finally {
+        setIsProcessing(false);
       }
     };
     // @ts-expect-error - Stripe types are complex here
@@ -256,7 +275,7 @@ function ConfirmBookingInner() {
 
   const PAYMENT_OPTIONS = [
     { key: "onsite" as const, Icon: Building2,  label: "Pay on site" },
-    { key: "apple"  as const, Icon: Smartphone, label: "Apple Pay / Google Pay" },
+    { key: "apple"  as const, Icon: Smartphone, label: walletLabel },
     { key: "card"   as const, Icon: CreditCard, label: "Card details" },
   ];
 
@@ -328,6 +347,8 @@ function ConfirmBookingInner() {
     setPayment(p);
     setPaymentError(null);
     setCardComplete(false);
+    if (p === "apple") setPrBtnLoading(true);
+    else setPrBtnLoading(false);
   }
 
   const canConfirm =
@@ -369,6 +390,7 @@ function ConfirmBookingInner() {
     const validationError = validateForm();
     if (validationError) { setPaymentError(validationError); return; }
     setIsProcessing(true);
+    setProcessingLabel("Processing payment…");
     setPaymentError(null);
 
     const cc = country.dial_code;
@@ -401,9 +423,11 @@ function ConfirmBookingInner() {
         const intentUserId: number | null = intentJson.user_id ?? null;
         const { error: stripeError } = await stripe.confirmCardPayment(clientSecret, { payment_method: paymentMethod!.id });
         if (stripeError) throw new Error(stripeError.message ?? "Card payment failed");
+        setProcessingLabel("Confirming your booking…");
         ({ pin, bookingId } = await createBooking(piId, "card", firstName, phone, email, guestName, forSomeoneElse, cc, address, intentUserId));
 
       } else {
+        setProcessingLabel("Confirming your booking…");
         ({ pin, bookingId } = await createBooking("", "cash", firstName, phone, email, guestName, forSomeoneElse, cc, address));
       }
 
@@ -606,10 +630,15 @@ function ConfirmBookingInner() {
 
               {payment === "apple" && (
                 <div className={styles.prButtonWrap}>
-                  {prBtnAvailable && paymentRequest ? (
+                  {prBtnLoading ? (
+                    <div className={styles.prBtnSkeleton}>
+                      <span className={styles.prBtnSkeletonSpinner} />
+                      Checking wallet availability…
+                    </div>
+                  ) : prBtnAvailable && paymentRequest ? (
                     <PaymentRequestButtonElement options={{ paymentRequest, style: { paymentRequestButton: { theme: "dark", height: "48px" } } }} />
                   ) : (
-                    <p className={styles.prUnavailable}>Apple Pay / Google Pay is not available in this browser or device. Please select another payment method.</p>
+                    <p className={styles.prUnavailable}>{walletLabel} is not available in this browser or device. Please select another payment method.</p>
                   )}
                 </div>
               )}
@@ -649,6 +678,16 @@ function ConfirmBookingInner() {
       
 
     </div>
+
+      {/* Processing overlay */}
+      {isProcessing && (
+        <div className={styles.processingOverlay}>
+          <div className={styles.processingCard}>
+            <span className={styles.processingSpinner} />
+            <p className={styles.processingLabel}>{processingLabel}</p>
+          </div>
+        </div>
+      )}
 
       {/* Success modal — outside blurred div so it stays sharp */}
       {showModal && (

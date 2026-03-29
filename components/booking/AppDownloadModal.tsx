@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Check, CalendarPlus, Zap, X, CalendarDays, Bell, Tag, Download } from "lucide-react";
 import styles from "./AppDownloadModal.module.css";
 import { APP_STORE_URL, PLAY_STORE_URL } from "@/lib/constants";
+import { isAndroid } from "@/lib/utils";
 
 interface AppDownloadModalProps {
   name?: string;
@@ -136,10 +137,7 @@ export default function AppDownloadModal({ name, pin, bookingId, serviceId, serv
           </div>
 
           <button className={styles.getAppBtn} onClick={() => {
-            const ua = navigator.userAgent || "";
-            const isIOS = /iPad|iPhone|iPod/.test(ua);
-            const isAndroid = /Android/.test(ua);
-            const url = isAndroid ? PLAY_STORE_URL : APP_STORE_URL;
+            const url = isAndroid() ? PLAY_STORE_URL : APP_STORE_URL;
             window.open(url, "_blank", "noopener,noreferrer");
           }}>
             <Download size={15} />
