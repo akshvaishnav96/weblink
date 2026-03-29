@@ -1,33 +1,14 @@
+import type React from "react";
 import { logEvent } from "firebase/analytics";
 import { getFirebaseAnalytics } from "./firebase";
+import { ANALYTICS_EVENTS } from "./constants";
 
-// ─── Session-based deduplication ─────────────────────────────────────────────
+// ─── Core logger ──────────────────────────────────────────────────────────────
 
-function hasTracked(key: string): boolean {
-  try {
-    return sessionStorage.getItem(key) === "1";
-  } catch {
-    return false;
-  }
-}
-
-function markTracked(key: string): void {
-  try {
-    sessionStorage.setItem(key, "1");
-  } catch {
-    // sessionStorage unavailable (SSR, private mode) — silently skip
-  }
-}
-
-// ─── Core fire-once helper ────────────────────────────────────────────────────
-
-function trackOnce(
-  dedupKey: string,
+function fire(
   eventName: string,
   params: Record<string, string | number | boolean>,
 ): void {
-  if (hasTracked(dedupKey)) return;
-
   const analytics = getFirebaseAnalytics();
   if (analytics) {
     try {
@@ -36,51 +17,74 @@ function trackOnce(
       console.warn("[Analytics] logEvent failed:", err);
     }
   }
-
-  markTracked(dedupKey);
   console.log(`[Analytics] ${eventName}`, params);
 }
 
-// ─── Public event helpers ─────────────────────────────────────────────────────
+// ─── page_visit — sessionStorage (once per tab session per slug) ──────────────
 
 /**
- * Fires once per session per business slug.
- * Call on the profile page mount.
+ * Fires once per browser tab session per business slug.
+ * Uses sessionStorage because the user can navigate away and come back —
+ * we don't want to re-fire on every mount within the same tab.
  */
 export function trackPageVisit(slug: string, businessName: string): void {
-  trackOnce(`page_visit__${slug}`, "page_visit", {
-    business_slug:  slug,
-    business_name:  businessName,
-  });
+  const key = `pv__${slug}`;
+  try {
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+  } catch {
+    // sessionStorage unavailable — fire anyway, no dedup
+  }
+  fire(ANALYTICS_EVENTS.PAGE_VISIT, { business_slug: slug, business_name: businessName });
 }
 
+// ─── service_selected — useRef dedup (last-fired value) ──────────────────────
+
 /**
- * Fires once per session per unique service ID.
- * Call when a user expands / selects a service.
+ * Call this with a ref that tracks the last-fired service ID.
+ * Only fires when the service actually changes from the previously tracked one.
+ * Resets naturally when the component unmounts (page navigation).
+ *
+ * Usage in component:
+ *   const lastServiceRef = useRef<string | null>(null);
+ *   trackServiceSelected(lastServiceRef, id, name, slug);
  */
 export function trackServiceSelected(
+  lastRef: React.RefObject<string | null>,
   serviceId: string,
   serviceName: string,
   slug: string,
 ): void {
-  trackOnce(`service_selected__${slug}__${serviceId}`, "service_selected", {
+  if (lastRef.current === serviceId) return;
+  lastRef.current = serviceId;
+  fire(ANALYTICS_EVENTS.SERVICE_SELECTED, {
     service_id:    serviceId,
     service_name:  serviceName,
     business_slug: slug,
   });
 }
 
+// ─── staff_selected — useRef dedup (last-fired value) ────────────────────────
+
 /**
- * Fires once per session per unique staff ID.
- * Call when a user picks a specific staff member.
+ * Call this with a ref that tracks the last-fired staff ID.
+ * Only fires when a different staff member is selected from the previous one.
+ * Resets naturally when the component unmounts (page navigation).
+ *
+ * Usage in component:
+ *   const lastStaffRef = useRef<string | null>(null);
+ *   trackStaffSelected(lastStaffRef, id, name, slug);
  */
 export function trackStaffSelected(
+  lastRef: React.RefObject<string | null>,
   staffId: string,
   staffName: string,
   slug: string,
 ): void {
   if (!staffId || staffId === "anyone" || staffId === "0") return;
-  trackOnce(`staff_selected__${slug}__${staffId}`, "staff_selected", {
+  if (lastRef.current === staffId) return;
+  lastRef.current = staffId;
+  fire(ANALYTICS_EVENTS.STAFF_SELECTED, {
     staff_id:      staffId,
     staff_name:    staffName,
     business_slug: slug,

@@ -32,3 +32,10 @@ export const PLAY_STORE_URL  = "https://play.google.com/store/apps/details?id=co
 // Set NEXT_PUBLIC_BASE_PATH=/bookme in .env when hosted at a subdirectory.
 // Used to prefix internal /api/ fetch calls so they resolve correctly.
 export const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
+// ── Analytics event names ─────────────────────────────────────────────────────
+export const ANALYTICS_EVENTS = {
+  PAGE_VISIT:        "page_visit",
+  SERVICE_SELECTED:  "service_selected",
+  STAFF_SELECTED:    "staff_selected",
+} as const;

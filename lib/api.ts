@@ -140,7 +140,6 @@ export async function fetchBusinessProfileBySlug(slug: string, signal?: AbortSig
   const res = await fetch(url, { headers: { Accept: "application/json" }, cache: "no-store", signal });
   if (!res.ok) throw new Error(`Failed to fetch business profile (${res.status})`);
   const json: ApiResponse<ApiBusinessProfile> = await res.json();
-  console.log("[API] Business profile fetched by slug:", json);
   if (!json.status) throw new Error(json.message);
   return json.data;
 }

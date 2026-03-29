@@ -33,3 +33,47 @@ export function getPaymentColor(type: string): string {
 export function cn(...classes: (string | undefined | null | false)[]): string {
   return classes.filter(Boolean).join(" ");
 }
+
+// ─── Date / Time utilities ─────────────────────────────────────────────────
+
+/**
+ * Converts a Date object to "YYYY-MM-DD" string (local time, no UTC shift).
+ */
+export function toISODate(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+/**
+ * Formats a date string ("YYYY-MM-DD") into short and long display formats.
+ * short: "28 Mar 2026"   full: "Friday, 28 March 2026"
+ */
+export function formatBookingDate(dateStr: string): { short: string; full: string } {
+  const d = new Date(dateStr + "T00:00:00");
+  const short = d.toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
+  const full  = d.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  return { short, full };
+}
+
+/**
+ * Converts "HH:MM:SS" or "HH:MM" to "H:MM AM/PM".
+ * Example: "09:00:00" → "9:00 AM", "16:30" → "4:30 PM"
+ */
+export function formatApiTime(time: string): string {
+  const [hStr, mStr] = time.split(":");
+  const h = parseInt(hStr, 10);
+  const m = parseInt(mStr, 10);
+  const ampm = h >= 12 ? "PM" : "AM";
+  const h12  = h > 12 ? h - 12 : h === 0 ? 12 : h;
+  return `${h12}:${String(m).padStart(2, "0")} ${ampm}`;
+}
+
+/**
+ * Extracts start time from a "HH:MM-HH:MM" slot string and formats it.
+ * Example: "16:00-16:30" → "4:00 PM"
+ */
+export function formatSlotStart(slot: string): string {
+  return formatApiTime(slot.split("-")[0]);
+}

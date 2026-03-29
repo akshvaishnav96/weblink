@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, use, useEffect, useCallback, useMemo } from "react";
+import { useState, use, useEffect, useCallback, useMemo, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { User } from "lucide-react";
 import BackHeader from "@/components/layout/BackHeader";
@@ -16,6 +16,7 @@ import {
 } from "@/lib/api";
 import { useBookingStore } from "@/store/bookingStore";
 import { DISCOUNTS_ENABLED } from "../_utils";
+import { toISODate, formatSlotStart } from "@/lib/utils";
 import { trackStaffSelected } from "@/lib/analytics";
 import styles from "./page.module.css";
 
@@ -30,21 +31,6 @@ function getInitials(name: string): string {
     .slice(0, 2);
 }
 
-function toISODate(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
-function formatSlotStart(slot: string): string {
-  const [start] = slot.split("-");
-  const [hours, minutes] = start.split(":");
-  const h = parseInt(hours, 10);
-  const ampm = h >= 12 ? "PM" : "AM";
-  const h12 = h > 12 ? h - 12 : h === 0 ? 12 : h;
-  return minutes === "00" ? `${h12}:00 ${ampm}` : `${h12}:${minutes} ${ampm}`;
-}
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -81,6 +67,7 @@ export default function ViewTimesPage({
   const [rawSlotsMap, setRawSlotsMap] = useState<Record<string, string>>({});
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [, setSlotsError] = useState<string | null>(null);
+  const lastStaffRef = useRef<string | null>(null);
   // Staff returned by the availability API — updates when date changes
   const [availableStaff, setAvailableStaff] = useState<ApiStaffSummary[] | null>(null);
 
@@ -100,35 +87,17 @@ export default function ViewTimesPage({
   // Whether we have real staff IDs for specific availability lookups
   const hasRealIds = serviceStaff.length > 0;
 
-  // Build expert cards from the availability API response (updates per date).
-  // Falls back to profile data only before the first API call returns.
+  // Build expert cards solely from the availability API response.
+  // Returns [] until the first API call completes — prevents flash of all profile staff.
   const experts = useMemo(() => {
-    // Prefer staff returned by the slot API (reflects actual date availability)
-    if (availableStaff !== null) {
-      return availableStaff.map((s) => ({
-        id: s.id.toString(),
-        initials: getInitials(s.name),
-        name: s.name,
-        picture: s.picture ?? undefined,
-      }));
-    }
-    // Initial load fallback before first API response arrives
-    if (!profile) return [];
-    if (serviceStaff.length > 0) {
-      return serviceStaff.map((s) => ({
-        id: s.id.toString(),
-        initials: getInitials(s.name),
-        name: s.name,
-        picture: s.picture ?? undefined,
-      }));
-    }
-    return (profile.staff ?? []).map((s) => ({
+    if (availableStaff === null) return []; // wait for API — show nothing until date availability loads
+    return availableStaff.map((s) => ({
       id: s.id.toString(),
       initials: getInitials(s.name),
       name: s.name,
       picture: s.picture ?? undefined,
     }));
-  }, [availableStaff, profile, serviceStaff]);
+  }, [availableStaff]);
 
   useEffect(() => {
     fetchBusinessProfileBySlug(slug)
@@ -300,7 +269,7 @@ export default function ViewTimesPage({
             setSelectedTime(null);
             if (id !== "anyone") {
               const expert = experts.find((e) => e.id === id);
-              trackStaffSelected(id, expert?.name ?? id, slug);
+              trackStaffSelected(lastStaffRef, id, expert?.name ?? id, slug);
             }
           }}
         />

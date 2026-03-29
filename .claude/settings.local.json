@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(ls -la /c/Users/Admin/Desktop/weblink/app/bookme/[slug]/)"
     ]
   }
 }

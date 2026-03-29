@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     }
     return NextResponse.json(data);
   } catch (err) {
-    console.error("[payment-intent] error:", err);
+    console.error("[payment-intent] error:", (err as Error).message);
     return NextResponse.json({ status: false, message: "Internal server error" }, { status: 500 });
   }
 }

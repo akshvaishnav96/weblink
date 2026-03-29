@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Clock, ChevronDown, TrendingUp } from "lucide-react";
 import { Service } from "@/types";
@@ -53,6 +53,7 @@ function toRawSlot(displayTime: string, durationMins: number): string {
 export default function ServiceRow({ service, businessId, barberSlug = "", businessName = "", businessAddress = "", userId = null, hideBadge = false, expanded: externalExpanded, onToggle, serviceMode = "onsite" }: ServiceRowProps) {
   const [internalExpanded, setInternalExpanded] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  const lastStaffRef = useRef<string | null>(null);
 
   const expanded = externalExpanded !== undefined ? externalExpanded : internalExpanded;
   const handleToggle = onToggle ?? (() => setInternalExpanded((prev) => !prev));
@@ -61,7 +62,7 @@ export default function ServiceRow({ service, businessId, barberSlug = "", busin
 
   function handleSlotClick(staff: { staffId: string; staffInitials: string; staffName: string }, slot: string) {
     setSelectedSlot(slot);
-    trackStaffSelected(staff.staffId, staff.staffName, barberSlug);
+    trackStaffSelected(lastStaffRef, staff.staffId, staff.staffName, barberSlug);
     setSelection({
       barberId: businessId,
       barberSlug,

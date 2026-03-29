@@ -65,8 +65,6 @@ function ConfirmBookingInner() {
   const params = useParams<{ slug: string }>();
   const pageSlug = params?.slug ?? "";
   const { selection, clearBooking } = useBookingStore();
-  console.log("[ConfirmBooking] Store selection:", selection);
-  console.log("[ConfirmBooking] Price from store:", { price: selection.price, discountedPrice: (selection as Record<string, unknown>).discountedPrice ?? "none" });
   const hydrated = useBookingHydrated();
   const stripe   = useStripe();
   const elements = useElements();
@@ -288,21 +286,18 @@ function ConfirmBookingInner() {
       ...(addr ? { drop_address: addr } : {}),
       ...(selection.notes ? { comment: selection.notes } : {}),
     };
-    console.log("[ConfirmBooking] Booking payload to send:", payload);
     return payload;
   }
 
   // ── Create booking on backend ─────────────────────────────────────────────
   async function createBooking(piId: string, pm: string, fn: string, ph: string, em: string, gn: string, fse: boolean, cc: string, addr?: string, userId?: number | null): Promise<{ pin: string; bookingId: number | null }> {
     const payload = { ...buildBasePayload({ firstName: fn, phone: ph, email: em, guestName: gn, isBookingSomeone: fse, countryCode: cc, paymentMode: pm, addr }), payment_intent_id: piId, user_id: pm === "cash" ? null : (userId ?? null) };
-    console.log("[ConfirmBooking] POST /bookme/api/booking/create payload:", payload);
     const res = await fetch(API_ENDPOINTS.BOOKING_CREATE, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
     const json = await res.json();
-    console.log("[ConfirmBooking] POST /bookme/api/booking/create response:", json);
     if (!json.status) throw new Error(json.message ?? "Booking creation failed");
     const bId = json.data?.booking_id ?? json.data?.id ?? json.booking_id ?? json.id ?? null;
     const bookingId = bId ? Number(bId) : null;
@@ -373,7 +368,6 @@ function ConfirmBookingInner() {
     setFieldErrors(errors);
     const validationError = validateForm();
     if (validationError) { setPaymentError(validationError); return; }
-    console.log("[ConfirmBooking] Payment method chosen:", payment);
     setIsProcessing(true);
     setPaymentError(null);
 

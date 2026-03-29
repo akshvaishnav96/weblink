@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { fetchBusinessProfileBySlug, type ApiBusinessProfile } from "@/lib/api";
 import { type Tab, type ServiceMode, mapApiService } from "./_utils";
 import { trackPageVisit, trackServiceSelected } from "@/lib/analytics";
@@ -30,6 +30,7 @@ export default function BusinessProfileClient({
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedServiceId, setExpandedServiceId] = useState<string | null>(null);
   const [serviceMode, setServiceMode] = useState<ServiceMode>("onsite");
+  const lastServiceRef = useRef<string | null>(null);
 
   // Page visit — once per session per slug
   useEffect(() => {
@@ -68,7 +69,8 @@ export default function BusinessProfileClient({
           ? s.service_type === "mobile" || s.service_type === "both"
           : true,
       )
-      .map((s) => mapApiService(s, serviceMode));
+      .map((s) => mapApiService(s, serviceMode))
+      .filter((s) => s.price > 0);
   }, [profile, serviceMode]);
 
   const filteredServices = useMemo(
@@ -134,7 +136,7 @@ export default function BusinessProfileClient({
             setExpandedServiceId(id);
             if (id !== null) {
               const svc = filteredServices.find((s) => s.id === id);
-              if (svc) trackServiceSelected(String(id), svc.name, slug);
+              if (svc) trackServiceSelected(lastServiceRef, String(id), svc.name, slug);
             }
           }}
         />

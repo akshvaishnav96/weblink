@@ -1,5 +1,6 @@
 import type { ApiService } from "@/lib/api";
 import type { Service, StaffAvailability } from "@/types";
+import { formatApiTime, formatSlotStart } from "@/lib/utils";
 
 export type Tab = "services" | "portfolio" | "about";
 export type ServiceMode = "onsite" | "mobile";
@@ -22,17 +23,8 @@ export function getInitials(name: string): string {
     .slice(0, 2);
 }
 
-export function formatApiTime(time: string): string {
-  const [hours, minutes] = time.split(":");
-  const h = parseInt(hours, 10);
-  const ampm = h >= 12 ? "PM" : "AM";
-  const h12 = h > 12 ? h - 12 : h === 0 ? 12 : h;
-  return minutes === "00" ? `${h12} ${ampm}` : `${h12}:${minutes} ${ampm}`;
-}
-
-export function formatSlotStart(slot: string): string {
-  return formatApiTime(slot.split("-")[0]);
-}
+// Re-export shared date/time utils so existing imports from _utils still work
+export { formatApiTime, formatSlotStart };
 
 function applyDiscount(
   base: number,

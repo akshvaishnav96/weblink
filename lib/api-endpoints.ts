@@ -1,6 +1,12 @@
 const API_BASE =
   process.env.API_BASE_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL;
 
+if (!API_BASE) {
+  throw new Error(
+    "[Config] API_BASE_URL or NEXT_PUBLIC_API_BASE_URL must be set in your environment variables."
+  );
+}
+
 export const API_ENDPOINTS = {
   // ── Backend (server-to-server) endpoints ───────────────────────────────────
   BUSINESS_PROFILE: (slug: string) => `${API_BASE}/bookme/${slug}?search=`,

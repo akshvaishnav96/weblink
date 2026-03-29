@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Calendar, Clock, CreditCard, Timer } from "lucide-react";
 import styles from "./page.module.css";
 import { API_ENDPOINTS } from "@/lib/api-endpoints";
+import { formatBookingDate, formatApiTime } from "@/lib/utils";
 
 type BookingStatus = "upcoming" | "cancelled";
 
@@ -27,21 +28,6 @@ interface Booking {
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-function formatDate(dateStr: string): { short: string; full: string } {
-  const d = new Date(dateStr + "T00:00:00");
-  const short = d.toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
-  const full  = d.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
-  return { short, full };
-}
-
-function formatTime(timeSlot: string): string {
-  const start = timeSlot.split("-")[0];
-  const [h, m] = start.split(":").map(Number);
-  const ampm = h >= 12 ? "PM" : "AM";
-  const h12  = h > 12 ? h - 12 : h === 0 ? 12 : h;
-  return `${h12}:${String(m).padStart(2, "0")} ${ampm}`;
-}
-
 function formatPaymentMode(mode: string | null): string {
   if (!mode) return "—";
   const map: Record<string, string> = {
@@ -56,7 +42,7 @@ function mapApiStatus(status: string): BookingStatus {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapApiBooking(data: any): Booking {
-  const { short, full } = formatDate(data.booking_date ?? "");
+  const { short, full } = formatBookingDate(data.booking_date ?? "");
   const svc = data.services?.[0];
   return {
     id:               data.id,
@@ -65,7 +51,7 @@ function mapApiBooking(data: any): Booking {
     businessId:       String(data.business?.id ?? ""),
     date:             short,
     dateGroup:        full,
-    time:             formatTime(data.time_slot ?? "00:00-00:00"),
+    time:             formatApiTime((data.time_slot ?? "00:00-00:00").split("-")[0]),
     duration:         svc?.business_services?.time ? `${svc.business_services.time} min` : "—",
     paymentMethod:    formatPaymentMode(data.payment_mode),
     price:            `$${parseFloat(data.total_amount ?? "0").toFixed(2).replace(/\.00$/, "")}`,
