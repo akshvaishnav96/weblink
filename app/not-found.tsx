@@ -5,17 +5,17 @@ import styles from "./not-found.module.css";
 
 export default function NotFound() {
   return (
-    <div className="fixed inset-0 flex flex-col items-center justify-center bg-[#111009] overflow-hidden p-[var(--sp-6)] z-[10]">
+    <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 200, background: "#111009", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px", overflow: "hidden" }}>
       {/* bgGradient/bgLights/bgVignette: radial-gradients — kept in CSS module */}
       <div className={styles.bgGradient} />
       <div className={styles.bgLights} />
       <div className={styles.bgVignette} />
 
-      <div className="relative z-[1] flex flex-col items-center text-center gap-0">
+      <div className="relative z-[1] flex flex-col items-center text-center gap-0 w-full max-w-[520px] px-4">
         {/* Scissors icon */}
         <div className="mb-[28px] opacity-[.55]">
           <svg
-            className="w-[56px] h-[56px] text-[var(--color-primary)]"
+            className="w-[clamp(56px,12vw,80px)] h-[clamp(56px,12vw,80px)] text-[var(--color-primary)]"
             viewBox="0 0 64 64"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
@@ -41,18 +41,21 @@ export default function NotFound() {
           4<span className="text-[var(--color-primary)]">0</span>4
         </h1>
 
-        <p className="text-[clamp(15px,4vw,19px)] font-semibold text-[#e8e0d0] mb-[10px] tracking-[-0.2px]">
+        <p style={{ textShadow: "0 1px 12px rgba(0,0,0,0.8)" }} className="text-[clamp(16px,4.5vw,22px)] font-semibold text-[#cbc3c3] mb-[10px] tracking-[-0.2px] w-full">
           This page got a trim — and didn&apos;t make it back.
         </p>
-        <p className="text-[13px] text-white/35 mb-[40px]">
+        <p style={{ textShadow: "0 1px 8px rgba(0,0,0,0.8)" }} className="text-[clamp(13px,3.5vw,16px)] text-[#cbc3c3] mb-[40px] w-full">
           The link may be broken, or the page no longer exists.
         </p>
+
       </div>
 
       {/* Brand watermark */}
-      <p className="absolute bottom-[24px] left-1/2 -translate-x-1/2 text-[12px] font-bold text-white/[.18] tracking-[1px] uppercase whitespace-nowrap">
-        valet vault<span className="text-[var(--color-primary)] opacity-[.5]">.</span>
-      </p>
+      <div className="absolute bottom-[24px] left-1/2 -translate-x-1/2 text-center text-[9px] tracking-[0.14em] uppercase text-[var(--color-text-muted)] whitespace-nowrap">
+        <a href="https://valetvault.com.au" rel="noopener" style={{ color: "inherit", textDecoration: "none" }}>
+          Powered by <span className="text-[var(--color-primary)]">Valet Vault</span>
+        </a>
+      </div>
     </div>
   );
 }
