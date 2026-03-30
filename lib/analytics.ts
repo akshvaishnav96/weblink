@@ -17,7 +17,9 @@ function fire(
       console.warn("[Analytics] logEvent failed:", err);
     }
   }
-  console.log(`[Analytics] ${eventName}`, params);
+  if (process.env.NEXT_PUBLIC_ENABLE_LOGS === "1") {
+    console.log(`[Analytics] ${eventName}`, params);
+  }
 }
 
 // ─── page_visit — sessionStorage (once per tab session per slug) ──────────────

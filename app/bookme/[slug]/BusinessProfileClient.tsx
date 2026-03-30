@@ -32,7 +32,9 @@ export default function BusinessProfileClient({
   const [serviceMode, setServiceMode] = useState<ServiceMode>("onsite");
   const lastServiceRef = useRef<string | null>(null);
 
-  // Page visit — once per session per slug
+  // Page visit — once per session per slug.
+  // Intentionally using profile?.id (not profile) so this only re-fires when the
+  // business actually changes, not every time the profile object reference updates.
   useEffect(() => {
     if (profile) {
       trackPageVisit(slug, profile.business_display_name ?? profile.business_name);
@@ -53,13 +55,29 @@ export default function BusinessProfileClient({
       });
   }, [slug, initialProfile]);
 
-  const hasMobileServices = useMemo(
-    () =>
-      profile?.services.some(
-        (s) => s.service_type === "mobile" || s.service_type === "both",
-      ) ?? false,
+  const hasWalkinServices = useMemo(
+    () => profile?.services.some((s) => s.service_type === "walkin") ?? false,
     [profile],
   );
+  const hasMobileOnlyServices = useMemo(
+    () => profile?.services.some((s) => s.service_type === "mobile") ?? false,
+    [profile],
+  );
+  const hasBothServices = useMemo(
+    () => profile?.services.some((s) => s.service_type === "both") ?? false,
+    [profile],
+  );
+
+  // Show toggle when: any service is "both"  OR  there's a mix of walkin + mobile
+  const hasMobileServices =
+    hasBothServices || (hasWalkinServices && hasMobileOnlyServices);
+
+  // Auto-switch to mobile when there are only mobile-type services
+  useEffect(() => {
+    if (!hasWalkinServices && !hasBothServices && hasMobileOnlyServices) {
+      setServiceMode("mobile");
+    }
+  }, [hasWalkinServices, hasBothServices, hasMobileOnlyServices]);
 
   const mappedServices = useMemo(() => {
     if (!profile) return [];

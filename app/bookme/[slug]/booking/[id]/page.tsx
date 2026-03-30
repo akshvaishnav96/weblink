@@ -100,7 +100,9 @@ function BookingDetailInner({
         if (json.status && json.data) {
           setBooking(mapApiBooking(json.data));
         }
-      } catch { /* ignore */ } finally {
+      } catch (err) {
+        console.warn("[BookingDetails] Failed to load booking:", err);
+      } finally {
         setLoading(false);
       }
     }

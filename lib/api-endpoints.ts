@@ -23,4 +23,5 @@ export const API_ENDPOINTS = {
   BOOKING_PAYMENT_INTENT: "/bookme/api/booking/payment-intent",
   BOOKING_DETAILS: (id: number | string) => `/bookme/api/booking/details/${id}`,
   BOOKING_CANCEL: (id: number | string) => `/bookme/api/booking/cancel/${id}`,
+  LOG_PAYMENT_FAILURE: "/bookme/api/log/payment-failure",
 } as const;

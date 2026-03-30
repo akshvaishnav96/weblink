@@ -14,6 +14,8 @@ const nextConfig: NextConfig = {
         // Nginx only proxies /bookme/* — rewrite /bookme/_next/image back to
         // /_next/image so Next.js image optimizer can handle the request.
         { source: `${BASE}/_next/image`, destination: "/_next/image" },
+        // Same for favicon — browser requests /bookme/favicon.ico
+        { source: `${BASE}/favicon.ico`, destination: "/favicon.ico" },
       ],
     };
   },
@@ -25,7 +27,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "**",
+        hostname: "valetvault.s3.ap-southeast-2.amazonaws.com",
       },
     ],
   },

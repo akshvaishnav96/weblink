@@ -66,7 +66,7 @@ export default function ViewTimesPage({
   const [slots, setSlots] = useState<string[]>([]);
   const [rawSlotsMap, setRawSlotsMap] = useState<Record<string, string>>({});
   const [slotsLoading, setSlotsLoading] = useState(false);
-  const [, setSlotsError] = useState<string | null>(null);
+  const [slotsError, setSlotsError] = useState<string | null>(null);
   const lastStaffRef = useRef<string | null>(null);
   // Staff returned by the availability API — updates when date changes
   const [availableStaff, setAvailableStaff] = useState<ApiStaffSummary[] | null>(null);
@@ -267,10 +267,8 @@ export default function ViewTimesPage({
           onSelect={(id) => {
             setSelectedExpert(id);
             setSelectedTime(null);
-            if (id !== "anyone") {
               const expert = experts.find((e) => e.id === id);
               trackStaffSelected(lastStaffRef, id, expert?.name ?? id, slug);
-            }
           }}
         />
       )}
@@ -305,6 +303,10 @@ export default function ViewTimesPage({
             <div className={styles.spinner} />
             <span className="text-[13px] text-[#999]">Checking availability…</span>
           </div>
+        ) : slotsError ? (
+          <p className="text-[13px] text-[#c0392b] text-center py-[20px] italic">
+            {slotsError}
+          </p>
         ) : slots.length > 0 ? (
           <div className="grid grid-cols-3 sm:grid-cols-3 gap-[10px] md:gap-[12px]">
             {slots.map((slot) => (

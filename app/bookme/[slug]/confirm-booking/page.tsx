@@ -14,7 +14,7 @@ import {
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
-import type { PaymentRequest, StripeCardElementOptions } from "@stripe/stripe-js";
+import type { PaymentRequest, StripeCardElementOptions, PaymentRequestPaymentMethodEvent } from "@stripe/stripe-js";
 import COUNTRIES_RAW from "@/utils/countries.json";
 import { API_ENDPOINTS } from "@/lib/api-endpoints";
 import AppDownloadModal from "@/components/booking/AppDownloadModal";
@@ -144,7 +144,9 @@ function ConfirmBookingInner() {
       if (saved.forSomeoneElse) setForSomeoneElse(saved.forSomeoneElse);
       if (saved.address) setAddress(saved.address);
       setSavedBanner(true);
-    } catch { /* ignore */ }
+    } catch (err) {
+      console.warn("[ConfirmBooking] Failed to load saved details:", err);
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -209,8 +211,10 @@ function ConfirmBookingInner() {
   // ── Apple Pay handler ─────────────────────────────────────────────────────
   useEffect(() => {
     if (!paymentRequest || !stripe) return;
-    const handler = async (event: Parameters<Parameters<PaymentRequest["on"]>[1]>[0] & { complete: (s: string) => void; paymentMethod: { id: string } }) => {
+    const handler = async (event: PaymentRequestPaymentMethodEvent) => {
       const { firstName: fn, phone: ph, email: em, guestName: gn, forSomeoneElse: fse, country: ct } = formRef.current;
+      let paymentConfirmed = false;
+      let capturedPaymentIntentId = "";
       try {
         const basePayload = buildBasePayload({ firstName: fn, phone: ph, email: em, guestName: gn, isBookingSomeone: fse, countryCode: ct.dial_code, paymentMode: "upi", addr: formRef.current.address });
         const res = await fetch(API_ENDPOINTS.BOOKING_PAYMENT_INTENT, {
@@ -221,14 +225,16 @@ function ConfirmBookingInner() {
         const json = await res.json();
         if (!json.status) { event.complete("fail"); return; }
         const clientSecret: string = json.client_secret ?? "";
-        const paymentIntentId: string = json.payment_intent_id ?? "";
+        capturedPaymentIntentId = json.payment_intent_id ?? "";
         const intentUserId: number | null = json.user_id ?? null;
         const { error } = await stripe.confirmCardPayment(clientSecret, { payment_method: event.paymentMethod.id });
         if (error) { event.complete("fail"); setPaymentError(error.message ?? "Payment failed"); return; }
+        // ── Payment is confirmed — money has been captured from this point ──
+        paymentConfirmed = true;
         event.complete("success");
         setIsProcessing(true);
         setProcessingLabel("Confirming your booking…");
-        const { pin, bookingId } = await createBooking(paymentIntentId, "upi", fn, ph, em, gn, fse, ct.dial_code, formRef.current.address, intentUserId);
+        const { pin, bookingId } = await createBooking(capturedPaymentIntentId, "upi", fn, ph, em, gn, fse, ct.dial_code, formRef.current.address, intentUserId);
         saveBookingId(bookingId);
         setCustomerSnapshot({ firstName: fn, phone: ph, email: em, countryCode: ct.dial_code, guestName: gn, forSomeoneElse: fse, address: formRef.current.address });
         setConfirmedServiceId(Number(selection.serviceId ?? 0));
@@ -237,17 +243,37 @@ function ConfirmBookingInner() {
         clearBooking();
         setConfirmedPin(pin);
         setShowModal(true);
-      } catch {
-        event.complete("fail");
-        setPaymentError("Payment failed. Please try again.");
+      } catch (err) {
+        if (paymentConfirmed) {
+          // Payment went through but booking creation failed — log server-side
+          fetch(API_ENDPOINTS.LOG_PAYMENT_FAILURE, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              paymentIntentId: capturedPaymentIntentId,
+              businessId:      selection.barberId,
+              serviceId:       selection.serviceId,
+              amount:          selection.price,
+              customer:        fn,
+              phone:           ph,
+              failedAt:        new Date().toISOString(),
+              error:           (err as Error).message,
+            }),
+          }).catch(() => { /* best-effort — don't block UI */ });
+          setPaymentError(
+            `Your payment was processed but the booking could not be confirmed. ` +
+            `Please contact support with reference: ${capturedPaymentIntentId}`
+          );
+        } else {
+          event.complete("fail");
+          setPaymentError("Payment failed. Please try again.");
+        }
       } finally {
         setIsProcessing(false);
       }
     };
-    // @ts-expect-error - Stripe types are complex here
     paymentRequest.on("paymentmethod", handler);
     return () => {
-      // @ts-expect-error
       paymentRequest.off("paymentmethod", handler);
     };
   }, [paymentRequest, stripe]);
@@ -263,7 +289,11 @@ function ConfirmBookingInner() {
   const barberSlug        = selection.barberSlug        ?? "";
   const serviceId    = selection.serviceId       ?? "";
 
-  const fallbackPin = useMemo(() => String(Math.floor(PIN_MIN + Math.random() * (PIN_MAX - PIN_MIN + 1))), []);
+  const fallbackPin = useMemo(() => {
+    const buf = new Uint32Array(1);
+    crypto.getRandomValues(buf);
+    return String(PIN_MIN + (buf[0] % (PIN_MAX - PIN_MIN + 1)));
+  }, []);
 
   const SUMMARY_ROWS = [
     { label: "Business Name", value: businessName },
@@ -375,7 +405,9 @@ function ConfirmBookingInner() {
       if (!stored.includes(bookingId)) {
         localStorage.setItem(STORAGE_KEYS.BOOKING_IDS, JSON.stringify([bookingId, ...stored]));
       }
-    } catch { /* ignore */ }
+    } catch (err) {
+      console.warn("[ConfirmBooking] Failed to save booking ID:", err);
+    }
   }
 
   // ── Main confirm handler ───────────────────────────────────────────────────
@@ -395,6 +427,8 @@ function ConfirmBookingInner() {
 
     const cc = country.dial_code;
 
+    let cardPaymentConfirmed = false;
+    let cardPaymentIntentId = "";
     try {
       let pin = fallbackPin;
       let bookingId: number | null = null;
@@ -419,12 +453,14 @@ function ConfirmBookingInner() {
         const intentJson = await intentRes.json();
         if (!intentJson.status) throw new Error(intentJson.message ?? "Payment intent failed");
         const clientSecret: string = intentJson.client_secret ?? "";
-        const piId: string = intentJson.payment_intent_id ?? "";
+        cardPaymentIntentId = intentJson.payment_intent_id ?? "";
         const intentUserId: number | null = intentJson.user_id ?? null;
         const { error: stripeError } = await stripe.confirmCardPayment(clientSecret, { payment_method: paymentMethod!.id });
         if (stripeError) throw new Error(stripeError.message ?? "Card payment failed");
+        // ── Card payment confirmed — money captured from this point ──
+        cardPaymentConfirmed = true;
         setProcessingLabel("Confirming your booking…");
-        ({ pin, bookingId } = await createBooking(piId, "card", firstName, phone, email, guestName, forSomeoneElse, cc, address, intentUserId));
+        ({ pin, bookingId } = await createBooking(cardPaymentIntentId, "card", firstName, phone, email, guestName, forSomeoneElse, cc, address, intentUserId));
 
       } else {
         setProcessingLabel("Confirming your booking…");
@@ -440,7 +476,30 @@ function ConfirmBookingInner() {
       setConfirmedPin(pin);
       setShowModal(true);
     } catch (err) {
-      setPaymentError((err as Error).message ?? "Booking failed. Please try again.");
+      if (cardPaymentConfirmed) {
+        // Card was charged but booking creation failed — store for support
+        const failedRecord = {
+          paymentIntentId: cardPaymentIntentId,
+          businessId:      barberId,
+          serviceId,
+          amount:          price,
+          customer:        firstName,
+          phone,
+          failedAt:        new Date().toISOString(),
+          error:           (err as Error).message,
+        };
+        fetch(API_ENDPOINTS.LOG_PAYMENT_FAILURE, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(failedRecord),
+        }).catch(() => { /* best-effort — don't block UI */ });
+        setPaymentError(
+          `Your payment was processed but the booking could not be confirmed. ` +
+          `Please contact support with reference: ${cardPaymentIntentId}`
+        );
+      } else {
+        setPaymentError((err as Error).message ?? "Booking failed. Please try again.");
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -718,7 +777,9 @@ function ConfirmBookingInner() {
                 };
                 localStorage.setItem(SAVED_KEY, JSON.stringify(toSave));
               }
-            } catch { /* ignore */ }
+            } catch (err) {
+              console.warn("[ConfirmBooking] Failed to save user details:", err);
+            }
           }}
         />
       )}
