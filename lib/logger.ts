@@ -24,9 +24,36 @@ function isFileLoggingEnabled(): boolean {
   return process.env.ENABLE_LOGS === "1";
 }
 
+function getTimezone(): string {
+  return process.env.TIMEZONE ?? "Australia/Sydney";
+}
+
+function getLocalDateString(): string {
+  // "YYYY-MM-DD" in the configured timezone
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: getTimezone(),
+    year:     "numeric",
+    month:    "2-digit",
+    day:      "2-digit",
+  }).format(new Date());
+}
+
+function getLocalISOString(): string {
+  // ISO-like timestamp in the configured timezone (for log entries)
+  return new Date().toLocaleString("sv-SE", {
+    timeZone:       getTimezone(),
+    year:           "numeric",
+    month:          "2-digit",
+    day:            "2-digit",
+    hour:           "2-digit",
+    minute:         "2-digit",
+    second:         "2-digit",
+    fractionalSecondDigits: 3,
+  }).replace(" ", "T");
+}
+
 function getLogFilePath(): string {
-  const date = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
-  return path.join(process.cwd(), "logs", `${date}.log`);
+  return path.join(process.cwd(), "logs", `${getLocalDateString()}.log`);
 }
 
 function serializeData(data: unknown): unknown {
@@ -38,7 +65,7 @@ function serializeData(data: unknown): unknown {
 
 function buildLine(level: Level, context: string, message: string, data?: unknown): string {
   return JSON.stringify({
-    ts:      new Date().toISOString(),
+    ts:      getLocalISOString(),
     env:     process.env.APP_ENV ?? "development",
     level,
     context,

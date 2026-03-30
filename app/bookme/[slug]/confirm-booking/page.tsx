@@ -33,7 +33,7 @@ import {
   PIN_MIN,
   PIN_MAX,
 } from "@/lib/constants";
-import { detectWalletLabel } from "@/lib/utils";
+import { detectWalletLabel, nowInTZ } from "@/lib/utils";
 
 type Country = { name: string; flag: string; code: string; dial_code: string };
 const COUNTRIES = COUNTRIES_RAW as Country[];
@@ -256,7 +256,7 @@ function ConfirmBookingInner() {
               amount:          selection.price,
               customer:        fn,
               phone:           ph,
-              failedAt:        new Date().toISOString(),
+              failedAt:        nowInTZ(),
               error:           (err as Error).message,
             }),
           }).catch(() => { /* best-effort — don't block UI */ });
@@ -485,7 +485,7 @@ function ConfirmBookingInner() {
           amount:          price,
           customer:        firstName,
           phone,
-          failedAt:        new Date().toISOString(),
+          failedAt:        nowInTZ(),
           error:           (err as Error).message,
         };
         fetch(API_ENDPOINTS.LOG_PAYMENT_FAILURE, {

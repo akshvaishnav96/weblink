@@ -65,14 +65,37 @@ export function detectWalletLabel(): string {
 
 // ─── Date / Time utilities ─────────────────────────────────────────────────
 
+function getAppTimezone(): string {
+  return process.env.NEXT_PUBLIC_TIMEZONE ?? "Australia/Sydney";
+}
+
 /**
- * Converts a Date object to "YYYY-MM-DD" string (local time, no UTC shift).
+ * Converts a Date object to "YYYY-MM-DD" in the configured app timezone.
  */
 export function toISODate(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: getAppTimezone(),
+    year:     "numeric",
+    month:    "2-digit",
+    day:      "2-digit",
+  }).format(date);
+}
+
+/**
+ * Returns the current date-time as an ISO-like string in the configured app timezone.
+ * Example: "2026-03-30T14:35:22.456"
+ */
+export function nowInTZ(): string {
+  return new Date().toLocaleString("sv-SE", {
+    timeZone:               getAppTimezone(),
+    year:                   "numeric",
+    month:                  "2-digit",
+    day:                    "2-digit",
+    hour:                   "2-digit",
+    minute:                 "2-digit",
+    second:                 "2-digit",
+    fractionalSecondDigits: 3,
+  }).replace(" ", "T");
 }
 
 /**

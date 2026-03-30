@@ -27,6 +27,16 @@ export function getFirebaseAnalytics(): Analytics | null {
   try {
     const app = getFirebaseApp();
     if (!app) return null;
+
+    // Enable Firebase DebugView when NEXT_PUBLIC_ENABLE_LOGS=1 or ?debug_mode=1 is in the URL
+    const debugMode =
+      process.env.NEXT_PUBLIC_ENABLE_LOGS === "1" ||
+      new URLSearchParams(window.location.search).get("debug_mode") === "1";
+    if (debugMode) {
+      // Setting this global before getAnalytics() activates DebugView in the Firebase console
+      (window as Window & { FIREBASE_ANALYTICS_DEBUG_MODE?: boolean }).FIREBASE_ANALYTICS_DEBUG_MODE = true;
+    }
+
     return getAnalytics(app);
   } catch {
     return null;

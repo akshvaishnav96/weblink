@@ -11,6 +11,19 @@ interface BookingCalendarProps {
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
+/** Returns today's { year, month (0-indexed), date } in the configured app timezone. */
+function getTodayInTZ(): { year: number; month: number; date: number } {
+  const tz = process.env.NEXT_PUBLIC_TIMEZONE ?? "Australia/Sydney";
+  const parts = new Intl.DateTimeFormat("en-AU", {
+    timeZone: tz,
+    year:     "numeric",
+    month:    "2-digit",
+    day:      "2-digit",
+  }).formatToParts(new Date());
+  const get = (type: string) => parseInt(parts.find(p => p.type === type)!.value);
+  return { year: get("year"), month: get("month") - 1, date: get("day") };
+}
+
 function getDaysInMonth(year: number, month: number): (number | null)[] {
   const firstDay = new Date(year, month, 1).getDay();
   const startOffset = (firstDay + 6) % 7; // Monday = 0
@@ -22,18 +35,18 @@ function getDaysInMonth(year: number, month: number): (number | null)[] {
 }
 
 export default function BookingCalendar({ selectedDate, onDateSelect }: BookingCalendarProps) {
-  const today = new Date();
-  const [viewYear, setViewYear]   = useState(today.getFullYear());
-  const [viewMonth, setViewMonth] = useState(today.getMonth());
+  const tzToday = getTodayInTZ();
+  const [viewYear, setViewYear]   = useState(tzToday.year);
+  const [viewMonth, setViewMonth] = useState(tzToday.month);
 
   const days = getDaysInMonth(viewYear, viewMonth);
 
   const monthLabel = new Date(viewYear, viewMonth).toLocaleString("default", { month: "long" });
   const monthName  = `${monthLabel}, ${viewYear}`;
 
-  const todayWeekdayIndex = (today.getDay() + 6) % 7;
+  const todayWeekdayIndex = (new Date(tzToday.year, tzToday.month, tzToday.date).getDay() + 6) % 7;
   const isCurrentViewMonth =
-    viewMonth === today.getMonth() && viewYear === today.getFullYear();
+    viewMonth === tzToday.month && viewYear === tzToday.year;
 
   const prevMonth = () => {
     if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); }
@@ -46,7 +59,7 @@ export default function BookingCalendar({ selectedDate, onDateSelect }: BookingC
   };
 
   const isToday = (day: number) =>
-    day === today.getDate() && viewMonth === today.getMonth() && viewYear === today.getFullYear();
+    day === tzToday.date && viewMonth === tzToday.month && viewYear === tzToday.year;
 
   const isSelected = (day: number) =>
     !!selectedDate &&
@@ -56,7 +69,7 @@ export default function BookingCalendar({ selectedDate, onDateSelect }: BookingC
 
   const isPast = (day: number) => {
     const d = new Date(viewYear, viewMonth, day);
-    return d < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    return d < new Date(tzToday.year, tzToday.month, tzToday.date);
   };
 
   return (

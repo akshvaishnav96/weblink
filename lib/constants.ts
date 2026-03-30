@@ -35,7 +35,7 @@ export const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 // ── Analytics event names ─────────────────────────────────────────────────────
 export const ANALYTICS_EVENTS = {
-  PAGE_VISIT:        "page_visit",
-  SERVICE_SELECTED:  "service_selected",
-  STAFF_SELECTED:    "staff_selected",
+  PAGE_VISIT:        "business_profile_click",
+  SERVICE_SELECTED:  "service_click",
+  STAFF_SELECTED:    "staff_click",
 } as const;

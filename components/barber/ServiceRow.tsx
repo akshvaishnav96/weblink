@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Clock, ChevronDown, TrendingUp } from "lucide-react";
 import { Service } from "@/types";
-import { formatDuration, formatPrice, getPaymentLabel } from "@/lib/utils";
+import { formatDuration, formatPrice, getPaymentLabel, toISODate } from "@/lib/utils";
 import BarberAvatar from "@/components/ui/BarberAvatar";
 import TimeSlotButton from "@/components/ui/TimeSlotButton";
 import Link from "next/link";
@@ -13,8 +13,13 @@ import { trackStaffSelected } from "@/lib/analytics";
 import styles from "./ServiceRow.module.css";
 
 function getTodayLabel(): string {
-  const d = new Date();
-  return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  const tz = process.env.NEXT_PUBLIC_TIMEZONE ?? "Australia/Sydney";
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: tz,
+    weekday:  "short",
+    month:    "short",
+    day:      "numeric",
+  }).format(new Date());
 }
 
 interface ServiceRowProps {
@@ -31,8 +36,7 @@ interface ServiceRowProps {
 }
 
 function todayISO(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  return toISODate(new Date());
 }
 
 function toRawSlot(displayTime: string, durationMins: number): string {

@@ -16,7 +16,7 @@ import {
 } from "@/lib/api";
 import { useBookingStore } from "@/store/bookingStore";
 import { DISCOUNTS_ENABLED } from "../_utils";
-import { toISODate, formatSlotStart } from "@/lib/utils";
+import { toISODate, formatSlotStart, nowInTZ } from "@/lib/utils";
 import { trackStaffSelected } from "@/lib/analytics";
 import styles from "./page.module.css";
 
@@ -58,7 +58,13 @@ export default function ViewTimesPage({
   const [randomStaffId, setRandomStaffId] = useState<string | null>(null);
   // staff_id returned by checkStaffAvailability — used for booking when no real IDs
   const [resolvedStaffId, setResolvedStaffId] = useState<string | null>(null);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+  // Initialise to today in the app timezone (Australia/Sydney) so the calendar
+  // opens on the correct date regardless of the user's browser timezone.
+  const [selectedDate, setSelectedDate] = useState<Date | null>(() => {
+    const [datePart] = nowInTZ().split("T");
+    const [y, m, d] = datePart.split("-").map(Number);
+    return new Date(y, m - 1, d);
+  });
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
   const [meetUpAddress] = useState("");
