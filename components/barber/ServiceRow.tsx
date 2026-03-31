@@ -56,7 +56,7 @@ function toRawSlot(displayTime: string, durationMins: number): string {
 
 export default function ServiceRow({ service, businessId, barberSlug = "", businessName = "", businessAddress = "", userId = null, hideBadge = false, expanded: externalExpanded, onToggle, serviceMode = "onsite" }: ServiceRowProps) {
   const [internalExpanded, setInternalExpanded] = useState(false);
-  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<{ staffId: string; slot: string } | null>(null);
   const lastStaffRef = useRef<string | null>(null);
 
   const expanded = externalExpanded !== undefined ? externalExpanded : internalExpanded;
@@ -65,7 +65,7 @@ export default function ServiceRow({ service, businessId, barberSlug = "", busin
   const setSelection = useBookingStore((s) => s.setSelection);
 
   function handleSlotClick(staff: { staffId: string; staffInitials: string; staffName: string }, slot: string) {
-    setSelectedSlot(slot);
+    setSelectedSlot({ staffId: staff.staffId, slot });
     trackStaffSelected(lastStaffRef, staff.staffId, staff.staffName, barberSlug);
     setSelection({
       barberId: businessId,
@@ -217,7 +217,7 @@ export default function ServiceRow({ service, businessId, barberSlug = "", busin
                           key={slot}
                           time={slot}
                           variant="pill"
-                          selected={selectedSlot === slot}
+                          selected={selectedSlot?.staffId === staff.staffId && selectedSlot?.slot === slot}
                           onClick={() => handleSlotClick(staff, slot)}
                         />
                       ))}
