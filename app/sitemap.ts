@@ -4,8 +4,8 @@ import { API_ENDPOINTS } from "@/lib/api-endpoints";
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://valetvault.com.au").replace(/\/$/, "");
 
 interface BusinessEntry {
-  slug: string;
-  updated_at?: string;
+  business_slug: string;
+  updated_at?:   string;
   business_name?: string;
 }
 
@@ -39,19 +39,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     const json = await res.json() as {
       status: boolean;
-      data: { data: BusinessEntry[] } | BusinessEntry[];
+      data: BusinessEntry[];
     };
+    if (!json.status || !Array.isArray(json.data)) return staticPages;
 
-    if (!json.status) return staticPages;
-
-    const businesses: BusinessEntry[] = Array.isArray(json.data)
-      ? json.data
-      : (json.data as { data: BusinessEntry[] }).data ?? [];
-
-    const businessPages: MetadataRoute.Sitemap = businesses
-      .filter(b => b.slug)
+    const businessPages: MetadataRoute.Sitemap = json.data
+      .filter(b => b.business_slug)
       .map(b => ({
-        url: `${SITE_URL}/bookme/${b.slug}`,
+        url: `${SITE_URL}/bookme/${b.business_slug}`,
         lastModified: b.updated_at ? new Date(b.updated_at) : now,
         changeFrequency: "daily" as const,
         priority: 0.9,

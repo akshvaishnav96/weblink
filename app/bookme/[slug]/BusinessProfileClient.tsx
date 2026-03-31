@@ -37,7 +37,7 @@ export default function BusinessProfileClient({
   // business actually changes, not every time the profile object reference updates.
   useEffect(() => {
     if (profile) {
-      trackPageVisit(slug, profile.business_display_name ?? profile.business_name);
+      trackPageVisit(slug, profile.business_display_name ?? profile.business_name, String(profile.id));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug, profile?.id]);
@@ -154,7 +154,7 @@ export default function BusinessProfileClient({
             setExpandedServiceId(id);
             if (id !== null) {
               const svc = filteredServices.find((s) => s.id === id);
-              if (svc) trackServiceSelected(lastServiceRef, String(id), svc.name, slug);
+              if (svc) trackServiceSelected(lastServiceRef, String(id), svc.name, slug, String(profile?.id ?? ""));
             }
           }}
         />

@@ -274,7 +274,7 @@ export default function ViewTimesPage({
             setSelectedExpert(id);
             setSelectedTime(null);
               const expert = experts.find((e) => e.id === id);
-              trackStaffSelected(lastStaffRef, id, expert?.name ?? id, slug);
+              trackStaffSelected(lastStaffRef, id, expert?.name ?? id, slug, serviceId, String(profile?.id ?? ""), service?.service_name ?? "");
           }}
         />
       )}

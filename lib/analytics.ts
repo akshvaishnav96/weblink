@@ -29,7 +29,7 @@ function fire(
  * Uses sessionStorage because the user can navigate away and come back —
  * we don't want to re-fire on every mount within the same tab.
  */
-export function trackPageVisit(slug: string, businessName: string): void {
+export function trackPageVisit(slug: string, businessName: string, businessId: string): void {
   const key = `pv__${slug}`;
   try {
     if (sessionStorage.getItem(key)) return;
@@ -37,7 +37,7 @@ export function trackPageVisit(slug: string, businessName: string): void {
   } catch {
     // sessionStorage unavailable — fire anyway, no dedup
   }
-  fire(ANALYTICS_EVENTS.PAGE_VISIT, { business_slug: slug, business_name: businessName });
+  fire(ANALYTICS_EVENTS.PAGE_VISIT, { business_slug: slug, business_name: businessName, business_id: businessId });
 }
 
 // ─── service_selected — useRef dedup (last-fired value) ──────────────────────
@@ -49,13 +49,14 @@ export function trackPageVisit(slug: string, businessName: string): void {
  *
  * Usage in component:
  *   const lastServiceRef = useRef<string | null>(null);
- *   trackServiceSelected(lastServiceRef, id, name, slug);
+ *   trackServiceSelected(lastServiceRef, id, name, slug, businessId);
  */
 export function trackServiceSelected(
   lastRef: React.RefObject<string | null>,
   serviceId: string,
   serviceName: string,
   slug: string,
+  businessId: string,
 ): void {
   if (lastRef.current === serviceId) return;
   lastRef.current = serviceId;
@@ -63,6 +64,7 @@ export function trackServiceSelected(
     service_id:    serviceId,
     service_name:  serviceName,
     business_slug: slug,
+    business_id:   businessId,
   });
 }
 
@@ -75,13 +77,16 @@ export function trackServiceSelected(
  *
  * Usage in component:
  *   const lastStaffRef = useRef<string | null>(null);
- *   trackStaffSelected(lastStaffRef, id, name, slug);
+ *   trackStaffSelected(lastStaffRef, id, name, slug, serviceId, businessId);
  */
 export function trackStaffSelected(
   lastRef: React.RefObject<string | null>,
   staffId: string,
   staffName: string,
   slug: string,
+  serviceId: string,
+  businessId: string,
+  serviceName: string = "",
 ): void {
   if (!staffId || staffId === "anyone" || staffId === "0") return;
   if (lastRef.current === staffId) return;
@@ -90,5 +95,8 @@ export function trackStaffSelected(
     staff_id:      staffId,
     staff_name:    staffName,
     business_slug: slug,
+    service_id:    serviceId,
+    service_name:  serviceName,
+    business_id:   businessId,
   });
 }

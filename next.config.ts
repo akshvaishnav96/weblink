@@ -16,6 +16,10 @@ const nextConfig: NextConfig = {
         { source: `${BASE}/_next/image`, destination: "/_next/image" },
         // Same for favicon — browser requests /bookme/favicon.ico
         { source: `${BASE}/favicon.ico`, destination: "/favicon.ico" },
+        // Sitemap — nginx proxies /bookme/sitemap.xml, forward to Next.js handler
+        { source: `${BASE}/sitemap.xml`, destination: "/sitemap.xml" },
+        // Robots — same
+        { source: `${BASE}/robots.txt`, destination: "/robots.txt" },
       ],
     };
   },

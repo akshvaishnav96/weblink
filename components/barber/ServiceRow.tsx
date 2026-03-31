@@ -66,7 +66,7 @@ export default function ServiceRow({ service, businessId, barberSlug = "", busin
 
   function handleSlotClick(staff: { staffId: string; staffInitials: string; staffName: string }, slot: string) {
     setSelectedSlot({ staffId: staff.staffId, slot });
-    trackStaffSelected(lastStaffRef, staff.staffId, staff.staffName, barberSlug);
+    trackStaffSelected(lastStaffRef, staff.staffId, staff.staffName, barberSlug, service.id, businessId, service.name);
     setSelection({
       barberId: businessId,
       barberSlug,
