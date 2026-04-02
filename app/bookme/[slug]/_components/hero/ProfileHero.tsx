@@ -32,16 +32,7 @@ export default function ProfileHero({ profile, hasAvailableSlots }: ProfileHeroP
       )}
       {hasAvailableSlots && (
         <div className={`${styles.heroSeats} flex items-center gap-2`}>
-          <div
-            style={{
-              height: "8px",
-              width: "8px",
-              background: "#0eaf0e",
-              borderRadius: "50%",
-              boxShadow: "0px 0px 10px green",
-            }}
-            className="w-2 h-2 min-w-2 min-h-2 bg-green-500"
-          />
+          <div className={styles.seatsDot} />
           <span>Seats available today</span>
         </div>
       )}

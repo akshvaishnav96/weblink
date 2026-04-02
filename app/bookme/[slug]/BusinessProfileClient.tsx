@@ -172,25 +172,50 @@ export default function BusinessProfileClient({
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
             "@context": "https://schema.org",
-            "@type": "LocalBusiness",
+            "@type": profile.business_type ?? "LocalBusiness",
             name: profile.business_display_name ?? profile.business_name,
             address: {
               "@type": "PostalAddress",
               streetAddress: profile.business_address,
             },
             telephone: profile.business_phone ?? undefined,
-            url:
-              profile.website_url ?? `https://valetvault.com.au/bookme/${slug}`,
+            url: profile.website_url ?? `https://valetvault.com.au/bookme/${slug}`,
             image: profile.business_banner ?? undefined,
-            ...(profile.latitude && profile.longitude
-              ? {
-                  geo: {
-                    "@type": "GeoCoordinates",
-                    latitude: profile.latitude,
-                    longitude: profile.longitude,
-                  },
-                }
-              : {}),
+            ...(profile.latitude && profile.longitude ? {
+              geo: {
+                "@type": "GeoCoordinates",
+                latitude: profile.latitude,
+                longitude: profile.longitude,
+              },
+            } : {}),
+            // Opening hours — skip closed days
+            ...(profile.open_hours?.length ? {
+              openingHours: profile.open_hours
+                .filter(h => !h.is_closed && h.open_time && h.close_time)
+                .map(h => {
+                  const day = h.day.slice(0, 2); // "Monday" → "Mo"
+                  const open  = h.open_time!.slice(0, 5);  // "09:00:00" → "09:00"
+                  const close = h.close_time!.slice(0, 5);
+                  return `${day} ${open}-${close}`;
+                }),
+            } : {}),
+            // Services as offers
+            ...(profile.services?.length ? {
+              makesOffer: profile.services.map(s => ({
+                "@type": "Offer",
+                name: s.service_name,
+                price: s.walk_price ?? s.mobile_price,
+                priceCurrency: "AUD",
+              })),
+            } : {}),
+            // Aggregate rating — only when there are actual reviews
+            ...(profile.total_reviews > 0 ? {
+              aggregateRating: {
+                "@type": "AggregateRating",
+                ratingValue: profile.average_rating,
+                reviewCount: profile.total_reviews,
+              },
+            } : {}),
           }),
         }}
       />

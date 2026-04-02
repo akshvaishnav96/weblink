@@ -46,7 +46,7 @@
 /* formTextarea: ::placeholder + :focus — kept in CSS module */
 .formTextarea {
   width: 100%; background: #fff; border: 1.5px solid #E8E4DD;
-  border-radius: 12px; padding: 12px 14px; font-size: 13.5px;
+  border-radius: 12px; padding: 12px 14px; font-size: 16px;
   color: #1a1a1a; resize: none; outline: none; min-height: 80px;
   line-height: 1.5; transition: border-color 0.15s;
   font-family: var(--font-body);
