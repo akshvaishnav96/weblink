@@ -172,7 +172,12 @@ export default function BusinessProfileClient({
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
             "@context": "https://schema.org",
-            "@type": profile.business_type ?? "LocalBusiness",
+            "@type": ({
+              Barber:   "BarberShop",
+              Salon:    "HairSalon",
+              Wellness: "HealthAndBeautyBusiness",
+              Spa:      "DaySpa",
+            } as Record<string, string>)[profile.business_type] ?? "HairSalon",
             name: profile.business_display_name ?? profile.business_name,
             address: {
               "@type": "PostalAddress",
