@@ -26,7 +26,7 @@
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  background: #c8901a;
+  background: #16a34a;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -34,7 +34,7 @@
   flex-shrink: 0;
   animation: iconPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
-.iconWrapTurn { background: #c8901a; }
+.iconWrapTurn { background: #16a34a; }
 .iconCheck  { color: #fff; width: 28px; height: 28px; }
 .iconParty  { font-size: 28px; line-height: 1; }
 
@@ -376,6 +376,15 @@
 .smsHeaderTime  { font-size: 11px; color: #bbb; }
 .smsBody { padding: 14px 16px 16px; }
 .smsText { font-size: 14px; color: #555; line-height: 1.55; margin-bottom: 10px; }
+.smsLinkRow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.smsLinkIcon {
+  color: #c8901a;
+  flex-shrink: 0;
+}
 .smsLink {
   font-size: 13px;
   color: #c8901a;

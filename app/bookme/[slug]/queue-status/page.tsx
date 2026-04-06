@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, SkipForward, XCircle, MessageCircle, Check, MessageSquare } from "lucide-react";
+import { Eye, SkipForward, XCircle, MessageCircle, Check, MessageSquare, ExternalLinkIcon } from "lucide-react";
 import { useQueueStatus } from "./_hooks/useQueueStatus";
 import YourTurnView from "./_components/YourTurnView";
 import { LeaveModal, SkipModal } from "./_components/ConfirmModal";
@@ -60,7 +60,10 @@ export default function QueueStatusPage() {
                   Hi! You&apos;re <strong>#{q.position}</strong> in line at {q.serviceName || "your provider"}.{" "}
                   Manage your spot here:
                 </p>
-                <span className={styles.smsLink}>queue.mikes.com/abc123</span>
+                <div className={styles.smsLinkRow}>
+                  <ExternalLinkIcon className={styles.smsLinkIcon} size={14} />
+                  <span className={styles.smsLink}>queue.mikes.com/abc123</span>
+                </div>
               </div>
             </div>
 

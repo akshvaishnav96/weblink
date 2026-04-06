@@ -39,7 +39,7 @@ export function useQueueStatus() {
   const waitMins    = session?.waitMins    ?? 0;
 
   // ── Live state ─────────────────────────────────────────────────────────────
-  const [position, setPosition] = useState(session?.position ?? 1);
+  const [position, setPosition] = useState(session?.position ?? 2);
   const [estWaitMins, setEstWait]    = useState(waitMins);
   const [view,        setView]       = useState<QueueView>("waiting");
   const [modal,       setModal]      = useState<ModalView>(null);
