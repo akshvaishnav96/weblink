@@ -64,161 +64,57 @@
 /* ── Service Summary card ── */
 .summaryCard {
   background: var(--color-white);
-  margin: 10px 12px 0;
-  border: 1.5px solid hsl(35deg 48% 79%);
-  border-radius: 12px;
+  margin: 14px 16px 0;
+  border: 1px solid var(--color-border-light);
+  border-radius: 14px;
   overflow: hidden;
 }
 .summaryHeader {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px 14px 10px;
-  border-bottom: 1px solid var(--color-border-light);
+  padding: 14px 16px 0;
 }
-.summaryHeaderLeft { flex: 1; min-width: 0; }
 .summaryServiceName {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  flex: 1;
+  min-width: 0;
+}
+.summaryPrice {
   font-size: 16px;
   font-weight: 700;
   color: var(--color-text-primary);
-  font-family: var(--font-heading);
+  flex-shrink: 0;
 }
 .summaryMeta {
   display: flex;
   align-items: center;
-  gap: 4px;
-  margin-top: 4px;
-  font-size: 13px;
+  gap: 5px;
+  padding: 6px 16px 14px;
+  font-size: 12px;
   color: var(--color-text-muted);
+  flex-wrap: wrap;
 }
 .summaryMetaIcon { width: 12px; height: 12px; flex-shrink: 0; }
-.summaryHeaderRight { flex-shrink: 0; }
-.summaryPrice {
-  font-size: 18px;
-  font-weight: 900;
-  color: var(--color-primary);
-  letter-spacing: -0.3px;
+.summaryMetaDot  { color: var(--color-border); }
+.summaryDivider {
+  height: 1px;
+  background: var(--color-border-light);
+  margin: 0 16px;
 }
-
-.summaryStaff {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-}
-.fastestAvatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: rgba(40,167,69,0.12);
-  color: #1a8a3a;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-.fastestAvatarIcon { width: 16px; height: 16px; }
-.summaryStaffName {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  line-height: 1.3;
-}
-.summaryWait {
-  font-size: 12px;
-  color: #1a8a3a;
-  margin-top: 1px;
-}
-
-.summaryPeople {
+.summaryDepositRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 14px;
-  border-top: 1px solid var(--color-border-light);
+  padding: 6px 16px;
   font-size: 13px;
 }
-.summaryPeopleLabel { color: var(--color-text-muted); }
-.summaryPeopleValue { font-weight: 700; color: var(--color-text-primary); }
-
-/* ── How Payment Works ── */
-.howItWorks {
-  margin: 10px 12px 0;
-  background: #faf9f7;
-  border: 1px solid var(--color-border-light);
-  border-radius: 12px;
-  padding: 14px 14px 12px;
-}
-.howTitle {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  margin-bottom: 14px;
-}
-.howSteps {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-.howStep {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  position: relative;
-}
-.howStepDot {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: #e8e5e0;
-  color: #888;
-  font-size: 11px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  z-index: 1;
-  position: relative;
-}
-.howStepDotActive {
-  background: var(--color-primary);
-  color: #fff;
-}
-.howStepLine {
-  position: absolute;
-  left: 13px;
-  top: 26px;
-  width: 1.5px;
-  height: 30px;
-  background: var(--color-border);
-  z-index: 0;
-}
-.howStepBody {
-  padding-bottom: 20px;
-  flex: 1;
-}
-.howStep:last-child .howStepBody { padding-bottom: 0; }
-.howStepLabel {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  line-height: 1.3;
-}
-.howStepAmount {
-  font-size: 15px;
-  font-weight: 800;
-  color: var(--color-primary);
-  margin-top: 2px;
-  line-height: 1;
-}
-.howStepAmountMuted { color: var(--color-text-muted); }
-.howStepNote {
-  font-size: 11px;
-  color: var(--color-text-muted);
-  margin-top: 3px;
-}
+.summaryDepositRow:last-child { padding-bottom: 14px; }
+.summaryDepositLabel { color: var(--color-text-muted); }
+.summaryDepositValue { font-weight: 600; color: var(--color-text-primary); }
 
 /* ── Form area ── */
 .formArea {
@@ -233,6 +129,14 @@
 .section {}
 .sectionTitle { font-size: 13px; font-weight: 700; color: var(--color-text-primary); margin-bottom: 3px; }
 .sectionSub   { font-size: 12px; color: var(--color-text-muted); margin-bottom: 12px; }
+.sectionLabel {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-bottom: 12px;
+}
 
 /* ── Inputs ── */
 .inputRow { position: relative; margin-bottom: 10px; }
@@ -263,7 +167,6 @@
 .input::placeholder { color: var(--color-text-placeholder); }
 .inputError { border-color: #e53e3e !important; box-shadow: 0 0 0 3px rgba(229,62,62,0.1); }
 .input:focus { border-color: var(--color-primary-border); box-shadow: 0 0 0 3px rgba(184,134,11,0.08); }
-
 .inputNoIcon {
   width: 100%;
   background: var(--color-surface);
@@ -361,7 +264,6 @@
 .countryEmpty { font-size: 13px; color: var(--color-text-muted); text-align: center; padding: 16px 0; }
 .flag     { font-size: 17px; line-height: 1; }
 .dialCode { font-weight: 500; font-size: 13px; }
-
 .phoneNote {
   display: flex;
   align-items: center;
@@ -374,7 +276,60 @@
 }
 .lockIcon { color: var(--color-primary); flex-shrink: 0; }
 
-/* ── Section title row (About You header) ── */
+/* ── Web link notifications card ── */
+.notifyCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--color-border-light);
+  border-radius: 12px;
+  background: var(--color-white);
+  margin-top: 12px;
+}
+.notifyIconWrap {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--color-primary-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.notifyIcon { color: var(--color-primary); }
+.notifyText { flex: 1; min-width: 0; }
+.notifyTitle { font-size: 13px; font-weight: 600; color: var(--color-text-primary); }
+.notifyDesc  { font-size: 11px; color: var(--color-text-muted); margin-top: 1px; }
+
+/* ── Toggle switch ── */
+.toggle {
+  position: relative;
+  width: 44px;
+  height: 26px;
+  border-radius: 13px;
+  background: var(--color-border);
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s;
+  padding: 0;
+}
+.toggleOn { background: var(--color-primary); }
+.toggleThumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-white);
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.toggleOn .toggleThumb { transform: translateX(18px); }
+
+/* ── Section title row ── */
 .sectionTitleRow {
   display: flex;
   align-items: flex-start;
@@ -393,6 +348,7 @@
   justify-content: space-between;
   gap: 2px;
   flex-shrink: 0;
+  margin-bottom: 10px;
 }
 .welcomeChip > span {
   font-size: 12px;
@@ -400,10 +356,9 @@
   color: var(--color-text-primary);
   white-space: nowrap;
   padding: 0.8rem;
-  background: rgba(149, 150, 149, 0.12);
-  margin: 0.5rem 0rem;
+  background: rgba(149,150,149,0.12);
   border-radius: 15px;
-  border: 1px solid rgba(201, 247, 117, 0.24);
+  border: 1px solid rgba(201,247,117,0.24);
 }
 .forgetLink {
   font-size: 11px;
@@ -412,7 +367,6 @@
   border: none;
   cursor: pointer;
   padding: 0;
-  text-decoration: none;
   white-space: nowrap;
 }
 .forgetLink:hover { color: #c0392b; }
@@ -479,27 +433,63 @@
   flex-shrink: 0;
 }
 
-.payOption {
+/* ── Payment method card grid ── */
+.payGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.payCard {
+  position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 14px;
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 8px 14px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 14px;
   background: var(--color-white);
   cursor: pointer;
-  margin-bottom: 8px;
   transition: border-color 0.15s, background 0.15s;
-  text-align: left;
-  min-height: 52px;
 }
-.payOptionActive { border-color: var(--color-primary-border); background: var(--color-primary-bg); }
-.payIcon        { flex-shrink: 0; color: var(--color-text-muted); }
-.payIconActive  { flex-shrink: 0; color: var(--color-primary); }
-.payLabel       { flex: 1; font-size: 14px; color: var(--color-text-primary); }
-.payCheck   { flex-shrink: 0; color: #c8901a; }
-.payUncheck { flex-shrink: 0; color: var(--color-border); }
+.payCardActive {
+  border-color: var(--color-primary-border);
+  background: var(--color-primary-bg);
+}
+.payCardBadge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  color: #c8901a;
+  flex-shrink: 0;
+}
+.payCardIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--color-surface-alt);
+  color: var(--color-text-muted);
+  transition: background 0.15s, color 0.15s;
+}
+.payCardIconActive {
+  background: var(--color-primary-bg);
+  color: var(--color-primary);
+}
+.payCardLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+.payCardLabelActive {
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
 
 /* ── Apple/Google Pay button area ── */
 .prButtonWrap { margin-top: 10px; }
@@ -576,6 +566,17 @@
   padding: 10px 14px;
   text-align: center;
   line-height: 1.5;
+}
+.ctaError {
+  font-size: 12.5px;
+  color: #c0392b;
+  background: #fdf2f2;
+  border: 1px solid #f5c6cb;
+  border-radius: 8px;
+  padding: 8px 12px;
+  text-align: center;
+  line-height: 1.5;
+  margin-bottom: 8px;
 }
 
 /* ── CTA wrapper — sits just above the bottom nav ── */
@@ -756,9 +757,8 @@
 @media (min-width: 640px) {
   .header      { padding: 18px 28px 14px; }
   .headerTitle { font-size: 19px; }
-  .summaryCard { margin: 14px 16px 0; }
-  .howItWorks  { margin: 10px 16px 0; padding: 16px; }
-  .formArea    { padding: 18px 20px 20px; gap: 20px; }
+  .summaryCard { margin: 16px 24px 0; }
+  .formArea    { padding: 18px 24px 20px; gap: 20px; }
   .ctaWrap     { padding: 0 24px 12px; }
 }
 
@@ -766,7 +766,9 @@
    DESKTOP  ≥ 1024px
    ════════════════════════════ */
 @media (min-width: 1024px) {
-  .header   { padding: 20px 48px 16px; }
-  .formArea { padding: 20px 32px 24px; }
-  .ctaWrap  { padding: 0 32px 12px; }
+  .header      { padding: 20px 24px 16px; }
+  .headerTitle { font-size: 20px; }
+  .summaryCard { margin: 16px 24px 0; }
+  .formArea    { padding: 20px 24px 24px; gap: 20px; }
+  .ctaWrap     { padding: 0 24px 14px; }
 }

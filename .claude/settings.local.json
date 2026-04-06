@@ -27,7 +27,8 @@
       "Bash(grep -n \"Promise.all\\\\|Promise.race\\\\|Promise.any\" /c/Users/Admin/Desktop/weblink/app/bookme/[slug]/confirm-booking/page.tsx)",
       "Bash(grep -n \"eslint-disable\\\\|any\\\\s*=\" /c/Users/Admin/Desktop/weblink/app/bookme/[slug]/BusinessProfileClient.tsx)",
       "Bash(wc -l /c/Users/Admin/Desktop/weblink/app/bookme/[slug]/confirm-booking/page.tsx /c/Users/Admin/Desktop/weblink/page.tsx)",
-      "Bash(ls -la c:UsersAdminDesktopweblink/app/bookme/[slug]/_components/hero)"
+      "Bash(ls -la c:UsersAdminDesktopweblink/app/bookme/[slug]/_components/hero)",
+      "Bash(ls c:/Users/Admin/Desktop/weblink/tailwind.config*)"
     ]
   }
 }

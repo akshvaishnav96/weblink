@@ -5,7 +5,6 @@ import { Elements } from "@stripe/react-stripe-js";
 import { getStripe } from "@/lib/stripe";
 import { useQueueBooking } from "./_hooks/useQueueBooking";
 import QueueSummaryCard from "./_components/QueueSummaryCard";
-import HowPaymentWorks from "./_components/HowPaymentWorks";
 import CustomerForm from "./_components/CustomerForm";
 import PaymentSection from "./_components/PaymentSection";
 import PayCTA from "./_components/PayCTA";
@@ -39,7 +38,7 @@ function QueueBookingView() {
     <>
       <div className={styles.page}>
 
-        <PageHeader title="Payment" sub={q.businessName} onBack={q.goBack} />
+        <PageHeader title="Confirm & Pay" sub="Review your booking details" onBack={q.goBack} />
 
         <div className={styles.body}>
 
@@ -50,11 +49,11 @@ function QueueBookingView() {
             staffInitials={q.staffInitials}
             duration={q.duration}
             price={q.price}
+            deposit={q.deposit}
+            remaining={q.remaining}
             waitMins={q.waitMins}
             people={q.people}
           />
-
-          <HowPaymentWorks deposit={q.deposit} remaining={q.remaining} />
 
           <div className={styles.formArea}>
 
@@ -77,13 +76,8 @@ function QueueBookingView() {
             />
 
             <PaymentSection
-              deposit={q.deposit}
               payment={q.payment}
               onPaymentChange={q.handlePaymentChange}
-              walletLabel={q.walletLabel}
-              paymentRequest={q.paymentRequest}
-              prBtnAvailable={q.prBtnAvailable}
-              prBtnLoading={q.prBtnLoading}
               cardName={q.cardName}
               setCardName={q.setCardName}
               onCardChange={(complete, errMsg) => {
@@ -91,10 +85,6 @@ function QueueBookingView() {
                 q.setPaymentError(errMsg);
               }}
             />
-
-            {q.paymentError && (
-              <p className={styles.paymentError}>{q.paymentError}</p>
-            )}
 
             <PayCTA
               deposit={q.deposit}
@@ -107,7 +97,7 @@ function QueueBookingView() {
               onSaveDetails={q.handleSaveDetails}
               onDismissSave={q.handleDismissSave}
               payment={q.payment}
-              walletLabel={q.walletLabel}
+              paymentError={q.paymentError}
               paymentRequest={q.paymentRequest}
               prBtnAvailable={q.prBtnAvailable}
               prBtnLoading={q.prBtnLoading}

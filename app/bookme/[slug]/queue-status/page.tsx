@@ -1,8 +1,7 @@
 "use client";
 
-import { CheckCircle, AlertCircle, User, Mail } from "lucide-react";
+import { Eye, SkipForward, XCircle, MessageCircle, Check, MessageSquare } from "lucide-react";
 import { useQueueStatus } from "./_hooks/useQueueStatus";
-import WaitingView  from "./_components/WaitingView";
 import YourTurnView from "./_components/YourTurnView";
 import { LeaveModal, SkipModal } from "./_components/ConfirmModal";
 import styles from "./page.module.css";
@@ -17,26 +16,28 @@ export default function QueueStatusPage() {
       <div className={styles.page}>
 
         {/* Status icon */}
-        <div className={`${styles.iconWrap}${isYourTurn ? ` ${styles.iconWrapTurn}` : ""}`}>
+        <div className={`${styles.iconWrap} ${isYourTurn ? styles.iconWrapTurn : ""}`}>
           {isYourTurn
             ? <span className={styles.iconParty}>🎉</span>
-            : <CheckCircle className={styles.iconCheck} />
+            : <Check className={styles.iconCheck} strokeWidth={3} />
           }
         </div>
 
         {/* Heading */}
         <h1 className={styles.heading}>
-          {isYourTurn ? "It's Your Turn!" : "You're in the Queue!"}
+          {isYourTurn ? "It's Your Turn!" : "You're in the queue!"}
         </h1>
         <p className={styles.subheading}>
-          {[q.serviceName, q.duration !== "—" ? `${q.duration} min` : ""].filter(Boolean).join(" • ")}
-          {q.people > 1 && <> &bull; <span className={styles.subheadingBold}>{q.people} people</span></>}
+          {isYourTurn
+            ? [q.serviceName, q.duration !== "—" ? `${q.duration} min` : ""].filter(Boolean).join(" • ")
+            : "We've sent a link to manage your spot"
+          }
         </p>
-        {q.staffName && q.staffName !== "Anyone Available" && (
+        {isYourTurn && q.staffName && q.staffName !== "Anyone Available" && (
           <p className={styles.subheadingStaff}>{q.staffName}</p>
         )}
 
-        {/* Main view: waiting or your-turn */}
+        {/* Main view */}
         {isYourTurn ? (
           <YourTurnView
             countdownLabel={q.countdownLabel}
@@ -46,35 +47,42 @@ export default function QueueStatusPage() {
             onLeave={() => q.openModal("leave")}
           />
         ) : (
-          <WaitingView
-            position={q.position}
-            estWaitMins={q.estWaitMins}
-            canSkip={q.canSkip}
-            skipCount={q.skipCount}
-            skipLimit={q.skipLimit}
-            onSkip={() => q.openModal("skip")}
-            onLeave={() => q.openModal("leave")}
-          />
-        )}
-
-        {/* Customer info row — shown only in waiting state */}
-        {!isYourTurn && (
           <>
-            <div className={styles.infoRow}>
-              <div className={styles.infoItem}>
-                <User className={styles.infoIcon} />
-                <span>{/* firstName comes via localStorage or booking pin */}{q.pin}</span>
+            {/* SMS preview card */}
+            <div className={styles.smsCard}>
+              <div className={styles.smsHeader}>
+                <MessageSquare className={styles.smsHeaderIcon} size={14} />
+                <span className={styles.smsHeaderTitle}>Text Message</span>
+                <span className={styles.smsHeaderTime}>Just now</span>
               </div>
-              <div className={styles.infoItem}>
-                <Mail className={styles.infoIcon} />
-                <span className={styles.infoEmail}>—</span>
+              <div className={styles.smsBody}>
+                <p className={styles.smsText}>
+                  Hi! You&apos;re <strong>#{q.position}</strong> in line at {q.serviceName || "your provider"}.{" "}
+                  Manage your spot here:
+                </p>
+                <span className={styles.smsLink}>queue.mikes.com/abc123</span>
               </div>
             </div>
 
-            <div className={styles.priorityNote}>
-              <AlertCircle className={styles.priorityIcon} />
-              Note: Scheduled bookings may take priority over the live queue.
+            {/* FROM YOUR LINK */}
+            <p className={styles.actionSectionLabel}>FROM YOUR LINK</p>
+            <div className={styles.actionGrid}>
+              <div className={styles.actionCard}>
+                <Eye className={styles.actionIcon} size={20} />
+                <span className={styles.actionText}>Track position</span>
+              </div>
+              <div className={styles.actionCard}>
+                <SkipForward className={styles.actionIcon} size={20} />
+                <span className={styles.actionText}>Skip turn</span>
+              </div>
+              <div className={styles.actionCard}>
+                <XCircle className={`${styles.actionIcon} ${styles.actionIconDanger}`} size={20} />
+                <span className={`${styles.actionText} ${styles.actionTextDanger}`}>Leave queue</span>
+              </div>
             </div>
+            <p className={styles.actionNote}>No app needed — works in any browser</p>
+
+           
           </>
         )}
 

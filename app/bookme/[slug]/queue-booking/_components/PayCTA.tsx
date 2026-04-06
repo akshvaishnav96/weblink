@@ -19,21 +19,16 @@ interface Props {
   onSaveDetails: () => void;
   onDismissSave: () => void;
   payment: PaymentMethod;
-  walletLabel: string;
+  paymentError: string | null;
   // Wallet pay
   paymentRequest: PaymentRequest | null;
   prBtnAvailable: boolean;
   prBtnLoading: boolean;
 }
 
-function PayBtnIcon({ payment, walletLabel }: { payment: PaymentMethod; walletLabel: string }) {
-  if (payment === "apple") {
-    const both     = walletLabel.includes("Apple") && walletLabel.includes("Google");
-    if (both) return null;
-    if (walletLabel.includes("Apple"))  return <RiAppleLine size={19} />;
-    if (walletLabel.includes("Google")) return <FaGoogle    size={15} />;
-    return null;
-  }
+function PayBtnIcon({ payment }: { payment: PaymentMethod }) {
+  if (payment === "apple")  return <RiAppleLine size={19} />;
+  if (payment === "google") return <FaGoogle    size={15} />;
   return <CreditCard size={17} />;
 }
 
@@ -42,11 +37,10 @@ export default function PayCTA({
   canConfirm, isProcessing, processingLabel,
   onPay,
   showSaveBanner, onSaveDetails, onDismissSave,
-  payment, walletLabel,
+  payment, paymentError,
   paymentRequest, prBtnAvailable, prBtnLoading,
 }: Props) {
-  const disabled = !canConfirm || isProcessing;
-  const isWallet = payment === "apple";
+  const isWallet = payment === "apple" || payment === "google";
 
   return (
     <div className={styles.ctaWrap}>
@@ -75,6 +69,11 @@ export default function PayCTA({
 
       <LegalText action="paying" />
 
+      {/* Validation / payment error */}
+      {paymentError && (
+        <p className={styles.ctaError}>{paymentError}</p>
+      )}
+
       {/* Wallet pay — native Apple/Google Pay button */}
       {isWallet ? (
         <>
@@ -91,15 +90,15 @@ export default function PayCTA({
           )}
           {!prBtnLoading && !prBtnAvailable && (
             <p className={styles.prUnavailable}>
-              {walletLabel} is not available in this browser or device. Please select Card payment instead.
+              {payment === "apple" ? "Apple Pay" : "Google Pay"} is not available in this browser. Please select Card instead.
             </p>
           )}
         </>
       ) : (
         /* Card pay button */
         <button
-          className={`${styles.ctaBtn}${disabled ? ` ${styles.ctaBtnDisabled}` : ""}`}
-          disabled={disabled}
+          className={`${styles.ctaBtn}${!canConfirm || isProcessing ? ` ${styles.ctaBtnDisabled}` : ""}`}
+          disabled={isProcessing}
           onClick={onPay}
         >
           {isProcessing ? (
@@ -109,7 +108,7 @@ export default function PayCTA({
             </>
           ) : (
             <>
-              <PayBtnIcon payment={payment} walletLabel={walletLabel} />
+              <PayBtnIcon payment={payment} />
               Pay {formatPrice(deposit)}
             </>
           )}

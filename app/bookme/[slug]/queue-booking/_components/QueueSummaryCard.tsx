@@ -1,5 +1,4 @@
-import { Clock, Zap } from "lucide-react";
-import BarberAvatar from "@/components/ui/BarberAvatar";
+import { Clock, User } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import styles from "../page.module.css";
 
@@ -10,56 +9,51 @@ interface Props {
   staffInitials: string;
   duration: string;
   price: number;
+  deposit: number;
+  remaining: number;
   waitMins: number;
   people: number;
 }
 
 export default function QueueSummaryCard({
-  serviceName, staffId, staffName, staffInitials,
-  duration, price, waitMins, people,
+  serviceName, staffId, staffName,
+  duration, price, deposit, remaining, people,
 }: Props) {
   const isAny = !staffId || staffId === "fastest" || staffId === "anyone";
+  const displayStaff = isAny ? "Anyone Available" : staffName;
 
   return (
     <div className={styles.summaryCard}>
-      {/* Service + price */}
+
+      {/* Service name + total price */}
       <div className={styles.summaryHeader}>
-        <div className={styles.summaryHeaderLeft}>
-          <p className={styles.summaryServiceName}>{serviceName}</p>
-          <div className={styles.summaryMeta}>
-            <Clock className={styles.summaryMetaIcon} />
-            <span>{duration !== "—" ? `${duration} min` : "—"}</span>
-          </div>
-        </div>
-        <div className={styles.summaryHeaderRight}>
-          <span className={styles.summaryPrice}>{formatPrice(price)}</span>
-        </div>
+        <p className={styles.summaryServiceName}>{serviceName}</p>
+        <span className={styles.summaryPrice}>{formatPrice(price)}</span>
       </div>
 
-      {/* Staff */}
-      <div className={styles.summaryStaff}>
-        {isAny ? (
-          <div className={styles.fastestAvatar}>
-            <Zap className={styles.fastestAvatarIcon} />
-          </div>
-        ) : (
-          <BarberAvatar initials={staffInitials} size="sm" />
-        )}
-        <div>
-          <p className={styles.summaryStaffName}>{staffName}</p>
-          {waitMins > 0 && (
-            <p className={styles.summaryWait}>~{waitMins} min estimated wait</p>
-          )}
-        </div>
+      {/* Meta: duration · staff */}
+      <div className={styles.summaryMeta}>
+        <Clock className={styles.summaryMetaIcon} />
+        <span>{duration !== "—" ? `${duration} min` : "—"}</span>
+        {people > 1 && <span>× {people}</span>}
+        <span className={styles.summaryMetaDot}>·</span>
+        <User className={styles.summaryMetaIcon} />
+        <span>{displayStaff}</span>
       </div>
 
-      {/* People count */}
-      {people > 1 && (
-        <div className={styles.summaryPeople}>
-          <span className={styles.summaryPeopleLabel}>People</span>
-          <span className={styles.summaryPeopleValue}>{people}</span>
-        </div>
-      )}
+      {/* Divider */}
+      <div className={styles.summaryDivider} />
+
+      {/* Deposit breakdown */}
+      <div className={styles.summaryDepositRow}>
+        <span className={styles.summaryDepositLabel}>Deposit now (50%)</span>
+        <span className={styles.summaryDepositValue}>{formatPrice(deposit)}</span>
+      </div>
+      <div className={styles.summaryDepositRow}>
+        <span className={styles.summaryDepositLabel}>Pay on-site (50%)</span>
+        <span className={styles.summaryDepositLa}>{formatPrice(remaining)}</span>
+      </div>
+
     </div>
   );
 }
