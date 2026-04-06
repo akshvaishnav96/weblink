@@ -429,20 +429,8 @@
 .payIcon       { flex-shrink: 0; color: var(--color-text-muted); }
 .payIconActive { flex-shrink: 0; color: var(--color-primary); }
 .payLabel { flex: 1; font-size: 14px; color: var(--color-text-primary); }
-.payRadio {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  border: 1.5px solid var(--color-border);
-  background: white;
-  flex-shrink: 0;
-  transition: border-color 0.15s, border-width 0.15s;
-  box-sizing: border-box;
-}
-.payRadioActive {
-  border-color: var(--color-primary);
-  border-width: 5px;
-}
+.payCheck   { flex-shrink: 0; color: #c8901a; }
+.payUncheck { flex-shrink: 0; color: var(--color-border); }
 
 /* ── Card form ── */
 .cardForm {
@@ -633,22 +621,10 @@
   margin-top: 8px;
 }
 
-/* ── Legal ── */
-.legalText {
-  font-size: 11px;
-  color: var(--color-text-muted);
-  text-align: center;
-  line-height: 1.6;
-  padding: 0 4px;
-}
-.legalLink {
-  color: var(--color-primary);
-  text-decoration: underline;
-}
 
 /* ── CTA ── */
 .ctaWrap {
-  padding: 16px 0 4px;
+  padding: 0px 0 4px;
 }
 .ctaBtn {
   width: 100%;

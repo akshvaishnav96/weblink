@@ -13,6 +13,8 @@ export interface BookingSelection {
   staffPicture: string;
   displayTime: string;
   duration: string;
+  people: number;
+  waitMins: number;
   price: string;
   businessName: string;
   businessAddress: string;

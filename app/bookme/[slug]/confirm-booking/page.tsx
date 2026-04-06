@@ -5,7 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import {
   ArrowLeft, CheckCircle2, User, Phone, Building2,
   Smartphone, CreditCard, Lock, ChevronDown, Search,
-  Check,
+  Check, CheckCircle, Circle,
 } from "lucide-react";
 import {
   Elements,
@@ -18,6 +18,7 @@ import type { PaymentRequest, StripeCardElementOptions, PaymentRequestPaymentMet
 import COUNTRIES_RAW from "@/utils/countries.json";
 import { API_ENDPOINTS } from "@/lib/api-endpoints";
 import AppDownloadModal from "@/components/booking/AppDownloadModal";
+import LegalText from "@/components/booking/LegalText";
 import { useBookingStore } from "@/store/bookingStore";
 import { useBookingHydrated } from "@/hooks/useBookingHydrated";
 import { getStripe } from "@/lib/stripe";
@@ -670,7 +671,10 @@ function ConfirmBookingInner() {
                   <button key={key} type="button" className={`${styles.payOption} ${active ? styles.payOptionActive : ""}`} onClick={() => handlePaymentChange(key)}>
                     <Icon size={16} className={active ? styles.payIconActive : styles.payIcon} />
                     <span className={styles.payLabel}>{label}</span>
-                    <span className={`${styles.payRadio} ${active ? styles.payRadioActive : ""}`} />
+                    {active
+                      ? <CheckCircle size={18} className={styles.payCheck} />
+                      : <Circle     size={18} className={styles.payUncheck} />
+                    }
                   </button>
                 );
               })}
@@ -710,11 +714,7 @@ function ConfirmBookingInner() {
             {paymentError && <p className={styles.paymentError}>{paymentError}</p>}
 
             {/* Legal */}
-            <p className={styles.legalText}>
-              By confirming, you agree to our{" "}
-              <a href="/bookme/privacy" className={styles.legalLink}>Privacy Policy</a> and{" "}
-              <a href="/bookme/terms" className={styles.legalLink}>Terms</a>.
-            </p>
+            <LegalText action="confirming" />
 
             {/* Confirm CTA — hidden for Apple Pay */}
             {payment !== "apple" && (

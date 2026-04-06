@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Check, CalendarPlus, Zap, X, CalendarDays, Bell, Tag, Download } from "lucide-react";
+import { CalendarPlus, Zap, X, CalendarDays, Bell, Tag, Download } from "lucide-react";
 import styles from "./AppDownloadModal.module.css";
 import { APP_STORE_URL, PLAY_STORE_URL } from "@/lib/constants";
+import SuccessCheckmark from "@/components/ui/SuccessCheckmark";
 import { isAndroid } from "@/lib/utils";
 
 interface AppDownloadModalProps {
@@ -70,9 +71,7 @@ export default function AppDownloadModal({ name, pin, bookingId, serviceId, serv
 
         {/* ── Success section ── */}
         <div className={styles.successSection}>
-          <div className={styles.checkCircle}>
-            <Check className={styles.checkIcon} />
-          </div>
+          <SuccessCheckmark size={72} />
           <h2 className={styles.successTitle}>
             You&apos;re all set{name ? `, ${name}` : ""}
           </h2>

@@ -1,0 +1,358 @@
+/* ── Row wrapper ─────────────────────────────────────────────────────────── */
+.row {
+  background: #faf7f2;
+  border: 1.5px solid #d4edda;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 6px 0 rgba(40, 160, 80, 0.07);
+  transition: box-shadow 0.15s;
+}
+.row:last-child { margin-bottom: 0; }
+.row:hover { box-shadow: 0 4px 16px 0 rgba(40, 160, 80, 0.12); }
+
+/* ── Badge ───────────────────────────────────────────────────────────────── */
+.badge {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px 6px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #1a8a3a;
+  background: linear-gradient(90deg, rgba(40,167,69,0.08) 0%, transparent 100%);
+  border-bottom: 1px solid rgba(40,167,69,0.1);
+}
+.badgeDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #28a745;
+  flex-shrink: 0;
+  animation: pulse 1.8s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(40,167,69,0.7); }
+  50%  { box-shadow: 0 0 0 5px rgba(40,167,69,0.15); }
+  100% { box-shadow: 0 0 0 0 rgba(40,167,69,0); }
+}
+
+/* ── Main row ────────────────────────────────────────────────────────────── */
+.main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 10px 18px 14px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.main:hover { background: rgba(40, 167, 69, 0.04); }
+
+/* ── Service name ────────────────────────────────────────────────────────── */
+.name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #2a1f10;
+  font-family: var(--font-heading);
+  display: block;
+}
+
+/* ── Duration ────────────────────────────────────────────────────────────── */
+.duration {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: #a09080;
+  margin-top: 4px;
+}
+.duration svg { width: 12px; height: 12px; }
+
+/* ── Queue meta ──────────────────────────────────────────────────────────── */
+.queueMeta {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a8a3a;
+  margin-top: 6px;
+}
+
+/* ── Price ───────────────────────────────────────────────────────────────── */
+.price {
+  font-size: 17px;
+  font-weight: 900;
+  color: #c8901a;
+  line-height: 1;
+}
+
+/* ── Chevron ─────────────────────────────────────────────────────────────── */
+.chevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #f0f0ee;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: rotate(0deg);
+}
+.chevronOpen { transform: rotate(180deg); }
+.chevron svg { width: 15px; height: 15px; stroke-width: 2; color: #888; }
+
+/* ── Panel animation ─────────────────────────────────────────────────────── */
+.panelWrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+.panelWrapperOpen { grid-template-rows: 1fr; }
+
+.panelInner {
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition:
+    opacity 0.28s cubic-bezier(0.4, 0, 0.2, 1) 0.06s,
+    transform 0.28s cubic-bezier(0.4, 0, 0.2, 1) 0.06s;
+}
+.panelWrapperOpen .panelInner {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Panel content ───────────────────────────────────────────────────────── */
+.panelContent {
+  padding: 12px 18px 16px;
+  border-top: 1px solid rgba(40,167,69,0.12);
+}
+
+/* ── Description ─────────────────────────────────────────────────────────── */
+.description {
+  font-size: 13px;
+  color: #7a6a55;
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+
+/* ── Choose label ────────────────────────────────────────────────────────── */
+.chooseLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #2a1f10;
+  margin-bottom: 10px;
+}
+.chooseDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #28a745;
+  flex-shrink: 0;
+}
+
+/* ── Staff list ──────────────────────────────────────────────────────────── */
+.staffList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+/* ── Staff card ──────────────────────────────────────────────────────────── */
+.staffCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #fff;
+  border: 1.5px solid #e8e8e8;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+  text-align: left;
+  width: 100%;
+}
+.staffCard:hover { background: #f8fdf8; border-color: #d0d0d0; }
+.staffCardSelected {
+  background: #fdf8ee !important;
+  border-color: #c8901a !important;
+  border-width: 1.5px;
+}
+
+/* ── Check icon ──────────────────────────────────────────────────────────── */
+.checkIcon {
+  width: 18px;
+  height: 18px;
+  color: #c8901a;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+/* ── Fastest icon ────────────────────────────────────────────────────────── */
+.fastestIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(40,167,69,0.12);
+  color: #1a8a3a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ── Fastest label ───────────────────────────────────────────────────────── */
+.fastestLabel {
+  font-size: 13px;
+  font-weight: 800;
+  color: #1a8a3a;
+  letter-spacing: 0.04em;
+}
+
+/* ── Staff wait ──────────────────────────────────────────────────────────── */
+.staffWait {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  color: #888;
+}
+
+
+.staffWaitIcon { width: 12px; height: 12px; color: #888; ; }
+
+/* ── Staff name ──────────────────────────────────────────────────────────── */
+.staffName {
+  font-size: 14px;
+  font-weight: 700;
+  color: #2a1f10;
+  margin-bottom: 2px;
+}
+
+/* ── Staff meta ──────────────────────────────────────────────────────────── */
+.staffMeta {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  color: #888;
+}
+.staffMeta svg { flex-shrink: 0; }
+
+/* ── Star ────────────────────────────────────────────────────────────────── */
+.star { color: #e0a020; font-size: 12px; }
+
+/* ── Summary section ─────────────────────────────────────────────────────── */
+.summary {
+  background: #f0efeb;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+.summaryTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+.summaryLabel {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #a09080;
+  margin-bottom: 3px;
+}
+.summaryName {
+  font-size: 14px;
+  font-weight: 700;
+  color: #2a1f10;
+}
+.summaryWait {
+  font-size: 14px;
+  font-weight: 700;
+  color: #c8901a;
+  text-align: right;
+}
+.summaryPeople {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px solid #e0ddd7;
+}
+
+/* ── People counter ──────────────────────────────────────────────────────── */
+.counter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.counterBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #e8e5e0;
+  border: none;
+  font-size: 16px;
+  font-weight: 500;
+  color: #2a1f10;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s;
+  line-height: 1;
+}
+.counterBtn:hover { background: #d8d4ce; }
+.counterVal {
+  font-size: 15px;
+  font-weight: 700;
+  color: #2a1f10;
+  min-width: 16px;
+  text-align: center;
+}
+
+/* ── Join button ─────────────────────────────────────────────────────────── */
+.joinBtn {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  background: #c8901a;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s;
+  text-align: center;
+}
+.joinBtn:hover { background: #b07810; }
+
+/* ── Join note ───────────────────────────────────────────────────────────── */
+.joinNote {
+  font-size: 12px;
+  color: #aaa;
+  text-align: center;
+  margin-top: 8px;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (min-width: 768px) {
+  .main        { padding: 10px 24px 14px; }
+  .badge       { padding: 8px 24px 6px; }
+  .panelContent { padding: 14px 24px 18px; }
+  .name        { font-size: 17px; }
+}
+@media (min-width: 1024px) {
+  .main        { padding: 12px 32px 16px; }
+  .badge       { padding: 10px 14px 7px; }
+  .panelContent { padding: 16px 32px 20px; }
+  .name        { font-size: 18px; }
+}
