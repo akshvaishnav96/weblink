@@ -9,7 +9,7 @@ export const STORAGE_KEYS = {
 } as const;
 
 // ── Regional defaults ─────────────────────────────────────────────────────────
-export const DEFAULT_COUNTRY_CODE = "IN";   // ISO 3166-1 alpha-2  (e.g. "AU", "IN", "US")
+export const DEFAULT_COUNTRY_CODE = "AU";   // ISO 3166-1 alpha-2  (e.g. "AU", "IN", "US")
 export const DEFAULT_CURRENCY     = "aud";  // Stripe currency code (lowercase)
 export const APPLE_PAY_COUNTRY    = "AU";   // Stripe paymentRequest country (ISO 3166-1)
 
@@ -23,3 +23,24 @@ export const COUNTRY_SEARCH_FOCUS_DELAY_MS = 50; // Delay before focusing countr
 // ── Booking PIN fallback ──────────────────────────────────────────────────────
 export const PIN_MIN = 1000;  // Fallback PIN random range (inclusive)
 export const PIN_MAX = 9999;
+
+// ── App download links ────────────────────────────────────────────────────────
+export const APP_STORE_URL   = "https://apps.apple.com/app/valet-vault/id6450396075";   // iOS
+export const PLAY_STORE_URL  = "https://play.google.com/store/apps/details?id=com.valetvault.app"; // Android
+
+// ── Base path (subdirectory hosting) ─────────────────────────────────────────
+// Set NEXT_PUBLIC_BASE_PATH=/bookme in .env when hosted at a subdirectory.
+// Used to prefix internal /api/ fetch calls so they resolve correctly.
+export const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
+// ── Analytics event names ─────────────────────────────────────────────────────
+export const ANALYTICS_EVENTS = {
+  PAGE_VISIT:        "business_profile_click",
+  SERVICE_SELECTED:  "service_click",
+  STAFF_SELECTED:    "staff_click",
+  SOCIAL_CLICK:      "social_click",
+  FACEBOOK_CLICK:    "facebook_click",
+  INSTAGRAM_CLICK:   "instagram_click",
+  TIKTOK_CLICK:      "tiktok_click",
+  WEBSITE_CLICK:     "website_click",
+} as const;

@@ -1,0 +1,352 @@
+/* HEADER */
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: var(--sp-6) var(--sp-4) var(--sp-2);
+}
+
+.greeting {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-bottom: 2px;
+}
+
+.appName {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  letter-spacing: -0.6px;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-top: 6px;
+}
+
+
+.appNameDot{
+  color: var(--color-primary);
+}
+/* LOCATION BUTTON */
+
+.locationBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  padding: 5px 10px;
+  background: var(--color-white);
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.locationBtn:hover {
+  border-color: var(--color-primary-border);
+}
+
+.locationIcon {
+  width: 11px;
+  height: 11px;
+  color: var(--color-primary);
+}
+
+/* NOTIFICATION BUTTON */
+
+.notifBtn {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border);
+  background: var(--color-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notifBtn svg {
+  width: 16px;
+  height: 16px;
+  color: var(--color-text-secondary);
+}
+
+.notifDot {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  border: 1.5px solid var(--color-white);
+}
+
+/* HERO */
+
+.heroBanner {
+  margin: var(--sp-3) var(--sp-4) 0;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  height: 158px;
+  position: relative;
+  background: #1C1913;
+}
+
+/* Warm gradient background */
+
+.heroBannerGradient {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      ellipse 65% 75% at 78% 42%,
+      rgba(130,85,12,0.42) 0%,
+      transparent 65%
+    ),
+    linear-gradient(
+      145deg,
+      #282015 0%,
+      #1E1912 40%,
+      #181512 100%
+    );
+}
+
+/* small golden lights */
+
+.heroBannerLights {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle 6px at 72% 20%, rgba(255,195,60,0.26) 0%, transparent 100%),
+    radial-gradient(circle 9px at 60% 15%, rgba(255,208,90,0.18) 0%, transparent 100%),
+    radial-gradient(circle 5px at 90% 42%, rgba(255,178,55,0.18) 0%, transparent 100%);
+}
+
+/* white fade on right side */
+
+.heroBannerVignette {
+  position: absolute;
+  inset: 0;
+  background: url("../public/images/Barbershop-In-Grand-Central-New-York.jpg");
+  background-size: cover;
+  background-position: right;
+  opacity: 0.5;}
+
+.heroBannerContent {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: var(--sp-5);
+}
+
+.tagline {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-white);
+  line-height: 1.2;
+  margin-bottom: var(--sp-3);
+  letter-spacing: -0.3px;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  background: var(--color-primary);
+  color: var(--color-white);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: var(--radius-full);
+  width: fit-content;
+  box-shadow: var(--shadow-btn);
+}
+
+/* SERVICES */
+
+.services {
+  padding: var(--sp-5) var(--sp-4) 0;
+}
+
+.servicesTitle {
+  font-size: var(--text-base);
+  font-weight: 700;
+  margin-bottom: var(--sp-4);
+}
+
+.servicesRow {
+  display: flex;
+  gap: var(--sp-1);
+  overflow-x: auto;
+  padding-bottom: var(--sp-2);
+
+  scroll-snap-type: x mandatory;
+  scroll-padding-left: var(--sp-4);
+  scroll-behavior: smooth;
+}
+
+.categoryItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 68px;
+  flex-shrink: 0;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+
+  scroll-snap-align: start;
+}
+
+.categoryIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  box-shadow: var(--shadow-xs);
+  color: var(--color-primary);
+  background-color: #8080801c;
+}
+
+.categoryLabel {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+/* PACKAGES */
+
+.packages {
+  margin-top: var(--sp-5);
+}
+
+.packagesHeader {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 var(--sp-4);
+  margin-bottom: var(--sp-3);
+}
+
+.packagesTitle {
+  font-size: var(--text-base);
+  font-weight: 700;
+}
+
+.packagesSeeAll {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.packagesScroll {
+  display: flex;
+  gap: var(--sp-3);
+  padding: 0 var(--sp-4);
+  overflow-x: auto;
+}
+
+/* REMINDER */
+
+.reminder {
+  margin: var(--sp-5) var(--sp-4) 0;
+  padding: var(--sp-4);
+  background: var(--color-primary-bg);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-primary-border);
+}
+
+.reminderText {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.reminderWeeks {
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.reminderLink {
+  display: inline-block;
+  margin-top: 5px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+/* TABLET */
+
+@media (min-width: 768px) {
+
+  .header {
+    padding: var(--sp-8) var(--sp-8) var(--sp-3);
+    /* max-width: var(--content-max); */
+    margin: 0 auto;
+  }
+
+  .appName {
+    font-size: 32px;
+  }
+
+  .heroBanner {
+    margin: var(--sp-3) var(--sp-8);
+    height: 220px;
+  }
+
+  .tagline {
+    font-size: 28px;
+  }
+
+  .services {
+    padding: var(--sp-8) var(--sp-8) 0;
+    /* max-width: var(--content-max); */
+    margin: 0 auto;
+  }
+
+  .servicesRow {
+    overflow-x: visible;
+    flex-wrap: wrap;
+  }
+
+  .packages {
+    margin-top: var(--sp-8);
+    /* max-width: var(--content-max); */
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+}
+
+/* DESKTOP */
+
+@media (min-width: 1024px) {
+
+  .heroBanner {
+    height: 320px;
+  }
+
+  .tagline {
+    font-size: 36px;
+  }
+
+  .packagesScroll {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--sp-5);
+  }
+
+}

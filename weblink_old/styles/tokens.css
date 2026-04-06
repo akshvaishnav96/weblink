@@ -1,0 +1,87 @@
+/* ================================================================
+   GROOMLY — DESIGN TOKENS
+   ================================================================ */
+:root {
+  /* Brand Colors */
+  --color-primary:        #B8860B;
+  --color-primary-hover:  #C9922A;
+  --color-primary-bg:     #FDF6EC;
+  --color-primary-border: #E2C98A;
+  --color-primary-muted:  #F5EAD0;
+
+  /* Neutrals */
+  --color-white:          #FFFFFF;
+  --color-surface:        #F8F7F5;
+  --color-surface-alt:    #F0EFEC;
+  --color-border:         #E8E8E8;
+  --color-border-light:   #F0EFED;
+
+  /* Text */
+  --color-text-primary:     #1A1A1A;
+  --color-text-secondary:   #555555;
+  --color-text-muted:       #999999;
+  --color-text-placeholder: #C0BFBD;
+
+  /* Semantic */
+  --color-star:            hsl(36 50% 50%);
+  --color-badge-pay-fg:    #9B6B0A;
+  --color-badge-walkin-fg: #888888;
+
+  /* Spacing */
+  --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
+  --sp-5: 20px; --sp-6: 24px; --sp-8: 32px; --sp-10: 40px; --sp-12: 48px;
+
+  /* Border Radius */
+  --radius-sm:   8px;
+  --radius-md:   12px;
+  --radius-lg:   16px;
+  --radius-xl:   20px;
+  --radius-2xl:  28px;
+  --radius-full: 9999px;
+
+  /* Font Sizes */
+  --text-xs:   11px;
+  --text-sm:   13px;
+  --text-base: 15px;
+  --text-md:   17px;
+  --text-lg:   20px;
+  --text-xl:   24px;
+  --text-2xl:  32px;
+
+  /* Shadows */
+  --shadow-xs:    0 1px 3px rgba(0,0,0,0.06);
+  --shadow-sm:    0 2px 8px rgba(0,0,0,0.07);
+  --shadow-md:    0 4px 16px rgba(0,0,0,0.09);
+  --shadow-lg:    0 8px 32px rgba(0,0,0,0.10);
+  --shadow-btn:   0 4px 16px rgba(184,134,11,0.28);
+  --shadow-modal: 0 -4px 32px rgba(0,0,0,0.14);
+
+  /* Layout */
+  --nav-height:       64px;
+  --top-nav-height:   64px;
+  --content-max:      1200px;  /* max page width on desktop */
+  --content-padding:  16px;    /* horizontal padding on mobile */
+
+  /* Responsive breakpoints (used as reference — apply in media queries) */
+  /* sm: 640px  |  md: 768px  |  lg: 1024px  |  xl: 1280px */
+
+  /* Typography */
+  --font-heading: 'Cormorant Garamond', Georgia, serif;
+  --font-body:    'Satoshi', -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  --heading-letter-spacing: 0.01em;
+}
+
+/* Tablet+ — bump base spacing */
+@media (min-width: 768px) {
+  :root {
+    --content-padding: 32px;
+    --text-base: 15px;
+  }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  :root {
+    --content-padding: 48px;
+  }
+}

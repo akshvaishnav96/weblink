@@ -32,8 +32,10 @@ export default function BottomNav() {
         );
       })} */}
      {/* ── Powered by ── */}
-      <div className={styles.poweredBy}>
-        <a href="https://valetvault.com.au">Powered by Valet Vault</a>
+      <div className="text-center text-[9px] tracking-[0.14em] uppercase text-[var(--color-text-muted)] pt-1">
+        <a href="https://valetvault.com.au" rel="noopener" style={{ color: "inherit", textDecoration: "none" }}>
+          Powered by <span className="text-[var(--color-primary)]">Valet Vault</span>
+        </a>
       </div>
     </nav>
   );

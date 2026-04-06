@@ -1,3 +1,4 @@
+/* header: 3-stop gradient at non-standard percentages — cannot express in Tailwind */
 .header {
   background: linear-gradient(160deg, #1C1913 0%, #2A2015 60%, #1E1A12 100%);
   padding: var(--sp-8) var(--sp-4) var(--sp-5);
@@ -5,14 +6,7 @@
   text-align: center; position: relative;
 }
 
-.hero { position: relative; display: inline-block; }
-.avatar {
-  width: 84px; height: 84px; border-radius: var(--radius-full);
-  background: linear-gradient(135deg, #B8860B, #E2B860);
-  color: var(--color-white); font-size: 28px; font-weight: 800;
-  display: flex; align-items: center; justify-content: center;
-  border: 3px solid rgba(255,255,255,0.15); letter-spacing: 1px;
-}
+/* editBtn: :hover + svg child selector — kept in CSS module */
 .editBtn {
   position: absolute; bottom: 0; right: -4px;
   width: 28px; height: 28px; border-radius: var(--radius-full);
@@ -23,29 +17,8 @@
 .editBtn:hover { background: var(--color-surface); }
 .editBtn svg { width: 13px; height: 13px; color: var(--color-text-secondary); }
 
-.info { display: flex; flex-direction: column; gap: 3px; }
-.name   { font-size: var(--text-lg); font-weight: 700; color: var(--color-white); letter-spacing: -0.3px; }
-.email  { font-size: var(--text-sm); color: rgba(255,255,255,0.55); }
-.member { font-size: 12px; color: rgba(255,255,255,0.35); }
-
-.stats {
-  display: flex; align-items: center; gap: var(--sp-4);
-  background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.10);
-  border-radius: var(--radius-lg); padding: var(--sp-3) var(--sp-5);
-  margin-top: var(--sp-2); width: 100%; max-width: 320px; justify-content: space-between;
-}
-.stat { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.statValue { font-size: var(--text-md); font-weight: 700; color: var(--color-white); }
-.statLabel { font-size: 11px; color: rgba(255,255,255,0.45); }
-.statDivider { width: 1px; height: 32px; background: rgba(255,255,255,0.12); }
-
 @media (min-width: 768px) {
   .header { padding: var(--sp-10) var(--sp-8) var(--sp-6); }
-  .avatar { width: 100px; height: 100px; font-size: 34px; }
-  .name  { font-size: 28px; }
-  .email { font-size: var(--text-base); }
-  .stats { max-width: 400px; padding: var(--sp-4) var(--sp-6); }
-  .statValue { font-size: var(--text-lg); }
 }
 @media (min-width: 1024px) {
   .header { padding: var(--sp-10) var(--content-padding) var(--sp-6); }

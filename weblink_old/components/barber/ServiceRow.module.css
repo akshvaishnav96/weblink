@@ -1,0 +1,283 @@
+/* ── Card wrapper ── */
+.row {
+  background: #faf7f2;
+  margin-bottom: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 6px 0 rgba(160, 120, 60, 0.08);
+  border-radius: 12px;
+  transition: box-shadow 0.15s;
+}
+.row:last-child { margin-bottom: 0; }
+.row:hover { box-shadow: 0 4px 16px 0 rgba(160, 120, 60, 0.13); }
+
+/* ── Badge ── */
+.badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 12px 18px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #b08040;
+}
+
+.badgePay { color: #b08040; }
+
+.badgeWalkin {
+  color: #a09080;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  gap: 5px;
+}
+
+/* ── Main row ── */
+.main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 6px 18px 18px;
+  transition: background 0.12s;
+}
+.mainClickable { cursor: pointer; }
+.main:hover { background: rgba(240, 230, 215, 0.25); }
+
+/* ── Left ── */
+.left { flex: 1; min-width: 0; padding-right: 12px; }
+
+.nameRow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #2a1f10;
+  font-family: var(--font-heading);
+}
+
+.popular {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  background: #fff0d0;
+  color: #9a6a08;
+  padding: 2px 9px;
+  border-radius: 999px;
+  border: 1px solid #f0d88a;
+}
+
+.duration {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: #a09080;
+  margin-top: 5px;
+}
+.duration svg { width: 12px; height: 12px; }
+
+.avail {
+  font-size: 12px;
+  font-weight: 500;
+  color: #c8901a;
+  margin-top: 4px;
+}
+
+.walkinHint {
+  font-size: 12px;
+  color: #a09080;
+  font-style: italic;
+  margin-top: 3px;
+}
+
+/* ── Right ── */
+.right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  flex-direction: column;
+}
+
+.priceBlock { text-align: right; }
+
+.priceOriginal {
+  font-size: 11px;
+  color: #b0a090;
+  text-decoration: line-through;
+  display: block;
+}
+
+.price {
+  font-size: 17px;
+  font-weight: 700;
+  color: #c8901a;
+  display: block;
+}
+
+.priceDiscounted { color: #c8901a; }
+
+/* ── Chevron — rotates smoothly ── */
+.chevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: rotate(0deg);
+}
+.chevronOpen { transform: rotate(180deg); }
+.chevron svg { width: 16px; height: 16px; stroke-width: 2; color: #c8a060; }
+
+/* ── Animated panel (CSS grid trick) ── */
+.panelWrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+.panelWrapperOpen { grid-template-rows: 1fr; }
+
+.panelInner {
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition:
+    opacity 0.28s cubic-bezier(0.4, 0, 0.2, 1) 0.06s,
+    transform 0.28s cubic-bezier(0.4, 0, 0.2, 1) 0.06s;
+}
+.panelWrapperOpen .panelInner {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Panel content ── */
+.panel { padding: var(--sp-3) 18px var(--sp-4); }
+
+.panelDesc {
+  font-size: 12px;
+  color: #7a6a55;
+  line-height: 1.5;
+  margin-bottom: var(--sp-3);
+  padding-bottom: var(--sp-3);
+  border-bottom: 1px solid #e8ddd0;
+}
+
+.panelDate {
+  font-size: 13px;
+  font-weight: 700;
+  color: #7a6a55;
+  margin-bottom: var(--sp-3);
+  letter-spacing: 0.01em;
+}
+
+.noStaff {
+  font-size: 13px;
+  color: #a09080;
+  padding: var(--sp-2) 0;
+}
+
+/* ── Staff blocks ── */
+.staffBlock { margin-bottom: var(--sp-3); }
+.staffBlock:last-of-type { margin-bottom: 0; }
+
+.staffHeader { display: flex; align-items: center; gap: var(--sp-2); margin-bottom: 10px; }
+
+.staffName { font-size: 14px; font-weight: 600; color: #2a1f10; flex: 1; }
+
+.staffMostBooked {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  background: #c8901a;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+.staffMostBooked svg { width: 10px; height: 10px; }
+
+.staffSlots { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 4px; }
+
+/* ── View more ── */
+.viewMore {
+  display: block;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #c8901a;
+  margin-top: var(--sp-3);
+  padding-top: var(--sp-2);
+  text-decoration: none;
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+    transition-timing-function: cubic-bezier(.4, 0, .2, 1);
+    transition-duration: .15s;
+    padding-top: .625rem;
+    padding-bottom: .625rem;
+    font-size: .875rem;
+    line-height: 1.25rem;
+    border: solid;
+        font-weight: 600;
+            background: var(--color-white);
+    border: 1px solid #e2c97a;
+                border-radius: .75rem;
+                    margin-top: 1rem;
+}
+.viewMore:hover { color: #a06010;  border: 1px solid var(--color-primary) }
+
+/* ── Walk-in panel ── */
+.panelWalkin {
+  background: #fdf8ec;
+  border: 1px solid #e8d9a0;
+  border-radius: 10px;
+  margin: 0 12px 12px;
+}
+
+.panelDivider {
+  border: none;
+  border-top: 1px solid #e8d9a0;
+  margin: 10px 0;
+}
+
+/* ── Walk-in staff row ── */
+.staffRowWalkin {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+}
+.staffRowWalkin:last-child { border-bottom: none; }
+
+/* ── Hours pill ── */
+.hoursRange {
+  font-size: 12px;
+  color: #a09080;
+  background: #ede8df;
+  border-radius: 20px;
+  padding: 4px 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Responsive ── */
+@media (min-width: 768px) {
+  .main   { padding: var(--sp-3) var(--sp-6) var(--sp-5); }
+  .badge  { padding: var(--sp-3) var(--sp-6) 4px; }
+  .panel  { padding: var(--sp-3) var(--sp-6) var(--sp-5); }
+  .name   { font-size: 16px; }
+  .price  { font-size: 18px; }
+  .duration { font-size: 13px; }
+  .avail  { font-size: 13px; }
+}
+@media (min-width: 1024px) {
+  .main   { padding: var(--sp-4) var(--sp-8) var(--sp-2) var(--sp-6); }
+  .badge  { padding: var(--sp-4) var(--sp-8) 6px; }
+  .panel  { padding: var(--sp-4) var(--sp-8) var(--sp-6); }
+  .name   { font-size: 17px; }
+  .price  {    font-size: 1.125rem;
+    line-height: 1.75rem; }
+}

@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Check, CalendarPlus, Zap, X, CalendarDays, Bell, Tag, Download } from "lucide-react";
 import styles from "./AppDownloadModal.module.css";
+import { APP_STORE_URL, PLAY_STORE_URL } from "@/lib/constants";
+import { isAndroid } from "@/lib/utils";
 
 interface AppDownloadModalProps {
   name?: string;
@@ -33,7 +35,7 @@ export default function AppDownloadModal({ name, pin, bookingId, serviceId, serv
     setCalLoading(true);
     setCalError(null);
     try {
-      const res = await fetch("/api/booking/add-to-calendar", {
+      const res = await fetch("/bookme/api/booking/add-to-calendar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -134,7 +136,10 @@ export default function AppDownloadModal({ name, pin, bookingId, serviceId, serv
             ))}
           </div>
 
-          <button className={styles.getAppBtn}>
+          <button className={styles.getAppBtn} onClick={() => {
+            const url = isAndroid() ? PLAY_STORE_URL : APP_STORE_URL;
+            window.open(url, "_blank", "noopener,noreferrer");
+          }}>
             <Download size={15} />
             Get the App — It&apos;s Free
           </button>

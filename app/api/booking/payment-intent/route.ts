@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const API_BASE = process.env.API_BASE_URL ?? "https://valetvaultdev.24livehost.com/api/v2/weblink";
+import { API_ENDPOINTS } from "@/lib/api-endpoints";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     console.log("[payment-intent] sending:", JSON.stringify(body));
 
-    const res = await fetch(`${API_BASE}/create-payment-intent`, {
+    const res = await fetch(API_ENDPOINTS.CREATE_PAYMENT_INTENT, {
       method:  "POST",
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify(body),

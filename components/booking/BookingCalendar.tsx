@@ -11,6 +11,19 @@ interface BookingCalendarProps {
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
+/** Returns today's { year, month (0-indexed), date } in the configured app timezone. */
+function getTodayInTZ(): { year: number; month: number; date: number } {
+  const tz = process.env.NEXT_PUBLIC_TIMEZONE ?? "Australia/Sydney";
+  const parts = new Intl.DateTimeFormat("en-AU", {
+    timeZone: tz,
+    year:     "numeric",
+    month:    "2-digit",
+    day:      "2-digit",
+  }).formatToParts(new Date());
+  const get = (type: string) => parseInt(parts.find(p => p.type === type)!.value);
+  return { year: get("year"), month: get("month") - 1, date: get("day") };
+}
+
 function getDaysInMonth(year: number, month: number): (number | null)[] {
   const firstDay = new Date(year, month, 1).getDay();
   const startOffset = (firstDay + 6) % 7; // Monday = 0
@@ -22,20 +35,18 @@ function getDaysInMonth(year: number, month: number): (number | null)[] {
 }
 
 export default function BookingCalendar({ selectedDate, onDateSelect }: BookingCalendarProps) {
-  const today = new Date();
-  const [viewYear, setViewYear]   = useState(today.getFullYear());
-  const [viewMonth, setViewMonth] = useState(today.getMonth());
+  const tzToday = getTodayInTZ();
+  const [viewYear, setViewYear]   = useState(tzToday.year);
+  const [viewMonth, setViewMonth] = useState(tzToday.month);
 
   const days = getDaysInMonth(viewYear, viewMonth);
 
-  // Format: "March, 2026"
   const monthLabel = new Date(viewYear, viewMonth).toLocaleString("default", { month: "long" });
   const monthName  = `${monthLabel}, ${viewYear}`;
 
-  // Today's weekday index (Mon=0 … Sun=6) — used to amber-highlight that column header
-  const todayWeekdayIndex = (today.getDay() + 6) % 7;
+  const todayWeekdayIndex = (new Date(tzToday.year, tzToday.month, tzToday.date).getDay() + 6) % 7;
   const isCurrentViewMonth =
-    viewMonth === today.getMonth() && viewYear === today.getFullYear();
+    viewMonth === tzToday.month && viewYear === tzToday.year;
 
   const prevMonth = () => {
     if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); }
@@ -48,7 +59,7 @@ export default function BookingCalendar({ selectedDate, onDateSelect }: BookingC
   };
 
   const isToday = (day: number) =>
-    day === today.getDate() && viewMonth === today.getMonth() && viewYear === today.getFullYear();
+    day === tzToday.date && viewMonth === tzToday.month && viewYear === tzToday.year;
 
   const isSelected = (day: number) =>
     !!selectedDate &&
@@ -58,37 +69,40 @@ export default function BookingCalendar({ selectedDate, onDateSelect }: BookingC
 
   const isPast = (day: number) => {
     const d = new Date(viewYear, viewMonth, day);
-    return d < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    return d < new Date(tzToday.year, tzToday.month, tzToday.date);
   };
 
   return (
-    <div className={styles.calendar}>
+    <div className="pt-6 px-4 pb-5 border-b border-[#F0EFED] bg-white md:pt-7 md:px-8 md:pb-6 lg:pt-8 lg:px-10 lg:pb-7">
+      {/* calendarTitle: uses --font-heading custom font var — kept in CSS module */}
       <h2 className={styles.calendarTitle}>Book Appointment</h2>
 
-      <div className={styles.nav}>
+      <div className="flex items-center justify-between mb-5 px-1 md:mb-[22px]">
+        {/* navBtn: :hover + svg child selector — kept in CSS module */}
         <button className={styles.navBtn} onClick={prevMonth} aria-label="Previous month">
           <ChevronLeft />
         </button>
-        <span className={styles.navMonth}>{monthName}</span>
+        <span style={{fontWeight:"bold"}} className="text-[15px] font-black text-[#1a1a1a] tracking-[0.01em] md:text-[16px]">{monthName}</span>
         <button className={styles.navBtn} onClick={nextMonth} aria-label="Next month">
           <ChevronRight />
         </button>
       </div>
 
-      <div className={styles.weekdays}>
+      <div className="grid grid-cols-7 mb-1">
         {DAYS.map((d, i) => (
           <div
             key={d}
-            className={`${styles.weekday}${isCurrentViewMonth && i === todayWeekdayIndex ? ` ${styles.weekdayToday}` : ""}`}
+            style={{fontWeight:"bolder"}}
+            className={`text-center text-[11px] font-bold py-[6px] tracking-[0.02em] md:text-[12px] lg:text-[13px] lg:py-2 ${isCurrentViewMonth && i === todayWeekdayIndex ? "text-[#B8860B]" : "text-[#aaa]"}`}
           >
             {d}
           </div>
         ))}
       </div>
 
-      <div className={styles.grid}>
+      <div className="grid grid-cols-7">
         {days.map((day, i) => {
-          if (!day) return <div key={`e-${i}`} className={styles.cell} />;
+          if (!day) return <div key={`e-${i}`} className="flex items-center justify-center py-[6px]" />;
 
           const past     = isPast(day);
           const selected = isSelected(day);
@@ -102,7 +116,7 @@ export default function BookingCalendar({ selectedDate, onDateSelect }: BookingC
           ].filter(Boolean).join(" ");
 
           return (
-            <div key={`d-${day}`} className={styles.cell}>
+            <div key={`d-${day}`} className="flex items-center justify-center py-[6px]">
               <button
                 disabled={past}
                 onClick={() => onDateSelect(new Date(viewYear, viewMonth, day))}

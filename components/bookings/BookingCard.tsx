@@ -12,21 +12,21 @@ interface BookingCardProps {
 }
 
 const STATUS_LABELS: Record<BookingStatus, string> = {
-  confirmed:  "Confirmed",
-  completed:  "Completed",
-  cancelled:  "Cancelled",
+  confirmed: "Confirmed",
+  completed: "Completed",
+  cancelled: "Cancelled",
 };
 
 const STATUS_CLASS: Record<BookingStatus, string> = {
-  confirmed: styles.confirmed,
-  completed: styles.completed,
-  cancelled: styles.cancelled,
+  confirmed: "border-l-[3px] border-l-[var(--color-primary)]",
+  completed: "border-l-[3px] border-l-[#4CAF50]",
+  cancelled: "border-l-[3px] border-l-[#BBBBBB] opacity-[.85]",
 };
 
 const BADGE_CLASS: Record<BookingStatus, string> = {
-  confirmed: styles.badgeConfirmed,
-  completed: styles.badgeCompleted,
-  cancelled: styles.badgeCancelled,
+  confirmed: "bg-[var(--color-primary-bg)] text-[var(--color-primary)]",
+  completed: "bg-[#EBF5EB] text-[#388E3C]",
+  cancelled: "bg-[#F5F5F5] text-[#999999]",
 };
 
 export default function BookingCard({ booking }: BookingCardProps) {
@@ -37,18 +37,22 @@ export default function BookingCard({ booking }: BookingCardProps) {
   return (
     <div className={`${styles.card} ${STATUS_CLASS[booking.status]}`}>
       {/* Header row */}
-      <div className={styles.header}>
+      <div className="flex items-center gap-[var(--sp-3)]">
         <BarberAvatar initials={booking.barberInitials} size="md" />
-        <div className={styles.headerInfo}>
-          <span className={styles.barberName}>{booking.barberName}</span>
-          <span className={styles.service}>{booking.service}</span>
+        <div className="flex-1 min-w-0 flex flex-col gap-[2px]">
+          <span className="text-[var(--text-sm)] font-bold text-[var(--color-text-primary)] whitespace-nowrap overflow-hidden text-ellipsis md:text-[var(--text-base)]">
+            {booking.barberName}
+          </span>
+          <span className="text-[12px] text-[var(--color-text-muted)] md:text-[var(--text-sm)]">
+            {booking.service}
+          </span>
         </div>
-        <span className={`${styles.badge} ${BADGE_CLASS[booking.status]}`}>
+        <span className={`flex-shrink-0 text-[11px] font-semibold py-[3px] px-[9px] rounded-full md:text-[12px] md:py-[4px] md:px-[12px] ${BADGE_CLASS[booking.status]}`}>
           {STATUS_LABELS[booking.status]}
         </span>
       </div>
 
-      {/* Meta row */}
+      {/* Meta row — metaItem svg child selector kept in CSS module */}
       <div className={styles.meta}>
         <span className={styles.metaItem}>
           <Calendar />
@@ -65,16 +69,17 @@ export default function BookingCard({ booking }: BookingCardProps) {
       </div>
 
       {/* Footer */}
-      <div className={styles.footer}>
-        <span className={styles.price}>${booking.price}</span>
-        <div className={styles.actions}>
+      <div className="flex items-center justify-between pt-[var(--sp-1)]">
+        <span className="text-[var(--text-base)] font-bold text-[var(--color-primary)] md:text-[var(--text-md)]">
+          ${booking.price}
+        </span>
+        <div className="flex gap-[var(--sp-2)]">
           {isUpcoming && (
             <>
-              <button className={`${styles.btn} ${styles.btnGhost}`}>
-                Cancel
-              </button>
+              {/* btn/btnGhost: hover states — kept in CSS module */}
+              <button className={`${styles.btn} ${styles.btnGhost}`}>Cancel</button>
               <Link
-                href={`/view-times/${booking.barberId}`}
+                href={`/bookme/${booking.barberId}/view-times`}
                 className={`${styles.btn} ${styles.btnPrimary}`}
               >
                 Reschedule
@@ -83,7 +88,7 @@ export default function BookingCard({ booking }: BookingCardProps) {
           )}
           {isCompleted && (
             <Link
-              href={`/view-times/${booking.barberId}`}
+              href={`/bookme/${booking.barberId}/view-times`}
               className={`${styles.btn} ${styles.btnPrimary}`}
             >
               Book Again
@@ -91,7 +96,7 @@ export default function BookingCard({ booking }: BookingCardProps) {
           )}
           {isCancelled && (
             <Link
-              href={`/view-times/${booking.barberId}`}
+              href={`/bookme/${booking.barberId}/view-times`}
               className={`${styles.btn} ${styles.btnGhost}`}
             >
               Rebook

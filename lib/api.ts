@@ -1,5 +1,5 @@
 // ─── Base ──────────────────────────────────────────────────────────────────────
-const API_BASE = process.env.API_BASE_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://valetvaultdev.24livehost.com/api/v2/weblink";
+import { API_ENDPOINTS } from "@/lib/api-endpoints";
 
 interface ApiResponse<T> {
   message: string;
@@ -24,6 +24,7 @@ export interface ApiStaffAvailability {
   is_available: number;
   created_at: string;
   updated_at: string;
+  staff?: ApiStaffSummary[]; // available staff for the requested date
 }
 
 export interface ApiStaff {
@@ -91,6 +92,7 @@ export interface ApiOpenHour {
 }
 
 export interface ApiStaffSummary {
+  id: number;
   name: string;
   picture: string;
   bio: string | null;
@@ -133,12 +135,11 @@ export interface StaffAvailabilityParams {
 export type AvailabilityResult = ApiStaffAvailability;
 
 // ─── API Functions ─────────────────────────────────────────────────────────────
-export async function fetchBusinessProfileBySlug(slug: string): Promise<ApiBusinessProfile> {
-  const url = `${API_BASE}/bookme/${slug}?search=`;
-  const res = await fetch(url, { headers: { Accept: "application/json" } });
+export async function fetchBusinessProfileBySlug(slug: string, signal?: AbortSignal): Promise<ApiBusinessProfile> {
+  const url = API_ENDPOINTS.BUSINESS_PROFILE(slug);
+  const res = await fetch(url, { headers: { Accept: "application/json" }, cache: "no-store", signal });
   if (!res.ok) throw new Error(`Failed to fetch business profile (${res.status})`);
   const json: ApiResponse<ApiBusinessProfile> = await res.json();
-  console.log("[API] Business profile fetched by slug:", json);
   if (!json.status) throw new Error(json.message);
   return json.data;
 }
@@ -156,7 +157,7 @@ export async function checkStaffAvailability(
     body.staff_id = params.staff_id;
   }
 
-  const res = await fetch(`${API_BASE}/check-staff-availability`, {
+  const res = await fetch(API_ENDPOINTS.STAFF_AVAILABILITY, {
     method: "POST",
     headers: {
       Accept: "application/json",
@@ -174,7 +175,6 @@ export async function checkStaffAvailability(
 }
 
 // ─── Booking API ───────────────────────────────────────────────────────────────
-const BOOKING_TOKEN = process.env.BOOKING_API_TOKEN ?? "";
 
 export interface BookingPayload {
   business_id: string | number;
@@ -192,6 +192,7 @@ export interface BookingPayload {
   customer_phone_number: string;
   customer_email: string;
   payment_mode: string;        // "cash" | "card" | "apple_pay"
+  comment?: string;
 }
 
 export interface BookingResult {
@@ -202,11 +203,10 @@ export interface BookingResult {
 
 /** Used for onsite (cash) and Apple/Google Pay — creates the booking immediately */
 export async function createBookingPayment(payload: BookingPayload): Promise<BookingResult> {
-  const res = await fetch(`${API_BASE}/create-booking-payment`, {
+  const res = await fetch(API_ENDPOINTS.BOOKING_CREATE_PAYMENT, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${BOOKING_TOKEN}`,
     },
     body: JSON.stringify(payload),
   });
@@ -227,7 +227,7 @@ export interface PaymentIntentResult {
 
 /** Used for card payments — creates a payment intent so the card can be charged securely */
 export async function createPaymentIntent(payload: PaymentIntentPayload): Promise<PaymentIntentResult> {
-  const res = await fetch(`${API_BASE}/create-payment-intent`, {
+  const res = await fetch(API_ENDPOINTS.CREATE_PAYMENT_INTENT, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

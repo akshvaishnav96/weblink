@@ -1,0 +1,38 @@
+.hero {
+  margin: var(--sp-4);
+  border-radius: var(--radius-xl);
+  background: linear-gradient(135deg, #C8900A 0%, #D4A030 30%, #E2B860 65%, #F7E8BE 100%);
+  padding: 2px;
+  box-shadow: var(--shadow-md);
+}
+.inner {
+  background: linear-gradient(160deg, #1C1913 0%, #2A2015 50%, #1E1A12 100%);
+  border-radius: calc(var(--radius-xl) - 2px);
+  padding: var(--sp-6) var(--sp-5);
+  display: flex; flex-direction: column; align-items: center; gap: var(--sp-3); text-align: center;
+}
+
+.tier { display: flex; align-items: center; gap: var(--sp-2); }
+.tierIcon  { font-size: 20px; }
+.tierLabel { font-size: var(--text-sm); font-weight: 700; letter-spacing: 0.5px; }
+
+.pointsWrap { display: flex; align-items: baseline; gap: 6px; }
+.points { font-size: 56px; font-weight: 800; color: var(--color-white); line-height: 1; letter-spacing: -2px; }
+.pointsLabel { font-size: var(--text-md); font-weight: 600; color: rgba(255,255,255,0.55); }
+
+.progressArea { width: 100%; max-width: 280px; }
+.progressBar { height: 6px; background: rgba(255,255,255,0.15); border-radius: var(--radius-full); overflow: hidden; margin-bottom: var(--sp-2); }
+.progressFill { height: 100%; background: linear-gradient(90deg, #B8860B, #E2B860); border-radius: var(--radius-full); transition: width 0.6s ease; }
+.progressText { font-size: 12px; color: rgba(255,255,255,0.60); }
+.progressText strong { color: #E2B860; }
+.maxTier { font-size: 12px; color: rgba(255,255,255,0.55); font-style: italic; }
+
+@media (min-width: 768px) {
+  .hero { margin: var(--sp-5) var(--sp-8); }
+  .inner { padding: var(--sp-8) var(--sp-6); }
+  .points { font-size: 72px; }
+  .progressArea { max-width: 360px; }
+}
+@media (min-width: 1024px) {
+  .hero { margin: var(--sp-6) auto; max-width: 640px; }
+}

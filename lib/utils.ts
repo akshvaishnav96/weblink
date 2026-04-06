@@ -33,3 +33,99 @@ export function getPaymentColor(type: string): string {
 export function cn(...classes: (string | undefined | null | false)[]): string {
   return classes.filter(Boolean).join(" ");
 }
+
+// ─── Device / UA utilities ────────────────────────────────────────────────
+
+/** Returns true when running on iOS (iPhone / iPad / iPod). */
+export function isIOS(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
+/** Returns true when running on Android. */
+export function isAndroid(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return /Android/i.test(navigator.userAgent);
+}
+
+/**
+ * Returns the wallet label to show on the payment button:
+ * iOS / Mac Safari → "Apple Pay"
+ * Android         → "Google Pay"
+ * everything else → "Apple Pay / Google Pay"
+ */
+export function detectWalletLabel(): string {
+  if (typeof navigator === "undefined") return "Apple Pay / Google Pay";
+  const ua = navigator.userAgent;
+  const onApple = /iPhone|iPad|iPod/i.test(ua) || (/Macintosh/i.test(ua) && /Safari/i.test(ua) && !/Chrome/i.test(ua));
+  if (onApple) return "Apple Pay";
+  if (/Android/i.test(ua)) return "Google Pay";
+  return "Apple Pay / Google Pay";
+}
+
+// ─── Date / Time utilities ─────────────────────────────────────────────────
+
+function getAppTimezone(): string {
+  return process.env.NEXT_PUBLIC_TIMEZONE ?? "Australia/Sydney";
+}
+
+/**
+ * Converts a Date object to "YYYY-MM-DD" in the configured app timezone.
+ */
+export function toISODate(date: Date): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: getAppTimezone(),
+    year:     "numeric",
+    month:    "2-digit",
+    day:      "2-digit",
+  }).format(date);
+}
+
+/**
+ * Returns the current date-time as an ISO-like string in the configured app timezone.
+ * Example: "2026-03-30T14:35:22.456"
+ */
+export function nowInTZ(): string {
+  return new Date().toLocaleString("sv-SE", {
+    timeZone:               getAppTimezone(),
+    year:                   "numeric",
+    month:                  "2-digit",
+    day:                    "2-digit",
+    hour:                   "2-digit",
+    minute:                 "2-digit",
+    second:                 "2-digit",
+    fractionalSecondDigits: 3,
+  }).replace(" ", "T");
+}
+
+/**
+ * Formats a date string ("YYYY-MM-DD") into short and long display formats.
+ * short: "28 Mar 2026"   full: "Friday, 28 March 2026"
+ */
+export function formatBookingDate(dateStr: string): { short: string; full: string } {
+  const d = new Date(dateStr + "T00:00:00");
+  const short = d.toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
+  const full  = d.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  return { short, full };
+}
+
+/**
+ * Converts "HH:MM:SS" or "HH:MM" to "H:MM AM/PM".
+ * Example: "09:00:00" → "9:00 AM", "16:30" → "4:30 PM"
+ */
+export function formatApiTime(time: string): string {
+  const [hStr, mStr] = time.split(":");
+  const h = parseInt(hStr, 10);
+  const m = parseInt(mStr, 10);
+  const ampm = h >= 12 ? "PM" : "AM";
+  const h12  = h > 12 ? h - 12 : h === 0 ? 12 : h;
+  return `${h12}:${String(m).padStart(2, "0")} ${ampm}`;
+}
+
+/**
+ * Extracts start time from a "HH:MM-HH:MM" slot string and formats it.
+ * Example: "16:00-16:30" → "4:00 PM"
+ */
+export function formatSlotStart(slot: string): string {
+  return formatApiTime(slot.split("-")[0]);
+}

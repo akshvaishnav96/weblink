@@ -1,3 +1,4 @@
+/* item: :last-child, :hover with transform at lg — kept in CSS module */
 .item {
   display: flex; align-items: center; gap: var(--sp-3);
   padding: 14px var(--sp-4);
@@ -9,19 +10,12 @@
 .item:last-child { border-bottom: none; }
 .item:hover { background: #FAFAF9; }
 
-.info { flex: 1; min-width: 0; }
-.name  { font-size: var(--text-sm); font-weight: 600; color: var(--color-text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.title { font-size: 12px; color: var(--color-text-muted); margin-top: 1px; }
-.meta  { display: flex; align-items: center; gap: var(--sp-3); margin-top: 4px; }
+/* distance: svg child selector */
 .distance { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; color: var(--color-text-muted); }
 .distance svg { width: 10px; height: 10px; stroke-width: 2; }
-.price { font-size: var(--text-sm); font-weight: 600; color: var(--color-primary); white-space: nowrap; flex-shrink: 0; margin-left: auto; }
 
 @media (min-width: 768px) {
   .item { padding: var(--sp-5) var(--sp-6); gap: var(--sp-4); }
-  .name  { font-size: var(--text-base); }
-  .title { font-size: var(--text-sm); }
-  .price { font-size: var(--text-base); }
 }
 
 @media (min-width: 1024px) {

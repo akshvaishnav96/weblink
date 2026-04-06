@@ -1,0 +1,71 @@
+/* spinner: @keyframes — kept in CSS module */
+.spinner {
+  width: 28px; height: 28px;
+  border: 3px solid #E8E8E8;
+  border-top-color: #B8860B;
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* progressLineLoading: @keyframes + animated gradient — kept in CSS module */
+.progressLineLoading {
+  background: linear-gradient(90deg, #E8E8E8 0%, #B8860B 40%, #EDD9A3 60%, #E8E8E8 100%);
+  background-size: 200% 100%;
+  animation: progressSlide 1.1s ease-in-out infinite;
+}
+@keyframes progressSlide {
+  0%   { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+/* selectedExpertChip: svg child selector — kept in CSS module */
+.selectedExpertChip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 18px; border: 1.5px solid #E0DDD7;
+  border-radius: 999px; background: #fff;
+  font-size: 13px; font-weight: 500; color: #5a5a5a;
+}
+.selectedExpertChip svg { color: #B8860B; flex-shrink: 0; }
+
+/* sectionTitle: font-family: var(--font-heading) — kept in CSS module */
+.sectionTitle {
+  font-family: var(--font-heading);
+  font-size: 20px; font-weight: 700; color: #1a1a1a;
+  text-align: center; margin-bottom: 16px; letter-spacing: 0.01em;
+}
+@media (min-width: 768px) { .sectionTitle { font-size: 22px; } }
+
+/* formLabel: custom font (Cormorant Garamond) — kept in CSS module */
+.formLabel {
+  color: #b8860b; letter-spacing: .02em; margin-bottom: 8px;
+  font-size: 14px; font-weight: 600; display: block;
+  font-family: 'Cormorant Garamond';
+}
+
+/* formTextarea: ::placeholder + :focus — kept in CSS module */
+.formTextarea {
+  width: 100%; background: #fff; border: 1.5px solid #E8E4DD;
+  border-radius: 12px; padding: 12px 14px; font-size: 16px;
+  color: #1a1a1a; resize: none; outline: none; min-height: 80px;
+  line-height: 1.5; transition: border-color 0.15s;
+  font-family: var(--font-body);
+}
+.formTextarea::placeholder { color: #C0BFBD; }
+.formTextarea:focus { border-color: #B8860B; }
+
+/* ctaBtn: :hover — kept in CSS module */
+.ctaBtn {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; padding: 16px; border-radius: 14px;
+  background: #C9A84C; color: #fff;
+  font-size: 15px; font-weight: 600; border: none; cursor: pointer;
+  box-shadow: 0 4px 16px rgba(184,134,11,0.28);
+  transition: background 0.15s, transform 0.1s;
+  font-family: var(--font-body);
+}
+.ctaBtn:hover { background: #B8860B; transform: translateY(-1px); }
+.ctaBtnDisabled {
+  background: #E8D9A8; color: #C8B06A;
+  cursor: not-allowed; box-shadow: none; pointer-events: none;
+}

@@ -6,6 +6,7 @@ import "./globals.css";
 import "@/styles/tokens.css";
 import "@/styles/globals.css";
 import BottomNav from "@/components/layout/BottomNav";
+import FontLoader from "@/components/FontLoader";
 
 
 const cormorant = Cormorant_Garamond({
@@ -16,22 +17,24 @@ const cormorant = Cormorant_Garamond({
 });
 
 
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? (process.env.NODE_ENV === "production" ? "/bookme" : "");
+
 export const metadata: Metadata = {
-  title: "Groomly",
+  title: "valetvault - Book top barbers near you",
   description: "Book top barbers near you.",
+  icons: {
+    icon: `${BASE}/favicon.ico`,
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={cormorant.variable}>
       <head>
-        <link rel="preconnect" href="https://api.fontshare.com" />
-        <link
-          href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700&display=swap"
-          rel="stylesheet"
-        />
+        <link rel="preconnect" href="https://api.fontshare.com" crossOrigin="anonymous" />
       </head>
       <body>
+        <FontLoader />
         <div className="app-shell">
           {/* <TopNav /> */}
           <main className="page-content">{children}</main>

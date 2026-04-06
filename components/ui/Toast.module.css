@@ -1,16 +1,3 @@
-.container {
-  position: fixed;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column-reverse;
-  gap: 10px;
-  z-index: 9999;
-  width: calc(100% - 32px);
-  max-width: 420px;
-  pointer-events: none;
-}
 
 .toast {
   display: flex;
@@ -40,9 +27,6 @@
 .warning { background: #fffbeb; border-color: #fde68a; color: #92400e; }
 .info    { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
 
-.toastIcon { flex-shrink: 0; }
-
-.toastMsg { flex: 1; }
 
 .toastClose {
   flex-shrink: 0;
@@ -59,13 +43,3 @@
 }
 .toastClose:hover { opacity: 1; }
 
-@media (min-width: 768px) {
-  .container {
-    left: auto;
-    right: 24px;
-    bottom: 32px;
-    transform: none;
-    width: 380px;
-    max-width: 380px;
-  }
-}

@@ -42,8 +42,8 @@ function ToastCard({ toast, onRemove }: { toast: ToastItem; onRemove: (id: numbe
 
   return (
     <div className={`${styles.toast} ${styles[toast.type]} ${visible ? styles.visible : ""}`}>
-      <Icon size={17} className={styles.toastIcon} />
-      <span className={styles.toastMsg}>{toast.message}</span>
+      <Icon size={17} className="flex-shrink-0" />
+      <span className="flex-1">{toast.message}</span>
       <button
         className={styles.toastClose}
         onClick={() => { setVisible(false); setTimeout(() => onRemove(toast.id), 300); }}
@@ -58,7 +58,7 @@ function ToastCard({ toast, onRemove }: { toast: ToastItem; onRemove: (id: numbe
 export default function Toast({ toasts, onRemove }: ToastProps) {
   if (toasts.length === 0) return null;
   return (
-    <div className={styles.container}>
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 flex flex-col-reverse gap-[10px] z-[9999] w-[calc(100%-32px)] max-w-[420px] pointer-events-none md:left-auto md:right-6 md:bottom-8 md:translate-x-0 md:w-[380px] md:max-w-[380px]">
       {toasts.map(t => (
         <ToastCard key={t.id} toast={t} onRemove={onRemove} />
       ))}
