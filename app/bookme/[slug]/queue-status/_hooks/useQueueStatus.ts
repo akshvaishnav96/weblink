@@ -41,7 +41,7 @@ export function useQueueStatus() {
   // ── Live state ─────────────────────────────────────────────────────────────
   const [position,    setPosition]   = useState(session?.position ?? 1);
   const [estWaitMins, setEstWait]    = useState(waitMins);
-  const [view,        setView]       = useState<QueueView>("waiting");
+  const [view,        setView]       = useState<QueueView>("your-turn");
   const [modal,       setModal]      = useState<ModalView>(null);
   const [skipCount,   setSkipCount]  = useState(0);
   const [skipLimit,   setSkipLimit]  = useState<number | null>(null); // locked on first skip

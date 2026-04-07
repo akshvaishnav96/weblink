@@ -42,6 +42,7 @@ export default function QueueStatusPage() {
           <YourTurnView
             countdownLabel={q.countdownLabel}
             countdownProgress={q.countdownProgress}
+            countdown={q.countdown}
             skipUsed={q.skipUsed}
             onSkip={() => q.openModal("skip")}
             onLeave={() => q.openModal("leave")}
