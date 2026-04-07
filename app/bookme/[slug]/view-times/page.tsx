@@ -399,6 +399,8 @@ export default function ViewTimesPage({
               staffPicture,
               displayTime: `${dateStr}, ${selectedTime}`,
               duration: String(service?.time ?? ""),
+              people: 1,
+              waitMins: 0,
               price: String(servicePrice),
               businessName,
               businessAddress,

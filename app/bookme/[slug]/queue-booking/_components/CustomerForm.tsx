@@ -1,14 +1,13 @@
-import { User, Phone, Lock, ChevronDown, Search } from "lucide-react";
+import { useState } from "react";
+import { User, Phone, Lock, ChevronDown, Search, Bell } from "lucide-react";
 import styles from "../page.module.css";
 import type { Country, FieldErrors } from "../_types";
 
 interface Props {
-  // Field values + setters
   firstName: string;     setFirstName: (v: string) => void;
   phone: string;         setPhone: (v: string) => void;
   email: string;         setEmail: (v: string) => void;
 
-  // Country picker
   country: Country;
   countryOpen: boolean;  setCountryOpen: (v: boolean | ((p: boolean) => boolean)) => void;
   countrySearch: string; setCountrySearch: (v: string) => void;
@@ -17,15 +16,12 @@ interface Props {
   searchRef: React.RefObject<HTMLInputElement | null>;
   onSelectCountry: (c: Country) => void;
 
-  // Validation
   fieldErrors: FieldErrors;
   setFieldErrors: (fn: (prev: FieldErrors) => FieldErrors) => void;
 
-  // Saved banner
   savedBanner: boolean;
   clearSaved: () => void;
 
-  // Side-effect: clear payment error on any change
   clearPaymentError: () => void;
 }
 
@@ -41,30 +37,31 @@ export default function CustomerForm({
   savedBanner, clearSaved,
   clearPaymentError,
 }: Props) {
+  const [webNotify, setWebNotify] = useState(true);
+
   return (
     <div className={styles.section}>
-      <div className={styles.sectionTitleRow}>
-        <div>
-          <p className={styles.sectionTitle}>About You</p>
-          {!savedBanner && <p className={styles.sectionSub}>Your details for the queue booking</p>}
-        </div>
-      </div>
-        {savedBanner && (
-          <div className={styles.welcomeChip}>
-            <span className={styles.welcomeText}>Welcome back, {firstName} ⚡</span>
-            <button className={styles.forgetLink} onClick={clearSaved}>Forget my details</button>
-          </div>
-        )}
 
-      {/* Name */}
+      {/* Section label */}
+      <p className={styles.sectionLabel}>Your Details</p>
+
+      {/* Welcome back banner */}
+      {savedBanner && (
+        <div className={styles.welcomeChip}>
+          <span>Welcome back, {firstName} ⚡</span>
+          <button className={styles.forgetLink} onClick={clearSaved}>Forget my details</button>
+        </div>
+      )}
+
+      {/* First name */}
       <div className={styles.inputRow}>
         <User className={styles.inputIcon} />
         <input
           className={`${styles.input}${fieldErrors.firstName ? ` ${styles.inputError}` : ""}`}
-          placeholder="Your name"
+          placeholder="Enter your name *"
           value={firstName}
           autoComplete="given-name"
-          maxLength={100}
+          maxLength={50}
           onChange={e => {
             setFirstName(e.target.value);
             setFieldErrors(p => ({ ...p, firstName: false }));
@@ -126,7 +123,7 @@ export default function CustomerForm({
             <Phone className={styles.inputIcon} />
             <input
               className={`${styles.input}${fieldErrors.phone ? ` ${styles.inputError}` : ""}`}
-              placeholder="Phone number"
+              placeholder="Phone number *"
               value={phone}
               inputMode="tel"
               autoComplete="tel-national"
@@ -141,22 +138,43 @@ export default function CustomerForm({
         </div>
       </div>
 
-      <div className={styles.phoneNote}>
-        <Lock className={styles.lockIcon} size={11} />
-        Your phone number is used for queue updates only
-      </div>
-
-      {/* Email (optional) */}
+      {/* Email */}
       <input
         className={styles.inputNoIcon}
-        placeholder="Email address (optional)"
+        placeholder="Email for receipt (optional)"
         type="email"
         inputMode="email"
         autoComplete="email"
-        maxLength={255}
+        maxLength={80}
         value={email}
         onChange={e => { setEmail(e.target.value); clearPaymentError(); }}
       />
+
+      {/* Lock note */}
+      <p className={styles.phoneNote}>
+        <Lock className={styles.lockIcon} size={11} />
+        Only used for queue updates. Never shared.
+      </p>
+
+      {/* Web link notifications toggle */}
+      <div className={styles.notifyCard}>
+        <span className={styles.notifyIconWrap}>
+          <Bell size={16} className={styles.notifyIcon} />
+        </span>
+        <div className={styles.notifyText}>
+          <p className={styles.notifyTitle}>Web link notifications</p>
+          <p className={styles.notifyDesc}>Receive a link to track your place in the queue</p>
+        </div>
+        <button
+          type="button"
+          className={`${styles.toggle}${webNotify ? ` ${styles.toggleOn}` : ""}`}
+          onClick={() => setWebNotify(p => !p)}
+          aria-label="Toggle web notifications"
+        >
+          <span className={styles.toggleThumb} />
+        </button>
+      </div>
+
     </div>
   );
 }

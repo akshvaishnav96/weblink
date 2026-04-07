@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useMemo } from "react";
-import { useRouter, useParams, useSearchParams } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import type {
   PaymentRequest,
   PaymentRequestPaymentMethodEvent,
@@ -42,7 +42,6 @@ type FormRef = {
 export function useQueueBooking() {
   const router = useRouter();
   const params = useParams<{ slug: string }>();
-  const searchParams = useSearchParams();
   const pageSlug = params?.slug ?? "";
 
   const { selection, clearBooking } = useBookingStore();
@@ -50,9 +49,9 @@ export function useQueueBooking() {
   const stripe = useStripe();
   const elements = useElements();
 
-  // ── URL params ─────────────────────────────────────────────────────────────
-  const people = Number(searchParams.get("people") ?? "1");
-  const waitMins = Number(searchParams.get("waitMins") ?? "0");
+  // ── From booking store (no URL params needed) ──────────────────────────────
+  const people = selection.people ?? 1;
+  const waitMins = selection.waitMins ?? 0;
 
   // ── Form state ─────────────────────────────────────────────────────────────
   const [firstName, setFirstName] = useState("");
@@ -114,7 +113,8 @@ export function useQueueBooking() {
   const staffName = selection.staffName ?? "Anyone Available";
   const staffInitials = selection.staffInitials ?? "??";
   const duration = selection.duration ?? "—";
-  const price = parseFloat(selection.price ?? "0") || 0;
+  const unitPrice = parseFloat(selection.price ?? "0") || 0;
+  const price = Math.round(unitPrice * people * 100) / 100;
   const deposit = Math.round(price * 50) / 100;
   const remaining = Math.round((price - deposit) * 100) / 100;
   const barberId = selection.barberId ?? "";
@@ -188,7 +188,7 @@ export function useQueueBooking() {
 
   // ── Apple/Google Pay: initialise on mount / when method changes ────────────
   useEffect(() => {
-    if (!stripe || payment !== "apple" || !deposit) return;
+    if (!stripe || (payment !== "apple" && payment !== "google") || !deposit) return;
     const amount = Math.round(deposit * 100);
     if (amount <= 0) return;
 
@@ -452,68 +452,69 @@ export function useQueueBooking() {
   }
 
   function finaliseSuccess({
-    fn,
-    ph,
-    em,
-    cc,
-    gn,
-    fse,
+    fn = "",
+    em = "",
     pin,
     bookingId,
     position,
   }: {
-    fn: string;
-    ph: string;
-    em: string;
-    cc: string;
-    gn: string;
-    fse: boolean;
+    fn?: string;
+    ph?: string;
+    em?: string;
+    cc?: string;
+    gn?: string;
+    fse?: boolean;
     pin: string;
     bookingId: number | null;
     position?: number;
   }) {
     saveBookingId(bookingId);
     clearBooking();
-    const params = new URLSearchParams({
-      bookingId: String(bookingId ?? ""),
-      pin,
-      position: String(position ?? 1),
-      serviceName: encodeURIComponent(serviceName),
-      staffName: encodeURIComponent(staffName),
-      duration: String(duration),
-      people: String(people),
-      waitMins: String(waitMins),
-    });
-    router.replace(`/bookme/${barberSlug}/queue-status?${params.toString()}`);
+    try {
+      sessionStorage.setItem(
+        STORAGE_KEYS.QUEUE_STATUS,
+        JSON.stringify({
+          bookingId: String(bookingId ?? ""),
+          pin,
+          position: position ?? 1,
+          serviceName,
+          staffName,
+          duration,
+          people,
+          waitMins,
+          firstName: fn,
+          email: em,
+        }),
+      );
+    } catch { /* ignore */ }
+    router.replace(`/bookme/${barberSlug}/queue-status/${bookingId ?? pin}`);
   }
 
   // ── Validation ─────────────────────────────────────────────────────────────
 
-  function validate(): string | null {
-    if (!firstName.trim()) return "Name is required.";
-    if (firstName.trim().length < 3)
-      return "Name must be at least 3 characters.";
-    if (firstName.trim().length > 100)
-      return "Name must not exceed 100 characters.";
-    if (forSomeoneElse && !guestName.trim()) return "Guest name is required.";
-    if (forSomeoneElse && guestName.trim().length < 3)
-      return "Guest name must be at least 3 characters.";
+  function validateForm(): string | null {
+    if (!firstName.trim()) return "Customer name is required.";
+    if (firstName.trim().length < 3) return "Customer name must be at least 3 characters.";
+    if (firstName.trim().length > 100) return "Customer name must not exceed 100 characters.";
+    if (forSomeoneElse && !guestName.trim()) return "Guest name is required when booking for someone else.";
+    if (forSomeoneElse && guestName.trim().length < 3) return "Guest name must be at least 3 characters.";
+    if (forSomeoneElse && guestName.trim().length > 100) return "Guest name must not exceed 100 characters.";
     if (!country.dial_code) return "Country code is required.";
     if (!phone.trim()) return "Phone number is required.";
     const digits = phone.replace(/\D/g, "");
-    if (digits.length < 9 || digits.length > 11)
-      return "Phone number must be 9–11 digits.";
-    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
-      return "Please enter a valid email.";
+    if (digits.length < 9 || digits.length > 11) return "Phone number must be between 9 to 11 digits.";
+    if (email.trim() && email.trim().length > 255) return "Email must not exceed 255 characters.";
+    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return "Please enter a valid email address.";
     return null;
   }
 
   const canConfirm =
     firstName.trim().length >= 3 &&
+    firstName.trim().length <= 100 &&
     phone.replace(/\D/g, "").length >= 9 &&
     phone.replace(/\D/g, "").length <= 11 &&
     !!country.dial_code &&
-    (!forSomeoneElse || guestName.trim().length >= 3) &&
+    (!forSomeoneElse || (guestName.trim().length >= 3 && guestName.trim().length <= 100)) &&
     (payment !== "card" || cardComplete);
 
   // ── Main pay handler ───────────────────────────────────────────────────────
@@ -521,19 +522,16 @@ export function useQueueBooking() {
   async function handlePay() {
     if (isProcessing) return;
 
-    setFieldErrors({
+    const errors = {
       firstName: !firstName.trim() || firstName.trim().length < 3,
-      guestName:
-        forSomeoneElse && (!guestName.trim() || guestName.trim().length < 3),
-      phone:
-        !phone.trim() ||
-        phone.replace(/\D/g, "").length < 9 ||
-        phone.replace(/\D/g, "").length > 11,
-    });
+      guestName: forSomeoneElse && (!guestName.trim() || guestName.trim().length < 3),
+      phone: !phone.trim() || phone.replace(/\D/g, "").length < 9 || phone.replace(/\D/g, "").length > 11,
+    };
+    setFieldErrors(errors);
 
-    const error = validate();
-    if (error) {
-      setPaymentError(error);
+    const validationError = validateForm();
+    if (validationError) {
+      setPaymentError(validationError);
       return;
     }
 

@@ -78,6 +78,8 @@ export default function ServiceRow({ service, businessId, barberSlug = "", busin
       staffPicture:   "",
       displayTime:    `${getTodayLabel()}, ${slot}`,
       duration:       String(service.duration),
+      people:         1,
+      waitMins:       0,
       price:          String(service.price),
       businessName,
       businessAddress,

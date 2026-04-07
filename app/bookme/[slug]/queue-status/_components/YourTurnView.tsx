@@ -6,20 +6,18 @@ const R  = 45;
 const C  = 2 * Math.PI * R; // circumference ≈ 282.7
 
 interface Props {
-  countdownLabel:    string;
+  countdownLabel: string;
   countdownProgress: number; // 1 → 0
-  countdown:         number; // raw seconds remaining
-  skipUsed:          boolean;
-  onSkip:            () => void;
-  onLeave:           () => void;
+  skipUsed: boolean;
+  onSkip: () => void;
+  onLeave: () => void;
 }
 
 export default function YourTurnView({
-  countdownLabel, countdownProgress, countdown,
+  countdownLabel, countdownProgress,
   skipUsed, onSkip, onLeave,
 }: Props) {
   const dashOffset = C * (1 - countdownProgress);
-  const isUrgent   = countdown <= 10;
 
   return (
     <>
@@ -32,7 +30,7 @@ export default function YourTurnView({
           <circle
             cx="50" cy="50" r={R}
             fill="none"
-            stroke={isUrgent ? "#ef4444" : "#16a34a"}
+            stroke="#16a34a"
             strokeWidth="5.5"
             strokeLinecap="round"
             strokeDasharray={C}
@@ -42,46 +40,16 @@ export default function YourTurnView({
           />
         </svg>
         <div className={styles.timerInner}>
-          <Clock className={`${styles.timerIcon}${isUrgent ? ` ${styles.timerIconUrgent}` : ""}`} />
-          <p className={`${styles.timerCount}${isUrgent ? ` ${styles.timerCountUrgent}` : ""}`}>{countdownLabel}</p>
+          <Clock className={styles.timerIcon} />
+          <p className={styles.timerCount}>{countdownLabel}</p>
           <p className={styles.timerSub}>remaining</p>
         </div>
       </div>
 
-      {/* Hurry pill — only when ≤ 10 s left */}
-      {isUrgent && (
-        <div className={styles.hurryPill}>
-          <AlertTriangle size={14} />
-          Hurry! Time running out
-        </div>
-      )}
-
       {/* Check-in warning */}
       <div className={styles.checkInBox}>
-        <AlertTriangle className={styles.checkInIcon} size={18} />
-        <div>
-          <p className={styles.checkInTitle}>Get checked in before the timer ends</p>
-          <p className={styles.checkInDesc}>
-            If you don&apos;t check in with the barber before time runs out, you risk being moved to the back of the queue.
-          </p>
-        </div>
-      </div>
-
-      {/* What to do now */}
-      <div className={styles.stepsCard}>
-        <p className={styles.stepsTitle}>What to do now:</p>
-        <div className={styles.stepsList}>
-          {[
-            "Head to the service counter",
-            "Show this screen to the barber",
-            "Take a seat and enjoy your haircut!",
-          ].map((step, i) => (
-            <div key={i} className={styles.stepItem}>
-              <span className={styles.stepNum}>{i + 1}</span>
-              <span className={styles.stepText}>{step}</span>
-            </div>
-          ))}
-        </div>
+        <AlertTriangle className={styles.checkInIcon} size={16} />
+        <span>Get checked in before the timer ends</span>
       </div>
 
       {/* Skip (one time only) */}

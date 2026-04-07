@@ -1,41 +1,12 @@
 "use client";
 
-import { CreditCard, User } from "lucide-react";
+import { CreditCard, User, CheckCircle } from "lucide-react";
 import { RiAppleLine } from "react-icons/ri";
 import { FaGoogle } from "react-icons/fa";
-import {
-  CardElement,
-  PaymentRequestButtonElement,
-} from "@stripe/react-stripe-js";
-import type { PaymentRequest, StripeCardElementOptions } from "@stripe/stripe-js";
-import { formatPrice } from "@/lib/utils";
+import { CardElement } from "@stripe/react-stripe-js";
+import type { StripeCardElementOptions } from "@stripe/stripe-js";
 import styles from "../page.module.css";
 import type { PaymentMethod } from "../_types";
-
-// "🍎 Apple Pay / 🇬 Google Pay" label with icons inline
-function WalletLabel({ label, active }: { label: string; active: boolean }) {
-  const cls = active ? styles.payIconActive : styles.payIcon;
-  const isApple  = label.includes("Apple");
-  const isGoogle = label.includes("Google");
-  const both = isApple && isGoogle;
-  return (
-    <span className={styles.walletLabelRow}>
-      {isApple && (
-        <span className={styles.walletPart}>
-          <RiAppleLine className={cls} size={18} />
-          <span>Apple Pay</span>
-        </span>
-      )}
-      {both && <span className={styles.walletSep}>/</span>}
-      {isGoogle && (
-        <span className={styles.walletPart}>
-          <FaGoogle className={cls} size={14} />
-          <span>Google Pay</span>
-        </span>
-      )}
-    </span>
-  );
-}
 
 const CARD_ELEMENT_OPTIONS: StripeCardElementOptions = {
   style: {
@@ -50,66 +21,61 @@ const CARD_ELEMENT_OPTIONS: StripeCardElementOptions = {
   hidePostalCode: true,
 };
 
+const PAY_OPTIONS = [
+  { key: "apple"  as PaymentMethod, label: "Apple Pay",  Icon: RiAppleLine },
+  { key: "google" as PaymentMethod, label: "Google Pay", Icon: FaGoogle    },
+  { key: "card"   as PaymentMethod, label: "Card",       Icon: CreditCard  },
+];
+
 interface Props {
-  deposit: number;
   payment: PaymentMethod;
   onPaymentChange: (p: PaymentMethod) => void;
-
-  // Wallet pay
-  walletLabel: string;
-  paymentRequest: PaymentRequest | null;
-  prBtnAvailable: boolean;
-  prBtnLoading: boolean;
-
-  // Card
   cardName: string;
   setCardName: (v: string) => void;
   onCardChange: (complete: boolean, errorMsg: string | null) => void;
 }
 
 export default function PaymentSection({
-  deposit, payment, onPaymentChange,
-  walletLabel, paymentRequest, prBtnAvailable, prBtnLoading,
-  cardName, setCardName, onCardChange,
+  payment,
+  onPaymentChange,
+  cardName,
+  setCardName,
+  onCardChange,
 }: Props) {
   return (
     <div className={styles.section}>
       <p className={styles.sectionTitle}>Payment Method</p>
-      <p className={styles.sectionSub}>Deposit: {formatPrice(deposit)}</p>
 
-      {/* Apple / Google Pay option */}
-      <button
-        type="button"
-        className={`${styles.payOption}${payment === "apple" ? ` ${styles.payOptionActive}` : ""}`}
-        onClick={() => onPaymentChange("apple")}
-      >
-        <WalletLabel label={walletLabel} active={payment === "apple"} />
-        <span className={`${styles.payRadio}${payment === "apple" ? ` ${styles.payRadioActive}` : ""}`} />
-      </button>
+      {/* 3-column card grid */}
+      <div className={styles.payGrid}>
+        {PAY_OPTIONS.map(({ key, label, Icon }) => {
+          const active = payment === key;
+          return (
+            <button
+              key={key}
+              type="button"
+              className={`${styles.payCard}${active ? ` ${styles.payCardActive}` : ""}`}
+              onClick={() => onPaymentChange(key)}
+            >
+              {active && <CheckCircle size={15} className={styles.payCardBadge} />}
+              <span className={`${styles.payCardIcon}${active ? ` ${styles.payCardIconActive}` : ""}`}>
+                <Icon size={22} />
+              </span>
+              <span className={`${styles.payCardLabel}${active ? ` ${styles.payCardLabelActive}` : ""}`}>
+                {label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
 
-      {payment === "apple" && (
-        <p className={styles.walletHint}>
-          The pay button will appear below ↓
-        </p>
-      )}
-
-      {/* Card option */}
-      <button
-        type="button"
-        className={`${styles.payOption}${payment === "card" ? ` ${styles.payOptionActive}` : ""}`}
-        onClick={() => onPaymentChange("card")}
-      >
-        <CreditCard className={payment === "card" ? styles.payIconActive : styles.payIcon} size={18} />
-        <span className={styles.payLabel}>Card details</span>
-        <span className={`${styles.payRadio}${payment === "card" ? ` ${styles.payRadioActive}` : ""}`} />
-      </button>
-
+      {/* Card form — shown when card selected */}
       {payment === "card" && (
         <div className={styles.cardForm}>
           <div className={styles.stripeElementWrap}>
             <CardElement
               options={CARD_ELEMENT_OPTIONS}
-              onChange={e => onCardChange(e.complete, e.error?.message ?? null)}
+              onChange={(e) => onCardChange(e.complete, e.error?.message ?? null)}
             />
           </div>
           <div className={styles.inputRow} style={{ marginBottom: 0 }}>
@@ -119,10 +85,9 @@ export default function PaymentSection({
               placeholder="Name on card"
               value={cardName}
               autoComplete="cc-name"
-              onChange={e => setCardName(e.target.value)}
+              onChange={(e) => setCardName(e.target.value)}
             />
           </div>
-          
         </div>
       )}
     </div>

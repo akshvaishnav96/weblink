@@ -39,9 +39,9 @@ export function useQueueStatus() {
   const waitMins    = session?.waitMins    ?? 0;
 
   // ── Live state ─────────────────────────────────────────────────────────────
-  const [position,    setPosition]   = useState(session?.position ?? 1);
+  const [position, setPosition] = useState(session?.position ?? 1);
   const [estWaitMins, setEstWait]    = useState(waitMins);
-  const [view,        setView]       = useState<QueueView>("your-turn");
+  const [view,        setView]       = useState<QueueView>("waiting");
   const [modal,       setModal]      = useState<ModalView>(null);
   const [skipCount,   setSkipCount]  = useState(0);
   const [skipLimit,   setSkipLimit]  = useState<number | null>(null); // locked on first skip
@@ -116,20 +116,23 @@ export function useQueueStatus() {
   // position === 1 → 1 skip max | position > 1 → 5 skips max
   const effectiveLimit = skipLimit ?? (position <= 1 ? 1 : 5);
   const canSkip  = skipCount < effectiveLimit;
-  const skipUsed = skipCount >= effectiveLimit;
+  const skipUsed = skipCount >= effectiveLimit; // kept for component compat
 
   async function confirmSkip() {
     if (!canSkip) return;
+    // Lock the limit the first time: position 0 or 1 = 1 skip only, else 5
     if (skipLimit === null) setSkipLimit(position <= 1 ? 1 : 5);
     setIsSkipping(true);
     try {
       setPosition(p => p + 1);
       setSkipCount(n => n + 1);
       setModal(null);
+      // Skipping from the timer screen → go back to waiting, reset countdown
       if (view === "your-turn") {
         setView("waiting");
         setCountdown(YOUR_TURN_SECONDS);
       }
+      // In production: call your skip-queue API here
     } catch { /* ignore */ } finally {
       setIsSkipping(false);
     }

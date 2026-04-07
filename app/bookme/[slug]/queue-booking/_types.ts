@@ -1,4 +1,4 @@
-export type PaymentMethod = "apple" | "card";
+export type PaymentMethod = "apple" | "google" | "card";
 
 export type Country = {
   name: string;

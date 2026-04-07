@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, SkipForward, XCircle, MessageSquare, ExternalLinkIcon, Check } from "lucide-react";
+import { Eye, SkipForward, XCircle, Check, MessageSquare, ExternalLinkIcon } from "lucide-react";
 import { useQueueStatus } from "./_hooks/useQueueStatus";
 import YourTurnView from "./_components/YourTurnView";
 import { LeaveModal, SkipModal } from "./_components/ConfirmModal";
@@ -42,7 +42,6 @@ export default function QueueStatusPage() {
           <YourTurnView
             countdownLabel={q.countdownLabel}
             countdownProgress={q.countdownProgress}
-            countdown={q.countdown}
             skipUsed={q.skipUsed}
             onSkip={() => q.openModal("skip")}
             onLeave={() => q.openModal("leave")}
@@ -86,11 +85,7 @@ export default function QueueStatusPage() {
             </div>
             <p className={styles.actionNote}>No app needed — works in any browser</p>
 
-            {/* Powered by footer */}
-            <div className={styles.poweredBy}>
-              <span className={styles.poweredByIcon}>⚙</span>
-              Powered by <span className={styles.poweredByBrand}>Valet Vault</span>
-            </div>
+           
           </>
         )}
 
