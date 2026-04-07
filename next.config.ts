@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
         // /_next/image so Next.js image optimizer can handle the request.
         { source: `${BASE}/_next/image`, destination: "/_next/image" },
         { source: `${BASE}/favicon.ico`, destination: "/favicon.ico" },
- 	{ source: `${BASE}/sitemap.xml`, destination: "/sitemap.xml" },
+        { source: `${BASE}/sitemap.xml`, destination: "/sitemap.xml" },
         { source: `${BASE}/robots.txt`, destination: "/robots.txt" },
       ],
     };

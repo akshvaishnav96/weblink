@@ -64,6 +64,7 @@ export default function CustomerForm({
           placeholder="Your name"
           value={firstName}
           autoComplete="given-name"
+          maxLength={100}
           onChange={e => {
             setFirstName(e.target.value);
             setFieldErrors(p => ({ ...p, firstName: false }));
@@ -129,6 +130,7 @@ export default function CustomerForm({
               value={phone}
               inputMode="tel"
               autoComplete="tel-national"
+              maxLength={15}
               onChange={e => {
                 setPhone(e.target.value.replace(/[^0-9\s\-()]/g, ""));
                 setFieldErrors(p => ({ ...p, phone: false }));
@@ -151,6 +153,7 @@ export default function CustomerForm({
         type="email"
         inputMode="email"
         autoComplete="email"
+        maxLength={255}
         value={email}
         onChange={e => { setEmail(e.target.value); clearPaymentError(); }}
       />

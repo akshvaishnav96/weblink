@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, use, useEffect, useCallback, useMemo } from "react";
+import { useState, use, useEffect, useCallback, useMemo, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { User } from "lucide-react";
 import BackHeader from "@/components/layout/BackHeader";
@@ -12,8 +12,12 @@ import {
   checkStaffAvailability,
   type ApiBusinessProfile,
   type ApiStaff,
+  type ApiStaffSummary,
 } from "@/lib/api";
 import { useBookingStore } from "@/store/bookingStore";
+import { DISCOUNTS_ENABLED } from "../_utils";
+import { toISODate, formatSlotStart, nowInTZ } from "@/lib/utils";
+import { trackStaffSelected } from "@/lib/analytics";
 import styles from "./page.module.css";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -27,30 +31,15 @@ function getInitials(name: string): string {
     .slice(0, 2);
 }
 
-function toISODate(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
-function formatSlotStart(slot: string): string {
-  const [start] = slot.split("-");
-  const [hours, minutes] = start.split(":");
-  const h = parseInt(hours, 10);
-  const ampm = h >= 12 ? "PM" : "AM";
-  const h12 = h > 12 ? h - 12 : h === 0 ? 12 : h;
-  return minutes === "00" ? `${h12}:00 ${ampm}` : `${h12}:${minutes} ${ampm}`;
-}
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ViewTimesPage({
   params,
 }: {
-  params: Promise<{ id: string; slug: string }>;
+  params: Promise<{ slug: string }>;
 }) {
-  const { slug, id } = use(params);
+  const { slug } = use(params);
   const router = useRouter();
   const searchParams = useSearchParams();
   const setSelection = useBookingStore((s) => s.setSelection);
@@ -58,6 +47,7 @@ export default function ViewTimesPage({
   const businessName = searchParams.get("businessName") ?? "";
   const businessAddress = searchParams.get("businessAddress") ?? "";
   const mode = (searchParams.get("mode") ?? "onsite") as "onsite" | "mobile";
+  const userId = searchParams.get("user_id");
   const isMobileMode = mode === "mobile";
 
   const [profile, setProfile] = useState<ApiBusinessProfile | null>(null);
@@ -68,7 +58,13 @@ export default function ViewTimesPage({
   const [randomStaffId, setRandomStaffId] = useState<string | null>(null);
   // staff_id returned by checkStaffAvailability — used for booking when no real IDs
   const [resolvedStaffId, setResolvedStaffId] = useState<string | null>(null);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+  // Initialise to today in the app timezone (Australia/Sydney) so the calendar
+  // opens on the correct date regardless of the user's browser timezone.
+  const [selectedDate, setSelectedDate] = useState<Date | null>(() => {
+    const [datePart] = nowInTZ().split("T");
+    const [y, m, d] = datePart.split("-").map(Number);
+    return new Date(y, m - 1, d);
+  });
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
   const [meetUpAddress] = useState("");
@@ -76,7 +72,10 @@ export default function ViewTimesPage({
   const [slots, setSlots] = useState<string[]>([]);
   const [rawSlotsMap, setRawSlotsMap] = useState<Record<string, string>>({});
   const [slotsLoading, setSlotsLoading] = useState(false);
-  const [, setSlotsError] = useState<string | null>(null);
+  const [slotsError, setSlotsError] = useState<string | null>(null);
+  const lastStaffRef = useRef<string | null>(null);
+  // Staff returned by the availability API — updates when date changes
+  const [availableStaff, setAvailableStaff] = useState<ApiStaffSummary[] | null>(null);
 
   // Staff from services — have real numeric IDs usable for specific availability checks
   const serviceStaff = useMemo((): ApiStaff[] => {
@@ -94,38 +93,25 @@ export default function ViewTimesPage({
   // Whether we have real staff IDs for specific availability lookups
   const hasRealIds = serviceStaff.length > 0;
 
-  // Build expert cards:
-  //  - If services have staff with real IDs → use those (supports specific availability)
-  //  - Otherwise → fall back to profile.staff summary (display only)
+  // Build expert cards solely from the availability API response.
+  // Returns [] until the first API call completes — prevents flash of all profile staff.
   const experts = useMemo(() => {
-    if (!profile) return [];
-    if (serviceStaff.length > 0) {
-      return serviceStaff.map((s) => ({
-        id: s.id.toString(),
-        initials: getInitials(s.name),
-        name: s.name,
-        picture: s.picture ?? undefined,
-      }));
-    }
-    // Fallback: profile.staff summary — use index as display-only ID
-    return (profile.staff ?? []).map((s, i) => ({
-      id: `s${i}`,
+    if (availableStaff === null) return []; // wait for API — show nothing until date availability loads
+    return availableStaff.map((s) => ({
+      id: s.id.toString(),
       initials: getInitials(s.name),
       name: s.name,
       picture: s.picture ?? undefined,
     }));
-  }, [profile, serviceStaff]);
+  }, [availableStaff]);
 
   useEffect(() => {
-    console.log("[ViewTimes] params:", { slug, id });
     fetchBusinessProfileBySlug(slug)
       .then((data) => {
-        console.log("[ViewTimes] profile loaded:", data);
         setProfile(data);
         setProfileLoading(false);
       })
       .catch((err: Error) => {
-        console.error("[ViewTimes] profile error:", err.message);
         setProfileError(err.message ?? "Failed to load profile");
         setProfileLoading(false);
       });
@@ -150,12 +136,11 @@ export default function ViewTimesPage({
       const effectiveStaffId =
         selectedExpert === "anyone" ? randomStaffId : selectedExpert;
       if (!effectiveStaffId) return; // waiting for random staff to be picked
-      callType = "specific";
+      callType = selectedExpert === "anyone" ? "anyone" : "specific";
       staffIdParam = effectiveStaffId;
     } else {
-      // No real staff IDs — use "anyone" type, API picks available staff
-      callType = "anyone";
-      staffIdParam = undefined;
+      callType = selectedExpert !== "anyone" ? "specific" : "anyone";
+      staffIdParam = selectedExpert !== "anyone" ? selectedExpert : undefined;
     }
 
     setSlotsLoading(true);
@@ -169,7 +154,16 @@ export default function ViewTimesPage({
         date: toISODate(selectedDate),
         business_service_id: serviceId,
       });
-      console.log("[ViewTimes] checkStaffAvailability response:", result);
+      // Only update the staff list on "anyone" calls (date-driven).
+      // When a specific staff is selected we only want to refresh slots, not the list.
+      if (callType === "anyone") {
+        const newStaff = result.staff ?? [];
+        setAvailableStaff(newStaff);
+        // Auto-select the single staff so it's sent correctly on booking
+        if (newStaff.length === 1) {
+          setSelectedExpert(newStaff[0].id.toString());
+        }
+      }
       // Store the staff_id from response for booking when no real IDs
       if (result.staff_id) {
         setResolvedStaffId(result.staff_id.toString());
@@ -186,6 +180,8 @@ export default function ViewTimesPage({
     } catch (err) {
       setSlotsError((err as Error).message ?? "Could not load time slots");
       setSlots([]);
+      // Only clear the staff list if this was a date-driven call — never on specific-staff errors
+      if (callType === "anyone") setAvailableStaff([]);
     } finally {
       setSlotsLoading(false);
     }
@@ -198,7 +194,9 @@ export default function ViewTimesPage({
   const service = profile?.services.find((s) => s.id.toString() === serviceId);
   const servicePrice = (() => {
     if (!service) return 0;
+    // Keep applyDiscount intact — re-enable via DISCOUNTS_ENABLED in _utils.ts
     const applyDiscount = (base: number, isDiscount: number, pct: string) => {
+      if (!DISCOUNTS_ENABLED) return base;
       const discountPct = parseFloat(pct) || 0;
       if (isDiscount && discountPct > 0)
         return Math.round(base * (1 - discountPct / 100) * 100) / 100;
@@ -230,11 +228,12 @@ export default function ViewTimesPage({
 
   if (profileLoading) {
     return (
-      <div className={styles.page}>
+      <div className="min-h-screen bg-white">
         <BackHeader title="Select Your Expert" />
-        <div className={styles.centeredMsg}>
+        <div className="flex flex-col items-center justify-center min-h-[50vh] gap-[16px]">
+          {/* spinner: @keyframes — kept in CSS module */}
           <div className={styles.spinner} />
-          <p className={styles.msgText}>Loading…</p>
+          <p className="text-[13px] text-[#999]">Loading…</p>
         </div>
       </div>
     );
@@ -242,11 +241,14 @@ export default function ViewTimesPage({
 
   if (profileError) {
     return (
-      <div className={styles.page}>
+      <div className="min-h-screen bg-white">
         <BackHeader title="Select Your Expert" />
-        <div className={styles.centeredMsg}>
-          <p className={styles.errorText}>{profileError}</p>
-          <button onClick={() => router.back()} className={styles.backBtn}>
+        <div className="flex flex-col items-center justify-center min-h-[50vh] gap-[16px]">
+          <p className="text-[13px] text-[#999] text-center px-[16px]">{profileError}</p>
+          <button
+            onClick={() => router.back()}
+            className="py-[10px] px-[24px] rounded-[999px] bg-[#B8860B] text-white text-[13px] font-semibold cursor-pointer border-none"
+          >
             Go back
           </button>
         </div>
@@ -255,24 +257,33 @@ export default function ViewTimesPage({
   }
 
   return (
-    <div className={styles.page}>
+    <div className="min-h-screen bg-white">
       <BackHeader title="Select Your Expert" />
 
       {/* Expert selector */}
-      <ExpertSelector
-        experts={experts}
-        selectedId={selectedExpert}
-        onSelect={(id) => {
-          setSelectedExpert(id);
-          setSelectedTime(null);
-        }}
-      />
+      {availableStaff !== null && experts.length === 0 ? (
+        <div className="flex items-center gap-[8px] px-[16px] py-[14px] text-[13px] text-[#999] italic">
+          <User size={14} strokeWidth={1.5} className="shrink-0 text-[#ccc]" />
+          No staff available for this date
+        </div>
+      ) : (
+        <ExpertSelector
+          experts={experts}
+          selectedId={selectedExpert}
+          onSelect={(id) => {
+            setSelectedExpert(id);
+            setSelectedTime(null);
+              const expert = experts.find((e) => e.id === id);
+              trackStaffSelected(lastStaffRef, id, expert?.name ?? id, slug, serviceId, String(profile?.id ?? ""), service?.service_name ?? "");
+          }}
+        />
+      )}
 
       {/* Progress line + selected expert chip */}
-      <div
-        className={`${styles.progressLine}${slotsLoading ? ` ${styles.progressLineLoading}` : ""}`}
-      />
-      <div className={styles.selectedExpertRow}>
+      {/* progressLineLoading: @keyframes + gradient — kept in CSS module */}
+      <div className={`h-[2px] w-full m-0 ${slotsLoading ? styles.progressLineLoading : "bg-[#B8860B]"}`} />
+      <div className="flex justify-center py-[14px] px-[16px] pb-[4px]">
+        {/* selectedExpertChip: svg child selector — kept in CSS module */}
         <div className={styles.selectedExpertChip}>
           <User size={12} />
           <span>{selectedExpertName}</span>
@@ -284,20 +295,26 @@ export default function ViewTimesPage({
         selectedDate={selectedDate}
         onDateSelect={(d) => {
           setSelectedDate(d);
+          setSelectedExpert("anyone");
           setSelectedTime(null);
         }}
       />
 
       {/* Time slots */}
-      <div className={styles.timeSlotsSection}>
+      {/* sectionTitle: font-family: var(--font-heading) — kept in CSS module */}
+      <div className="py-[24px] px-[16px] pb-[20px] border-b border-[#F0EFED] md:py-[28px] md:px-[32px] md:pb-[24px] lg:py-[32px] lg:px-[40px] lg:pb-[28px]">
         <p className={styles.sectionTitle}>Choose Time</p>
         {slotsLoading ? (
-          <div className={styles.slotsLoading}>
+          <div className="flex items-center gap-[12px] py-[16px]">
             <div className={styles.spinner} />
-            <span className={styles.msgText}>Checking availability…</span>
+            <span className="text-[13px] text-[#999]">Checking availability…</span>
           </div>
+        ) : slotsError ? (
+          <p className="text-[13px] text-[#c0392b] text-center py-[20px] italic">
+            {slotsError}
+          </p>
         ) : slots.length > 0 ? (
-          <div className={styles.timeSlotsGrid}>
+          <div className="grid grid-cols-3 sm:grid-cols-3 gap-[10px] md:gap-[12px]">
             {slots.map((slot) => (
               <TimeSlotButton
                 key={slot}
@@ -308,14 +325,15 @@ export default function ViewTimesPage({
             ))}
           </div>
         ) : (
-          <p className={styles.noSlots}>
+          <p className="text-[13px] text-[#999] text-center py-[20px] italic">
             No availability for this date — try another day
           </p>
         )}
       </div>
 
       {/* Additional Notes */}
-      <div className={styles.formSection}>
+      {/* formLabel: custom font — kept in CSS module; formTextarea: ::placeholder + :focus — kept in CSS module */}
+      <div className="py-[16px] px-[16px] pb-[4px] md:px-[32px] lg:px-[40px]">
         <label className={styles.formLabel}>Additional Notes (Optional)</label>
         <textarea
           className={styles.formTextarea}
@@ -327,7 +345,8 @@ export default function ViewTimesPage({
       </div>
 
       {/* Book button */}
-      <div className={styles.ctaSection}>
+      {/* ctaBtn: :hover — kept in CSS module */}
+      <div className="py-[20px] px-[16px] pb-[12px] md:py-[24px] md:px-[32px] md:pb-[16px] lg:py-[24px] lg:px-[40px] lg:pb-[20px]">
         <button
           onClick={() => {
             if (!canBook) return;
@@ -348,7 +367,10 @@ export default function ViewTimesPage({
                 selectedExpert !== "anyone"
                   ? experts.find((e) => e.id === selectedExpert)
                   : undefined;
-              bookingStaffId = resolvedStaffId ?? "0";
+              bookingStaffId =
+                selectedExpert !== "anyone"
+                  ? selectedExpert
+                  : (resolvedStaffId ?? "0");
             }
 
             const staffName = expertObj?.name ?? "Anyone";
@@ -390,10 +412,10 @@ export default function ViewTimesPage({
                   : (service?.service_type ?? "walkin"),
               notes: notes || undefined,
               meetUpAddress: meetUpAddress || undefined,
+              userId: userId ?? null,
             };
-            console.log("[ViewTimes] setSelection payload:", selectionPayload);
             setSelection(selectionPayload);
-            router.push(`/confirm-booking`);
+            router.push(`/bookme/${slug}/confirm-booking`);
           }}
           className={`${styles.ctaBtn}${!canBook ? ` ${styles.ctaBtnDisabled}` : ""}`}
         >

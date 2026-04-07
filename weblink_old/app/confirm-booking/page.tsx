@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useRef, useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import {
   ArrowLeft, CheckCircle2, User, Phone, Building2,
-  Smartphone, CreditCard, Lock, ChevronDown, Search, Wallet,
+  Smartphone, CreditCard, Lock, ChevronDown, Search,
+  Check, CheckCircle, Circle,
 } from "lucide-react";
 import {
   Elements,
@@ -13,9 +14,11 @@ import {
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
-import type { PaymentRequest, StripeCardElementOptions } from "@stripe/stripe-js";
+import type { PaymentRequest, StripeCardElementOptions, PaymentRequestPaymentMethodEvent } from "@stripe/stripe-js";
 import COUNTRIES_RAW from "@/utils/countries.json";
+import { API_ENDPOINTS } from "@/lib/api-endpoints";
 import AppDownloadModal from "@/components/booking/AppDownloadModal";
+import LegalText from "@/components/booking/LegalText";
 import { useBookingStore } from "@/store/bookingStore";
 import { useBookingHydrated } from "@/hooks/useBookingHydrated";
 import { getStripe } from "@/lib/stripe";
@@ -31,11 +34,10 @@ import {
   PIN_MIN,
   PIN_MAX,
 } from "@/lib/constants";
+import { detectWalletLabel, nowInTZ } from "@/lib/utils";
 
 type Country = { name: string; flag: string; code: string; dial_code: string };
 const COUNTRIES = COUNTRIES_RAW as Country[];
-
-type UpiStatus = "idle" | "pending" | "success" | "failed";
 
 const CARD_ELEMENT_OPTIONS: StripeCardElementOptions = {
   style: {
@@ -62,9 +64,9 @@ export default function ConfirmBookingPage() {
 // ─── Inner component ───────────────────────────────────────────────────────
 function ConfirmBookingInner() {
   const router = useRouter();
+  const params = useParams<{ slug: string }>();
+  const pageSlug = params?.slug ?? "";
   const { selection, clearBooking } = useBookingStore();
-  console.log("[ConfirmBooking] Store selection:", selection);
-  console.log("[ConfirmBooking] Price from store:", { price: selection.price, discountedPrice: (selection as Record<string, unknown>).discountedPrice ?? "none" });
   const hydrated = useBookingHydrated();
   const stripe   = useStripe();
   const elements = useElements();
@@ -79,7 +81,7 @@ function ConfirmBookingInner() {
   const [confirmedServiceId,    setConfirmedServiceId]    = useState<number>(0);
   const [confirmedBarberSlug,     setConfirmedBarberSlug]     = useState<string>("");
   const [confirmedServicePrice, setConfirmedServicePrice] = useState<number>(0);
-  const [customerSnapshot,      setCustomerSnapshot]      = useState<{ firstName: string; phone: string; email: string; countryCode: string } | null>(null);
+  const [customerSnapshot,      setCustomerSnapshot]      = useState<{ firstName: string; phone: string; email: string; countryCode: string; guestName: string; forSomeoneElse: boolean; address: string } | null>(null);
 
   // ── Form state ────────────────────────────────────────────────────────────
   const [firstName,      setFirstName]      = useState("");
@@ -87,10 +89,9 @@ function ConfirmBookingInner() {
   const [guestName,      setGuestName]      = useState("");
   const [address,        setAddress]        = useState("");
   const [phone,          setPhone]          = useState("");
-  const [payment,        setPayment]        = useState<"onsite" | "apple" | "card" | "upi">("onsite");
+  const [payment,        setPayment]        = useState<"onsite" | "apple" | "card">("onsite");
   const [email,          setEmail]          = useState("");
   const [cardName,       setCardName]       = useState("");
-  const [upiId,          setUpiId]          = useState("");
   const [country,        setCountry]        = useState<Country>(
     COUNTRIES.find(c => c.code === DEFAULT_COUNTRY_CODE) ?? COUNTRIES[0]
   );
@@ -98,15 +99,18 @@ function ConfirmBookingInner() {
   const [countrySearch, setCountrySearch] = useState("");
   const [isProcessing,  setIsProcessing]  = useState(false);
   const [paymentError,  setPaymentError]  = useState<string | null>(null);
-  const [upiStatus,     setUpiStatus]     = useState<UpiStatus>("idle");
   const [cardComplete,  setCardComplete]  = useState(false);
   const [savedBanner,   setSavedBanner]   = useState(false);
+  const [fieldErrors,   setFieldErrors]   = useState<{ firstName?: boolean; guestName?: boolean; phone?: boolean }>({});
   const countryRef = useRef<HTMLDivElement>(null);
   const searchRef  = useRef<HTMLInputElement>(null);
 
   // ── Apple/Google Pay state ─────────────────────────────────────────────
   const [paymentRequest, setPaymentRequest] = useState<PaymentRequest | null>(null);
   const [prBtnAvailable, setPrBtnAvailable] = useState(false);
+  const [prBtnLoading, setPrBtnLoading] = useState(false);
+  const [walletLabel, setWalletLabel] = useState(detectWalletLabel);
+  const [processingLabel, setProcessingLabel] = useState("Processing…");
 
   const isMobileBooking = selection.serviceType === "mobile" || selection.serviceType === "both";
 
@@ -121,15 +125,15 @@ function ConfirmBookingInner() {
   useEffect(() => {
     if (!hydrated) return;
     if (confirmedPin) return;
-    if (!selection.serviceId) router.replace("/");
-  }, [hydrated, confirmedPin, selection.serviceId, router]);
+    if (!selection.serviceId) router.replace(pageSlug ? `/bookme/${pageSlug}` : "/bookme/not-found");
+  }, [hydrated, confirmedPin, selection.serviceId, router, pageSlug]);
 
   // ── Load saved details ────────────────────────────────────────────────────
   useEffect(() => {
     try {
       const raw = localStorage.getItem(SAVED_KEY);
       if (!raw) return;
-      const saved = JSON.parse(raw) as { firstName?: string; phone?: string; email?: string; countryCode?: string };
+      const saved = JSON.parse(raw) as { firstName?: string; phone?: string; email?: string; countryCode?: string; guestName?: string; forSomeoneElse?: boolean; address?: string };
       if (saved.firstName) setFirstName(saved.firstName);
       if (saved.phone) setPhone(saved.phone);
       if (saved.email) setEmail(saved.email);
@@ -137,14 +141,20 @@ function ConfirmBookingInner() {
         const found = COUNTRIES.find(c => c.dial_code === saved.countryCode);
         if (found) setCountry(found);
       }
+      if (saved.guestName) setGuestName(saved.guestName);
+      if (saved.forSomeoneElse) setForSomeoneElse(saved.forSomeoneElse);
+      if (saved.address) setAddress(saved.address);
       setSavedBanner(true);
-    } catch { /* ignore */ }
+    } catch (err) {
+      console.warn("[ConfirmBooking] Failed to load saved details:", err);
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function clearSavedDetails() {
     localStorage.removeItem(SAVED_KEY);
     setFirstName(""); setPhone(""); setEmail("");
+    setGuestName(""); setForSomeoneElse(false); setAddress("");
     setCountry(COUNTRIES.find(c => c.code === DEFAULT_COUNTRY_CODE) ?? COUNTRIES[0]);
     setSavedBanner(false);
   }
@@ -183,19 +193,32 @@ function ConfirmBookingInner() {
       requestPayerEmail: false,
     });
     pr.canMakePayment().then(result => {
-      if (result) { setPaymentRequest(pr); setPrBtnAvailable(true); }
-      else { setPaymentRequest(null); setPrBtnAvailable(false); }
+      setPrBtnLoading(false);
+      if (result) {
+        setPaymentRequest(pr);
+        setPrBtnAvailable(true);
+        // Refine label from Stripe's authoritative result
+        const r = result as Record<string, boolean>;
+        if (r.applePay && r.googlePay) setWalletLabel("Apple Pay / Google Pay");
+        else if (r.applePay) setWalletLabel("Apple Pay");
+        else if (r.googlePay) setWalletLabel("Google Pay");
+      } else {
+        setPaymentRequest(null);
+        setPrBtnAvailable(false);
+      }
     });
   }, [stripe, payment, selection.price, selection.businessName]);
 
   // ── Apple Pay handler ─────────────────────────────────────────────────────
   useEffect(() => {
     if (!paymentRequest || !stripe) return;
-    const handler = async (event: Parameters<Parameters<PaymentRequest["on"]>[1]>[0] & { complete: (s: string) => void; paymentMethod: { id: string } }) => {
+    const handler = async (event: PaymentRequestPaymentMethodEvent) => {
       const { firstName: fn, phone: ph, email: em, guestName: gn, forSomeoneElse: fse, country: ct } = formRef.current;
+      let paymentConfirmed = false;
+      let capturedPaymentIntentId = "";
       try {
-        const basePayload = buildBasePayload({ firstName: fn, phone: ph, email: em, guestName: gn, isBookingSomeone: fse, countryCode: ct.dial_code, paymentMode: "apple_pay", addr: formRef.current.address });
-        const res = await fetch("/api/booking/payment-intent", {
+        const basePayload = buildBasePayload({ firstName: fn, phone: ph, email: em, guestName: gn, isBookingSomeone: fse, countryCode: ct.dial_code, paymentMode: "upi", addr: formRef.current.address });
+        const res = await fetch(API_ENDPOINTS.BOOKING_PAYMENT_INTENT, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ...basePayload, total_amount: Math.round(basePayload.total_amount * 100), services: basePayload.services.map((s: { service_id: number; price: number }) => ({ ...s, price: Math.round(s.price * 100) })), payment_intent_id: "" }),
@@ -203,28 +226,55 @@ function ConfirmBookingInner() {
         const json = await res.json();
         if (!json.status) { event.complete("fail"); return; }
         const clientSecret: string = json.client_secret ?? "";
-        const paymentIntentId: string = json.payment_intent_id ?? "";
+        capturedPaymentIntentId = json.payment_intent_id ?? "";
+        const intentUserId: number | null = json.user_id ?? null;
         const { error } = await stripe.confirmCardPayment(clientSecret, { payment_method: event.paymentMethod.id });
         if (error) { event.complete("fail"); setPaymentError(error.message ?? "Payment failed"); return; }
+        // ── Payment is confirmed — money has been captured from this point ──
+        paymentConfirmed = true;
         event.complete("success");
-        const { pin, bookingId } = await createBooking(paymentIntentId, "apple_pay", fn, ph, em, gn, fse, ct.dial_code, formRef.current.address);
+        setIsProcessing(true);
+        setProcessingLabel("Confirming your booking…");
+        const { pin, bookingId } = await createBooking(capturedPaymentIntentId, "upi", fn, ph, em, gn, fse, ct.dial_code, formRef.current.address, intentUserId);
         saveBookingId(bookingId);
-        setCustomerSnapshot({ firstName: fn, phone: ph, email: em, countryCode: ct.dial_code });
+        setCustomerSnapshot({ firstName: fn, phone: ph, email: em, countryCode: ct.dial_code, guestName: gn, forSomeoneElse: fse, address: formRef.current.address });
         setConfirmedServiceId(Number(selection.serviceId ?? 0));
         setConfirmedServicePrice(parseFloat(selection.price ?? "0") || 0);
         setConfirmedBarberSlug(selection.barberSlug ?? "");
         clearBooking();
         setConfirmedPin(pin);
         setShowModal(true);
-      } catch {
-        event.complete("fail");
-        setPaymentError("Payment failed. Please try again.");
+      } catch (err) {
+        if (paymentConfirmed) {
+          // Payment went through but booking creation failed — log server-side
+          fetch(API_ENDPOINTS.LOG_PAYMENT_FAILURE, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              paymentIntentId: capturedPaymentIntentId,
+              businessId:      selection.barberId,
+              serviceId:       selection.serviceId,
+              amount:          selection.price,
+              customer:        fn,
+              phone:           ph,
+              failedAt:        nowInTZ(),
+              error:           (err as Error).message,
+            }),
+          }).catch(() => { /* best-effort — don't block UI */ });
+          setPaymentError(
+            `Your payment was processed but the booking could not be confirmed. ` +
+            `Please contact support with reference: ${capturedPaymentIntentId}`
+          );
+        } else {
+          event.complete("fail");
+          setPaymentError("Payment failed. Please try again.");
+        }
+      } finally {
+        setIsProcessing(false);
       }
     };
-    // @ts-expect-error - Stripe types are complex here
     paymentRequest.on("paymentmethod", handler);
     return () => {
-      // @ts-expect-error
       paymentRequest.off("paymentmethod", handler);
     };
   }, [paymentRequest, stripe]);
@@ -240,7 +290,11 @@ function ConfirmBookingInner() {
   const barberSlug        = selection.barberSlug        ?? "";
   const serviceId    = selection.serviceId       ?? "";
 
-  const fallbackPin = useMemo(() => String(Math.floor(PIN_MIN + Math.random() * (PIN_MAX - PIN_MIN + 1))), []);
+  const fallbackPin = useMemo(() => {
+    const buf = new Uint32Array(1);
+    crypto.getRandomValues(buf);
+    return String(PIN_MIN + (buf[0] % (PIN_MAX - PIN_MIN + 1)));
+  }, []);
 
   const SUMMARY_ROWS = [
     { label: "Business Name", value: businessName },
@@ -252,9 +306,8 @@ function ConfirmBookingInner() {
 
   const PAYMENT_OPTIONS = [
     { key: "onsite" as const, Icon: Building2,  label: "Pay on site" },
-    { key: "apple"  as const, Icon: Smartphone, label: "Apple Pay / Google Pay" },
+    { key: "apple"  as const, Icon: Smartphone, label: walletLabel },
     { key: "card"   as const, Icon: CreditCard, label: "Card details" },
-    { key: "upi"    as const, Icon: Wallet,     label: "UPI" },
   ];
 
   // ── Build base booking payload ────────────────────────────────────────────
@@ -279,23 +332,22 @@ function ConfirmBookingInner() {
       customer_phone_number: ph,
       customer_email:        em,
       payment_mode:          pm,
+      user_id:               pm === "cash" ? null : (selection.userId ?? null),
       ...(addr ? { drop_address: addr } : {}),
+      ...(selection.notes ? { comment: selection.notes } : {}),
     };
-    console.log("[ConfirmBooking] Booking payload to send:", payload);
     return payload;
   }
 
   // ── Create booking on backend ─────────────────────────────────────────────
-  async function createBooking(piId: string, pm: string, fn: string, ph: string, em: string, gn: string, fse: boolean, cc: string, addr?: string): Promise<{ pin: string; bookingId: number | null }> {
-    const payload = { ...buildBasePayload({ firstName: fn, phone: ph, email: em, guestName: gn, isBookingSomeone: fse, countryCode: cc, paymentMode: pm, addr }), payment_intent_id: piId };
-    console.log("[ConfirmBooking] POST /api/booking/create payload:", payload);
-    const res = await fetch("/api/booking/create", {
+  async function createBooking(piId: string, pm: string, fn: string, ph: string, em: string, gn: string, fse: boolean, cc: string, addr?: string, userId?: number | null): Promise<{ pin: string; bookingId: number | null }> {
+    const payload = { ...buildBasePayload({ firstName: fn, phone: ph, email: em, guestName: gn, isBookingSomeone: fse, countryCode: cc, paymentMode: pm, addr }), payment_intent_id: piId, user_id: pm === "cash" ? null : (userId ?? null) };
+    const res = await fetch(API_ENDPOINTS.BOOKING_CREATE, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
     const json = await res.json();
-    console.log("[ConfirmBooking] POST /api/booking/create response:", json);
     if (!json.status) throw new Error(json.message ?? "Booking creation failed");
     const bId = json.data?.booking_id ?? json.data?.id ?? json.booking_id ?? json.id ?? null;
     const bookingId = bId ? Number(bId) : null;
@@ -318,8 +370,6 @@ function ConfirmBookingInner() {
     if (digits.length < 9 || digits.length > 11) return "Phone number must be between 9 to 11 digits.";
     if (email.trim() && email.trim().length > 255) return "Email must not exceed 255 characters.";
     if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return "Please enter a valid email address.";
-    if (payment === "upi" && !upiId.trim()) return "Please enter your UPI ID";
-    if (payment === "upi" && !upiId.trim().includes("@")) return "UPI ID must contain '@' (e.g. yourname@upi)";
     return null;
   }
 
@@ -328,6 +378,8 @@ function ConfirmBookingInner() {
     setPayment(p);
     setPaymentError(null);
     setCardComplete(false);
+    if (p === "apple") setPrBtnLoading(true);
+    else setPrBtnLoading(false);
   }
 
   const canConfirm =
@@ -338,24 +390,11 @@ function ConfirmBookingInner() {
     !!country.dial_code &&
     (!forSomeoneElse || (guestName.trim().length >= 3 && guestName.trim().length <= 100)) &&
     (payment !== "card" || cardComplete) &&
-    (payment !== "upi" || upiId.trim().includes("@"));
-
-  // ── UPI polling helper ─────────────────────────────────────────────────────
-  async function pollUpiPayment(s: Awaited<ReturnType<typeof getStripe>>, clientSecret: string): Promise<boolean> {
-    if (!s) return false;
-    for (let i = 0; i < UPI_POLL_MAX_ATTEMPTS; i++) {
-      await new Promise(r => setTimeout(r, UPI_POLL_INTERVAL_MS));
-      const { paymentIntent } = await s.retrievePaymentIntent(clientSecret);
-      if (paymentIntent?.status === "succeeded") return true;
-      if (paymentIntent?.status === "canceled" || paymentIntent?.status === "requires_payment_method") return false;
-    }
-    return false;
-  }
+    true;
 
   // ── CTA label ─────────────────────────────────────────────────────────────
   function getCtaLabel() {
     if (!isProcessing) return "Confirm Booking";
-    if (payment === "upi" && upiStatus === "pending") return "Waiting for UPI approval…";
     return "Processing…";
   }
 
@@ -367,20 +406,30 @@ function ConfirmBookingInner() {
       if (!stored.includes(bookingId)) {
         localStorage.setItem(STORAGE_KEYS.BOOKING_IDS, JSON.stringify([bookingId, ...stored]));
       }
-    } catch { /* ignore */ }
+    } catch (err) {
+      console.warn("[ConfirmBooking] Failed to save booking ID:", err);
+    }
   }
 
   // ── Main confirm handler ───────────────────────────────────────────────────
   async function handleConfirm() {
     if (isProcessing) return;
+    const errors = {
+      firstName: !firstName.trim() || firstName.trim().length < 3,
+      guestName: forSomeoneElse && (!guestName.trim() || guestName.trim().length < 3),
+      phone: !phone.trim() || phone.replace(/\D/g, "").length < 9 || phone.replace(/\D/g, "").length > 11,
+    };
+    setFieldErrors(errors);
     const validationError = validateForm();
     if (validationError) { setPaymentError(validationError); return; }
-    console.log("[ConfirmBooking] Payment method chosen:", payment);
     setIsProcessing(true);
+    setProcessingLabel("Processing payment…");
     setPaymentError(null);
 
     const cc = country.dial_code;
 
+    let cardPaymentConfirmed = false;
+    let cardPaymentIntentId = "";
     try {
       let pin = fallbackPin;
       let bookingId: number | null = null;
@@ -397,7 +446,7 @@ function ConfirmBookingInner() {
         if (pmError) throw new Error(pmError.message);
 
         const cardPayload = buildBasePayload({ firstName, phone, email, guestName, isBookingSomeone: forSomeoneElse, countryCode: cc, paymentMode: "card", addr: address });
-        const intentRes = await fetch("/api/booking/payment-intent", {
+        const intentRes = await fetch(API_ENDPOINTS.BOOKING_PAYMENT_INTENT, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ...cardPayload, total_amount: Math.round(cardPayload.total_amount * 100), services: cardPayload.services.map(s => ({ ...s, price: Math.round(s.price * 100) })) }),
@@ -405,34 +454,21 @@ function ConfirmBookingInner() {
         const intentJson = await intentRes.json();
         if (!intentJson.status) throw new Error(intentJson.message ?? "Payment intent failed");
         const clientSecret: string = intentJson.client_secret ?? "";
-        const piId: string = intentJson.payment_intent_id ?? "";
+        cardPaymentIntentId = intentJson.payment_intent_id ?? "";
+        const intentUserId: number | null = intentJson.user_id ?? null;
         const { error: stripeError } = await stripe.confirmCardPayment(clientSecret, { payment_method: paymentMethod!.id });
         if (stripeError) throw new Error(stripeError.message ?? "Card payment failed");
-        ({ pin, bookingId } = await createBooking(piId, "card", firstName, phone, email, guestName, forSomeoneElse, cc, address));
-
-      } else if (payment === "upi" && upiId) {
-        const upiPayload = buildBasePayload({ firstName, phone, email, guestName, isBookingSomeone: forSomeoneElse, countryCode: cc, paymentMode: "upi", addr: address });
-        const intentRes = await fetch("/api/booking/payment-intent", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...upiPayload, total_amount: Math.round(upiPayload.total_amount * 100), services: upiPayload.services.map(s => ({ ...s, price: Math.round(s.price * 100) })) }),
-        });
-        const intentJson = await intentRes.json();
-        if (!intentJson.status) throw new Error(intentJson.message ?? "UPI payment intent failed");
-        const clientSecret: string = intentJson.client_secret ?? "";
-        const piId: string = intentJson.payment_intent_id ?? "";
-        if (!stripe) throw new Error("Stripe failed to load");
-        setUpiStatus("pending");
-        const succeeded = await pollUpiPayment(stripe, clientSecret);
-        if (!succeeded) { setUpiStatus("failed"); throw new Error("UPI payment was not completed. Please approve it in your UPI app and try again."); }
-        setUpiStatus("success");
-        ({ pin, bookingId } = await createBooking(piId, "upi", firstName, phone, email, guestName, forSomeoneElse, cc, address));
+        // ── Card payment confirmed — money captured from this point ──
+        cardPaymentConfirmed = true;
+        setProcessingLabel("Confirming your booking…");
+        ({ pin, bookingId } = await createBooking(cardPaymentIntentId, "card", firstName, phone, email, guestName, forSomeoneElse, cc, address, intentUserId));
 
       } else {
+        setProcessingLabel("Confirming your booking…");
         ({ pin, bookingId } = await createBooking("", "cash", firstName, phone, email, guestName, forSomeoneElse, cc, address));
       }
 
-      setCustomerSnapshot({ firstName, phone, email, countryCode: cc });
+      setCustomerSnapshot({ firstName, phone, email, countryCode: cc, guestName, forSomeoneElse, address });
       setConfirmedServiceId(Number(serviceId));
       setConfirmedServicePrice(parseFloat(price) || 0);
       setConfirmedBarberSlug(barberSlug);
@@ -441,7 +477,30 @@ function ConfirmBookingInner() {
       setConfirmedPin(pin);
       setShowModal(true);
     } catch (err) {
-      setPaymentError((err as Error).message ?? "Booking failed. Please try again.");
+      if (cardPaymentConfirmed) {
+        // Card was charged but booking creation failed — store for support
+        const failedRecord = {
+          paymentIntentId: cardPaymentIntentId,
+          businessId:      barberId,
+          serviceId,
+          amount:          price,
+          customer:        firstName,
+          phone,
+          failedAt:        nowInTZ(),
+          error:           (err as Error).message,
+        };
+        fetch(API_ENDPOINTS.LOG_PAYMENT_FAILURE, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(failedRecord),
+        }).catch(() => { /* best-effort — don't block UI */ });
+        setPaymentError(
+          `Your payment was processed but the booking could not be confirmed. ` +
+          `Please contact support with reference: ${cardPaymentIntentId}`
+        );
+      } else {
+        setPaymentError((err as Error).message ?? "Booking failed. Please try again.");
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -467,7 +526,8 @@ function ConfirmBookingInner() {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className={styles.page}>
+    <>
+    <div className={`${styles.page}${showModal ? ` ${styles.pageBlurred}` : ""}`}>
       {/* Header */}
       <div className={styles.header}>
         <button className={styles.backBtn} onClick={() => router.back()} aria-label="Go back"><ArrowLeft /></button>
@@ -494,7 +554,7 @@ function ConfirmBookingInner() {
 
         {/* Cancellation policy */}
         <div className={styles.cancelBox}>
-          <CheckCircle2 className={styles.cancelIcon} />
+          <Check className={styles.cancelIcon} />
           <div>
             <p className={styles.cancelTitle}>Free cancellation up to 12 hours before</p>
             <ul className={styles.cancelList}>
@@ -522,7 +582,7 @@ function ConfirmBookingInner() {
             {/* Saved details banner */}
             {savedBanner && (
               <div className={styles.savedBanner}>
-                <CheckCircle2 size={15} className={styles.savedBannerIcon} />
+                <Check size={25} className={styles.savedBannerIcon} />
                 <span className={styles.savedBannerText}>Your details are pre-filled from your last booking.</span>
                 <button type="button" className={styles.savedBannerClear} onClick={clearSavedDetails}>Clear</button>
               </div>
@@ -534,7 +594,7 @@ function ConfirmBookingInner() {
               <p className={styles.sectionSub}>So we can send your booking confirmation</p>
               <div className={styles.inputRow}>
                 <User className={styles.inputIcon} />
-                <input className={styles.input} placeholder="First name" value={firstName} onChange={e => setFirstName(e.target.value)} autoComplete="given-name" />
+                <input className={`${styles.input}${fieldErrors.firstName ? ` ${styles.inputError}` : ""}`} placeholder="Enter your name" value={firstName} onChange={e => { setFirstName(e.target.value); setFieldErrors(prev => ({ ...prev, firstName: false })); }} autoComplete="given-name" />
               </div>
               <div className={styles.toggleRow} onClick={() => setForSomeoneElse(v => !v)}>
                 <button className={`${styles.toggle} ${forSomeoneElse ? styles.toggleOn : ""}`} onClick={e => { e.stopPropagation(); setForSomeoneElse(v => !v); }} aria-label="Booking for someone else" type="button">
@@ -546,7 +606,7 @@ function ConfirmBookingInner() {
                 <>
                   <div className={styles.inputRow}>
                     <User className={styles.inputIcon} />
-                    <input className={styles.input} placeholder="Guest name (who's showing up)" value={guestName} onChange={e => setGuestName(e.target.value)} />
+                    <input className={`${styles.input}${fieldErrors.guestName ? ` ${styles.inputError}` : ""}`} placeholder="Guest name (who's showing up)" value={guestName} onChange={e => { setGuestName(e.target.value); setFieldErrors(prev => ({ ...prev, guestName: false })); }} />
                   </div>
                   <p className={styles.guestHint}>This name will appear on the check-in list</p>
                 </>
@@ -594,7 +654,7 @@ function ConfirmBookingInner() {
                 </div>
                 <div className={styles.inputRow} style={{ flex: 1, marginBottom: 0 }}>
                   <Phone className={styles.inputIcon} />
-                  <input className={styles.input} placeholder="4XX XXX XXX" type="tel" inputMode="numeric" value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g, ""))} maxLength={11} autoComplete="tel" />
+                  <input className={`${styles.input}${fieldErrors.phone ? ` ${styles.inputError}` : ""}`} placeholder="4XX XXX XXX" type="tel" inputMode="numeric" value={phone} onChange={e => { setPhone(e.target.value.replace(/\D/g, "")); setFieldErrors(prev => ({ ...prev, phone: false })); }} maxLength={11} autoComplete="tel" />
                 </div>
               </div>
               <p className={styles.phoneNote}>
@@ -611,7 +671,10 @@ function ConfirmBookingInner() {
                   <button key={key} type="button" className={`${styles.payOption} ${active ? styles.payOptionActive : ""}`} onClick={() => handlePaymentChange(key)}>
                     <Icon size={16} className={active ? styles.payIconActive : styles.payIcon} />
                     <span className={styles.payLabel}>{label}</span>
-                    <span className={`${styles.payRadio} ${active ? styles.payRadioActive : ""}`} />
+                    {active
+                      ? <CheckCircle size={18} className={styles.payCheck} />
+                      : <Circle     size={18} className={styles.payUncheck} />
+                    }
                   </button>
                 );
               })}
@@ -630,50 +693,36 @@ function ConfirmBookingInner() {
 
               {payment === "apple" && (
                 <div className={styles.prButtonWrap}>
-                  {prBtnAvailable && paymentRequest ? (
+                  {prBtnLoading ? (
+                    <div className={styles.prBtnSkeleton}>
+                      <span className={styles.prBtnSkeletonSpinner} />
+                      Checking wallet availability…
+                    </div>
+                  ) : prBtnAvailable && paymentRequest ? (
                     <PaymentRequestButtonElement options={{ paymentRequest, style: { paymentRequestButton: { theme: "dark", height: "48px" } } }} />
                   ) : (
-                    <p className={styles.prUnavailable}>Apple Pay / Google Pay is not available in this browser or device. Please select another payment method.</p>
+                    <p className={styles.prUnavailable}>{walletLabel} is not available in this browser or device. Please select another payment method.</p>
                   )}
                 </div>
               )}
 
-              {payment === "upi" && (
-                <div className={styles.cardForm}>
-                  <input className={styles.upiInput} placeholder="Enter UPI ID (e.g. yourname@upi)" type="text" value={upiId} onChange={e => setUpiId(e.target.value)} autoComplete="off" inputMode="email" />
-                  <p className={styles.upiHint}>You will be prompted to approve the payment in your UPI app after confirming.</p>
-                </div>
-              )}
 
-              {upiStatus === "pending" && (
-                <div style={{ marginTop: 10, padding: "12px 14px", background: "#FFF8E7", border: "1px solid #E2C98A", borderRadius: 10, fontSize: 13, color: "#7A5800", lineHeight: 1.5 }}>
-                  <strong>Waiting for UPI approval</strong><br />
-                  Please open your UPI app and approve the payment of ${price}.
-                </div>
-              )}
-
-              {payment !== "onsite" && (
-                <input className={styles.inputNoIcon} placeholder="Email for receipt (optional)" type="email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" />
-              )}
+              <input className={styles.inputNoIcon} placeholder="Email for receipt (optional)" type="email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" />
             </div>
 
             {/* Error */}
             {paymentError && <p className={styles.paymentError}>{paymentError}</p>}
 
             {/* Legal */}
-            <p className={styles.legalText}>
-              By confirming, you agree to our{" "}
-              <a href="/privacy" className={styles.legalLink}>Privacy Policy</a> and{" "}
-              <a href="/terms" className={styles.legalLink}>Terms</a>.
-            </p>
+            <LegalText action="confirming" />
 
             {/* Confirm CTA — hidden for Apple Pay */}
             {payment !== "apple" && (
               <div className={styles.ctaWrap}>
                 <button
                   type="button"
-                  className={`${styles.ctaBtn} ${(!canConfirm || isProcessing) ? styles.ctaBtnDisabled : ""}`}
-                  disabled={!canConfirm || isProcessing}
+                  className={`${styles.ctaBtn} `}
+                  // disabled={!canConfirm || isProcessing}
                   onClick={handleConfirm}
                 >
                   {isProcessing ? <><span className={styles.btnSpinner} />Processing…</> : getCtaLabel()}
@@ -685,7 +734,21 @@ function ConfirmBookingInner() {
         )}
       </div>
 
-      {/* Success modal */}
+      
+
+    </div>
+
+      {/* Processing overlay */}
+      {isProcessing && (
+        <div className={styles.processingOverlay}>
+          <div className={styles.processingCard}>
+            <span className={styles.processingSpinner} />
+            <p className={styles.processingLabel}>{processingLabel}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Success modal — outside blurred div so it stays sharp */}
       {showModal && (
         <AppDownloadModal
           name={firstName}
@@ -693,14 +756,33 @@ function ConfirmBookingInner() {
           bookingId={confirmedBookingId ?? undefined}
           serviceId={confirmedServiceId}
           servicePrice={confirmedServicePrice}
-          onSkip={() => router.push(confirmedBarberSlug ? `/bookme/${confirmedBarberSlug}` : "/")}
+          onSkip={() => {
+           if (confirmedBarberSlug) {
+              router.push(`/bookme/${confirmedBarberSlug}`);
+            } else {
+                            router.push(`/bookme/${confirmedBarberSlug}`);
+            }
+          }}
           onSaveDetails={() => {
             try {
-              if (customerSnapshot) localStorage.setItem(SAVED_KEY, JSON.stringify(customerSnapshot));
-            } catch { /* ignore */ }
+              if (customerSnapshot) {
+                const toSave = {
+                  firstName:   customerSnapshot.firstName,
+                  phone:       customerSnapshot.phone,
+                  countryCode: customerSnapshot.countryCode,
+                  ...(customerSnapshot.email          ? { email:          customerSnapshot.email }          : {}),
+                  ...(customerSnapshot.guestName      ? { guestName:      customerSnapshot.guestName }      : {}),
+                  ...(customerSnapshot.forSomeoneElse ? { forSomeoneElse: customerSnapshot.forSomeoneElse } : {}),
+                  ...(customerSnapshot.address        ? { address:        customerSnapshot.address }        : {}),
+                };
+                localStorage.setItem(SAVED_KEY, JSON.stringify(toSave));
+              }
+            } catch (err) {
+              console.warn("[ConfirmBooking] Failed to save user details:", err);
+            }
           }}
         />
       )}
-    </div>
+    </>
   );
 }

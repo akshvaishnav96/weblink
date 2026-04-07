@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter, useParams, useSearchParams } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { API_ENDPOINTS } from "@/lib/api-endpoints";
+import { STORAGE_KEYS } from "@/lib/constants";
 
 // How often to poll for position updates (ms)
 const POLL_INTERVAL_MS = 15_000;
@@ -13,22 +14,32 @@ export type QueueView = "waiting" | "your-turn";
 export type ModalView = "leave" | "skip" | null;
 
 export function useQueueStatus() {
-  const router       = useRouter();
-  const params       = useParams<{ slug: string }>();
-  const searchParams = useSearchParams();
-  const slug         = params?.slug ?? "";
+  const router = useRouter();
+  const params = useParams<{ slug: string }>();
+  const slug   = params?.slug ?? "";
 
-  // ── URL params (set by queue-booking on success) ───────────────────────────
-  const bookingId   = searchParams.get("bookingId") ?? "";
-  const pin         = searchParams.get("pin") ?? "";
-  const serviceName = decodeURIComponent(searchParams.get("serviceName") ?? "");
-  const staffName   = decodeURIComponent(searchParams.get("staffName")   ?? "");
-  const duration    = searchParams.get("duration") ?? "—";
-  const people      = Number(searchParams.get("people")   ?? "1");
-  const waitMins    = Number(searchParams.get("waitMins") ?? "0");
+  // ── Read session data written by queue-booking on success ─────────────────
+  const session = (() => {
+    try {
+      const raw = sessionStorage.getItem(STORAGE_KEYS.QUEUE_STATUS);
+      return raw ? JSON.parse(raw) as {
+        bookingId: string; pin: string; position: number;
+        serviceName: string; staffName: string; duration: string;
+        people: number; waitMins: number;
+      } : null;
+    } catch { return null; }
+  })();
+
+  const bookingId   = session?.bookingId   ?? "";
+  const pin         = session?.pin         ?? "";
+  const serviceName = session?.serviceName ?? "";
+  const staffName   = session?.staffName   ?? "";
+  const duration    = session?.duration    ?? "—";
+  const people      = session?.people      ?? 1;
+  const waitMins    = session?.waitMins    ?? 0;
 
   // ── Live state ─────────────────────────────────────────────────────────────
-  const [position,    setPosition]   = useState(Number(searchParams.get("position") ?? "1"));
+  const [position,    setPosition]   = useState(session?.position ?? 1);
   const [estWaitMins, setEstWait]    = useState(waitMins);
   const [view,        setView]       = useState<QueueView>("waiting");
   const [modal,       setModal]      = useState<ModalView>(null);
@@ -67,9 +78,9 @@ export function useQueueStatus() {
     return () => clearInterval(id);
   }, [fetchPosition]);
 
-  // ── If position=0 in URL params, show timer immediately on mount ───────────
+  // ── If position=0 in session data, show timer immediately on mount ──────────
   useEffect(() => {
-    if (Number(searchParams.get("position") ?? "1") === 0) {
+    if ((session?.position ?? 1) === 0) {
       setView("your-turn");
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -105,23 +116,20 @@ export function useQueueStatus() {
   // position === 1 → 1 skip max | position > 1 → 5 skips max
   const effectiveLimit = skipLimit ?? (position <= 1 ? 1 : 5);
   const canSkip  = skipCount < effectiveLimit;
-  const skipUsed = skipCount >= effectiveLimit; // kept for component compat
+  const skipUsed = skipCount >= effectiveLimit;
 
   async function confirmSkip() {
     if (!canSkip) return;
-    // Lock the limit the first time: position 0 or 1 = 1 skip only, else 5
     if (skipLimit === null) setSkipLimit(position <= 1 ? 1 : 5);
     setIsSkipping(true);
     try {
       setPosition(p => p + 1);
       setSkipCount(n => n + 1);
       setModal(null);
-      // Skipping from the timer screen → go back to waiting, reset countdown
       if (view === "your-turn") {
         setView("waiting");
         setCountdown(YOUR_TURN_SECONDS);
       }
-      // In production: call your skip-queue API here
     } catch { /* ignore */ } finally {
       setIsSkipping(false);
     }
