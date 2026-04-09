@@ -26,8 +26,8 @@ export const PIN_MIN = 1000;  // Fallback PIN random range (inclusive)
 export const PIN_MAX = 9999;
 
 // ── App download links ────────────────────────────────────────────────────────
-export const APP_STORE_URL   = "https://apps.apple.com/app/valet-vault/id6450396075";   // iOS
-export const PLAY_STORE_URL  = "https://play.google.com/store/apps/details?id=com.valetvault.app"; // Android
+export const APP_STORE_URL   = "https://apps.apple.com/au/app/valet-vault-mens-concierge/id6741186159";   // iOS
+export const PLAY_STORE_URL  = "https://play.google.com/store/apps/details?id=com.valetvault&pcampaignid=web_share"; // Android
 
 // ── Base path (subdirectory hosting) ─────────────────────────────────────────
 // Set NEXT_PUBLIC_BASE_PATH=/bookme in .env when hosted at a subdirectory.
