@@ -8,9 +8,9 @@ export default function LegalText({ action = "confirming" }: LegalTextProps) {
   return (
     <p className={styles.legalText}>
       By {action}, you agree to our{" "}
-      <a href="/bookme/privacy" className={styles.legalLink}>Privacy Policy</a>
+      <a href="/barbers/privacy" className={styles.legalLink}>Privacy Policy</a>
       {" "}and{" "}
-      <a href="/bookme/terms" className={styles.legalLink}>Terms</a>.
+      <a href="/barbers/terms" className={styles.legalLink}>Terms</a>.
     </p>
   );
 }

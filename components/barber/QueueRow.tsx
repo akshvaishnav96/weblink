@@ -61,7 +61,7 @@ export default function QueueRow({
       {/* ── Badge ─────────────────────────────────────────────────────── */}
       <div className={styles.badge}>
         <span className={styles.badgeDot} />
-        JOIN QUEUE 
+        JOIN QUEUE
       </div>
 
       {/* ── Main clickable row ────────────────────────────────────────── */}
@@ -113,7 +113,7 @@ export default function QueueRow({
                 onClick={() => setSelectedStaffId("fastest")}
               >
                 <div className={styles.fastestIcon}>
-                  <Zap className="w-4 h-4"  width={"20px"} height={"20px"}/>
+                  <Zap className="w-4 h-4" />
                 </div>
                 <div className="flex-1 min-w-0 text-left">
                   <div className="flex items-center" style={{gap:"0.5rem"}}>
@@ -189,12 +189,12 @@ export default function QueueRow({
               </div>
             </div>
 
-            {/* Join Queue button */}
+             {/* Join Queue button */}
             <button
               className={styles.joinBtn}
               onClick={() => onJoin?.(selectedStaffId, people)}
             >
-              Join Queue {people > 1 ? ` (${people} people)` : ""}
+              Join Queue {people > 0 && `${people > 1 ? `(${people} people)` : ``}`}
             </button>
             <p className={styles.joinNote}>
               Pay on-site after your service&nbsp;•&nbsp;Cash or Card accepted

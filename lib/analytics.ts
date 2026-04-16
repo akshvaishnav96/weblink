@@ -68,6 +68,31 @@ export function trackServiceSelected(
   });
 }
 
+// ─── social_click — fires on every social link tap ───────────────────────────
+
+/**
+ * Always fires `social_click`.
+ * Also fires `{platform}_click` only when NEXT_PUBLIC_SOCIAL_SINGLE_URL_CLICK === "1".
+ *
+ * @param platform  "facebook" | "instagram" | "tiktok" | "website"
+ */
+export function trackSocialClick(
+  platform: "facebook" | "instagram" | "tiktok" | "website",
+  slug: string,
+  businessId: string | number,
+): void {
+  const params = { platform, business_slug: slug, business_id: String(businessId) };
+
+  // Always fire the grouped event
+  fire(ANALYTICS_EVENTS.SOCIAL_CLICK, params);
+
+  // Fire the per-platform event only when the env flag is enabled
+  if (process.env.NEXT_PUBLIC_SOCIAL_SINGLE_URL_CLICK === "1") {
+    const perPlatform = ANALYTICS_EVENTS[`${platform.toUpperCase()}_CLICK` as keyof typeof ANALYTICS_EVENTS];
+    fire(perPlatform, params);
+  }
+}
+
 // ─── staff_selected — useRef dedup (last-fired value) ────────────────────────
 
 /**

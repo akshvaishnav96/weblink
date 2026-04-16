@@ -59,6 +59,24 @@
   text-align: center;
 }
 
+.checkCircle {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--color-primary-bg);
+  border: 2px solid var(--color-primary-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+.checkIcon {
+  width: 28px;
+  height: 28px;
+  color: var(--color-primary);
+  stroke-width: 2.5;
+}
+
 .successTitle {
   font-size: 19px;
   font-weight: 700;

@@ -1,10 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarPlus, Zap, X, CalendarDays, Bell, Tag, Download } from "lucide-react";
+import { Check, CalendarPlus, Zap, X, CalendarDays, Bell, Tag, Download } from "lucide-react";
 import styles from "./AppDownloadModal.module.css";
 import { APP_STORE_URL, PLAY_STORE_URL } from "@/lib/constants";
-import SuccessCheckmark from "@/components/ui/SuccessCheckmark";
 import { isAndroid } from "@/lib/utils";
 
 interface AppDownloadModalProps {
@@ -36,7 +35,7 @@ export default function AppDownloadModal({ name, pin, bookingId, serviceId, serv
     setCalLoading(true);
     setCalError(null);
     try {
-      const res = await fetch("/bookme/api/booking/add-to-calendar", {
+      const res = await fetch("/barbers/api/booking/add-to-calendar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -71,7 +70,9 @@ export default function AppDownloadModal({ name, pin, bookingId, serviceId, serv
 
         {/* ── Success section ── */}
         <div className={styles.successSection}>
-          <SuccessCheckmark size={72} />
+          <div className={styles.checkCircle}>
+            <Check className={styles.checkIcon} />
+          </div>
           <h2 className={styles.successTitle}>
             You&apos;re all set{name ? `, ${name}` : ""}
           </h2>
@@ -121,9 +122,9 @@ export default function AppDownloadModal({ name, pin, bookingId, serviceId, serv
         {/* ── Do more section ── */}
         <div className={styles.moreSection}>
           <p className={styles.moreHeading}>DO MORE WITH VALET VAULT</p>
-          <p className={styles.moreDesc}>
+          {/* <p className={styles.moreDesc}>
             Access services across hair, beauty, fitness, wellness, car detailing and car rentals — all in one app.
-          </p>
+          </p> */}
 
           <div className={styles.featureGrid}>
             {FEATURES.map(({ icon: Icon, label, desc }) => (
@@ -135,7 +136,7 @@ export default function AppDownloadModal({ name, pin, bookingId, serviceId, serv
             ))}
           </div>
 
-          <button className={styles.getAppBtn} onClick={() => {
+          {/* <button className={styles.getAppBtn} onClick={() => {
             const url = isAndroid() ? PLAY_STORE_URL : APP_STORE_URL;
             window.open(url, "_blank", "noopener,noreferrer");
           }}>
@@ -144,7 +145,7 @@ export default function AppDownloadModal({ name, pin, bookingId, serviceId, serv
           </button>
           <p className={styles.getAppNote}>
             Create an account to unlock recurring bookings, exclusive offers and more
-          </p>
+          </p> */}
           <button className={styles.skipBtn} onClick={onSkip}>
             I&apos;ll explore later
           </button>
