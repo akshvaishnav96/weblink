@@ -14,7 +14,7 @@ export default function RatingPage() {
   const routeParams  = useParams<{ slug: string; id: string }>();
   const slug         = routeParams?.slug ?? "";
 
-  // Booking info from query params (passed from queue-status)
+  // Booking info from query params (passed from queue)
   const serviceName = params.get("serviceName") ?? "Service";
   const duration    = params.get("duration")    ?? "";
   const staffName   = params.get("staffName")   ?? "";

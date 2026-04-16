@@ -54,6 +54,7 @@ export default function QueueRow({
   const selectedStaff = staff.find(s => s.staffId === selectedStaffId) ?? staff[0];
   const selectedName  = selectedStaffId === "fastest" ? "Anyone Available" : selectedStaff?.staffName ?? "Anyone Available";
   const selectedWait  = selectedStaff?.waitMins ?? waitMins;
+  const totalPrice    = Math.round(price * people * 100) / 100;
 
   return (
     <div className={styles.row}>
@@ -80,10 +81,13 @@ export default function QueueRow({
         <div className="flex flex-col items-end gap-2 flex-shrink-0">
           {originalPrice && (
             <span className="text-[11px] text-[#b0a090] line-through leading-none">
-              {formatPrice(originalPrice)}
+              {formatPrice(people > 1 ? originalPrice * people : originalPrice)}
             </span>
           )}
-          <span className={styles.price}>{formatPrice(price)}</span>
+          <span className={styles.price}>{formatPrice(totalPrice)}</span>
+          {people > 1 && (
+            <span className="text-[11px] text-[#b0a090] leading-none">{formatPrice(price)} × {people}</span>
+          )}
           <span className={`${styles.chevron}${expanded ? ` ${styles.chevronOpen}` : ""}`}>
             <ChevronDown />
           </span>
@@ -169,6 +173,10 @@ export default function QueueRow({
                   <p className={styles.summaryLabel}>EST. WAIT</p>
                   <p className={styles.summaryWait}>~{selectedWait} min</p>
                 </div>
+              </div>
+              <div className={styles.summaryTop} style={{ marginTop: "6px" }}>
+                <p className={styles.summaryLabel}>TOTAL</p>
+                <p className={styles.summaryWait}>{formatPrice(totalPrice)}</p>
               </div>
               <div className={styles.summaryPeople}>
                 <div className="flex items-center gap-2 text-[13px] text-[#888]" style={{gap:"0.5rem"}}>

@@ -9,7 +9,7 @@
 }
 .backBtn:active { background: #F5F3EF; }
 
-/* spinner: @keyframes — kept in CSS module */
+/* spinner */
 .spinner {
   width: 32px; height: 32px;
   border: 3px solid #EEEBE5;
@@ -19,8 +19,8 @@
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* cancelBtn: :active:not(:disabled) + :disabled + @media hover — kept in CSS module */
-.cancelBtn {
+/* leaveBtn */
+.leaveBtn {
   display: flex; align-items: center; justify-content: center;
   width: 100%; padding: 13px 16px; border-radius: 10px;
   border: 1.5px solid #D0CCC4; background: #fff;
@@ -28,10 +28,10 @@
   cursor: pointer; -webkit-tap-highlight-color: transparent;
   transition: background 0.12s, border-color 0.12s; min-height: 44px;
 }
-.cancelBtn:active:not(:disabled) { background: #F5F3EF; border-color: #C0BBB3; }
-.cancelBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+.leaveBtn:active:not(:disabled) { background: #F5F3EF; border-color: #C0BBB3; }
+.leaveBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* keepBtn/confirmCancelBtn: :active — kept in CSS module */
+/* keepBtn / confirmLeaveBtn */
 .keepBtn {
   flex: 1; padding: 11px 16px; border-radius: 8px;
   border: 1.5px solid #D0CCC4; background: #fff;
@@ -40,14 +40,28 @@
 }
 .keepBtn:active { background: #F5F3EF; }
 
-.confirmCancelBtn {
+.confirmLeaveBtn {
   flex: 1; padding: 11px 16px; border-radius: 8px;
   border: none; background: #C0392B; color: #fff;
   font-size: 13.5px; font-weight: 600; cursor: pointer;
   transition: background 0.12s; min-height: 44px;
 }
-.confirmCancelBtn:active { background: #A93226; }
+.confirmLeaveBtn:active { background: #A93226; }
 
 @media (min-width: 1024px) {
-  .cancelBtn:hover:not(:disabled) { background: #F5F3EF; border-color: #C0BBB3; }
+  .leaveBtn:hover:not(:disabled) { background: #F5F3EF; border-color: #C0BBB3; }
+}
+
+/* liveDot: pulsing green — same as seatsDot in [slug]/page.module.css */
+.liveDot {
+  width: 8px; height: 8px; min-width: 8px;
+  border-radius: 50%;
+  background: #28a745;
+  animation: livePulse 1.8s ease-in-out infinite;
+  flex-shrink: 0;
+}
+@keyframes livePulse {
+  0%   { box-shadow: 0 0 0 0 rgba(40,167,69,0.7); }
+  50%  { box-shadow: 0 0 0 5px rgba(40,167,69,0.15); }
+  100% { box-shadow: 0 0 0 0 rgba(40,167,69,0); }
 }

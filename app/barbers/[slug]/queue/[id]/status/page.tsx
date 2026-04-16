@@ -1,11 +1,11 @@
 "use client";
 
 import { Clock } from "lucide-react";
-import { useQueueStatus } from "../_hooks/useQueueStatus";
-import WaitingView  from "../_components/WaitingView";
-import YourTurnView from "../_components/YourTurnView";
-import { LeaveModal, SkipModal } from "../_components/ConfirmModal";
-import styles from "../page.module.css";
+import { useQueueStatus } from "../../_hooks/useQueueStatus";
+import WaitingView  from "../../_components/WaitingView";
+import YourTurnView from "../../_components/YourTurnView";
+import { LeaveModal, SkipModal } from "../../_components/ConfirmModal";
+import styles from "../../page.module.css";
 
 export default function QueueStatusPage() {
   const q = useQueueStatus();

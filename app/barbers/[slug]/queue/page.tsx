@@ -5,6 +5,7 @@ import { useQueueStatus } from "./_hooks/useQueueStatus";
 import YourTurnView from "./_components/YourTurnView";
 import { LeaveModal, SkipModal } from "./_components/ConfirmModal";
 import styles from "./page.module.css";
+import Link from "next/link";
 
 export default function QueueStatusPage() {
   const q = useQueueStatus();
@@ -61,8 +62,10 @@ export default function QueueStatusPage() {
                   Manage your spot here:
                 </p>
                 <div className={styles.smsLinkRow}>
+                  <Link href={`/barbers/gorav/queue/1`} className={`${styles.smsLink} flex items-center gap-[8px]`} target="_blank" rel="noopener noreferrer">
                   <ExternalLinkIcon className={styles.smsLinkIcon} size={14} />
-                  <span className={styles.smsLink}>queue.mikes.com/abc123</span>
+                    barbers/gorav/queue/1
+                  </Link>
                 </div>
               </div>
             </div>

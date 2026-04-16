@@ -6,7 +6,7 @@ export const STORAGE_KEYS = {
   BOOKING:    "groomly-booking",       // Zustand persisted store key
   SAVED_USER: "groomly-saved-user",    // Pre-filled user details for repeat bookings
   BOOKING_IDS:"groomly-booking-ids",   // IDs of bookings created in this session
-   QUEUE_STATUS: "groomly-queue-status", // Session data passed to queue-status page
+   QUEUE_STATUS: "groomly-queue-status", // Session data passed to queue page
 } as const;
 
 // ── Regional defaults ─────────────────────────────────────────────────────────

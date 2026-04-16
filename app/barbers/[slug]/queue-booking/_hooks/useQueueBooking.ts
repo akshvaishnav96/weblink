@@ -487,7 +487,7 @@ export function useQueueBooking() {
         }),
       );
     } catch { /* ignore */ }
-    router.replace(`/barbers/${barberSlug}/queue-status/${bookingId ?? pin}`);
+    router.replace(`/barbers/${barberSlug}/queue/${bookingId ?? pin}`);
   }
 
   // ── Validation ─────────────────────────────────────────────────────────────
