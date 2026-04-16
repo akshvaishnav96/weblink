@@ -24,6 +24,8 @@ interface Booking {
   verificationCode: string;
   status: BookingStatus;
   bookedFor?: string;
+  serviceType?: string;
+  queuePosition?: number;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -59,6 +61,8 @@ function mapApiBooking(data: any): Booking {
     verificationCode: data.booking_otp ?? "—",
     status:           mapApiStatus(data.status ?? ""),
     bookedFor:        data.members?.[0]?.member_name ?? undefined,
+    serviceType:      data.service_type ?? undefined,
+    queuePosition:    data.queue_position != null ? Number(data.queue_position) : undefined,
   };
 }
 
@@ -163,6 +167,7 @@ function BookingDetailInner({
               <p className="text-[13px] font-semibold text-[#5a5a5a] text-center m-0 mb-[10px]" style={{fontWeight:"bold"}}>{booking.dateGroup}</p>
               <BookingCard
                 booking={booking}
+                slug={slug}
                 cancelling={cancellingId === booking.id}
                 confirming={confirmingId === booking.id}
                 onRequestCancel={() => { setConfirmingId(booking.id); setCancelError(null); }}
@@ -181,6 +186,7 @@ function BookingDetailInner({
 
 function BookingCard({
   booking,
+  slug,
   cancelling,
   confirming,
   onRequestCancel,
@@ -188,14 +194,17 @@ function BookingCard({
   onConfirmCancel,
 }: {
   booking: Booking & { bookedFor?: string };
+  slug: string;
   cancelling?: boolean;
   confirming?: boolean;
   onRequestCancel?: () => void;
   onKeep?: () => void;
   onConfirmCancel?: () => void;
 }) {
+  const router      = useRouter();
   const isUpcoming  = booking.status === "upcoming";
   const isCancelled = booking.status === "cancelled";
+  const isQueue     = booking.serviceType === "queue";
 
   return (
     <div className={isCancelled
@@ -236,6 +245,22 @@ function BookingCard({
         </div>
       </div>
 
+      {/* Live Queue banner */}
+      {(
+        <button
+          onClick={() => router.push(`/barbers/${slug}/queue-status/${booking.id}`)}
+          className="w-full flex items-center justify-between py-[12px] px-[14px] mb-[12px] bg-[#f0fdf4] border border-[#16a34a] rounded-[10px] cursor-pointer"
+        >
+          <div className="flex items-center gap-[8px]">
+            <span className={styles.liveDot} />
+            <span className="text-[13px] font-semibold text-[#15803d]">
+              Live Queue{booking.queuePosition != null ? ` - Position #${booking.queuePosition}` : ""}
+            </span>
+          </div>
+          <span className="text-[13px] font-semibold text-[#15803d]">View →</span>
+        </button>
+      )}
+
       {/* Type badge + price */}
       <div className="flex items-center justify-between mb-[12px]">
         <span className="inline-flex items-center py-[3px] px-[11px] rounded-[20px] border-[1.5px] border-[#D1C9B8] bg-transparent text-[12px] font-medium text-[#5a5050]">
@@ -252,24 +277,26 @@ function BookingCard({
         </span>
       </div>
 
-      {/* Cancel button / inline confirm */}
-      {/* cancelBtn: :active:not(:disabled) + :disabled + @media hover — kept in CSS module */}
+      {/* Cancel / Leave Queue button */}
       {isUpcoming && !confirming && (
         <button className={styles.cancelBtn} onClick={onRequestCancel} disabled={cancelling}>
-          {cancelling ? "Cancelling…" : "Cancel Booking"}
+          {cancelling ? (isQueue ? "Leaving…" : "Cancelling…") : (isQueue ? "Leave Queue" : "Cancel Booking")}
         </button>
       )}
 
       {isUpcoming && confirming && (
         <div className="bg-[#FFF5F5] border border-[#FDDEDE] rounded-[10px] p-[14px] pb-[12px]">
-          <p className="text-[14px] font-semibold text-[#1a1a1a] m-0 mb-[4px]">Cancel this booking?</p>
-          {booking.paymentMethod !== "Cash" && (
+          <p className="text-[14px] font-semibold text-[#1a1a1a] m-0 mb-[4px]">
+            {isQueue ? "Leave the queue?" : "Cancel this booking?"}
+          </p>
+          {!isQueue && booking.paymentMethod !== "Cash" && (
             <p className="text-[12.5px] text-[#7a6060] m-0 mb-[12px]">50% fee applies within 12 hrs of appointment.</p>
           )}
           <div className="flex gap-[10px]">
-            {/* keepBtn/confirmCancelBtn: :active — kept in CSS module */}
             <button className={styles.keepBtn} onClick={onKeep}>Keep</button>
-            <button className={styles.confirmCancelBtn} onClick={onConfirmCancel}>Confirm Cancel</button>
+            <button className={styles.confirmCancelBtn} onClick={onConfirmCancel}>
+              {isQueue ? "Leave Queue" : "Confirm Cancel"}
+            </button>
           </div>
         </div>
       )}

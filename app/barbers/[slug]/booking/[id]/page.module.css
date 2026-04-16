@@ -51,3 +51,17 @@
 @media (min-width: 1024px) {
   .cancelBtn:hover:not(:disabled) { background: #F5F3EF; border-color: #C0BBB3; }
 }
+
+/* liveDot: pulsing green — same as seatsDot in [slug]/page.module.css */
+.liveDot {
+  width: 8px; height: 8px; min-width: 8px;
+  border-radius: 50%;
+  background: #28a745;
+  animation: livePulse 1.8s ease-in-out infinite;
+  flex-shrink: 0;
+}
+@keyframes livePulse {
+  0%   { box-shadow: 0 0 0 0 rgba(40,167,69,0.7); }
+  50%  { box-shadow: 0 0 0 5px rgba(40,167,69,0.15); }
+  100% { box-shadow: 0 0 0 0 rgba(40,167,69,0); }
+}

@@ -26,6 +26,7 @@ export function useQueueStatus() {
         bookingId: string; pin: string; position: number;
         serviceName: string; staffName: string; duration: string;
         people: number; waitMins: number;
+        firstName?: string; email?: string;
       } : null;
     } catch { return null; }
   })();
@@ -37,6 +38,8 @@ export function useQueueStatus() {
   const duration    = session?.duration    ?? "—";
   const people      = session?.people      ?? 1;
   const waitMins    = session?.waitMins    ?? 0;
+  const firstName   = session?.firstName   ?? "";
+  const email       = session?.email       ?? "";
 
   // ── Live state ─────────────────────────────────────────────────────────────
   const [position, setPosition] = useState(session?.position ?? 1);
@@ -146,7 +149,7 @@ export function useQueueStatus() {
 
   return {
     // Booking info
-    bookingId, pin, serviceName, staffName, duration, people,
+    bookingId, pin, serviceName, staffName, duration, people, firstName, email,
     // Live queue state
     position, estWaitMins, view,
     // Modals

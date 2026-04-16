@@ -1,4 +1,4 @@
-import { Clock, SkipForward, LogOut } from "lucide-react";
+import { Clock, SkipForward, LogOut, User, Mail, AlertCircle } from "lucide-react";
 import styles from "../page.module.css";
 
 interface Props {
@@ -7,11 +7,13 @@ interface Props {
   canSkip: boolean;
   skipCount: number;
   skipLimit: number;
+  firstName?: string;
+  email?: string;
   onSkip: () => void;
   onLeave: () => void;
 }
 
-export default function WaitingView({ position, estWaitMins, canSkip, skipCount, skipLimit, onSkip, onLeave }: Props) {
+export default function WaitingView({ position, estWaitMins, canSkip, skipCount, skipLimit, firstName, email, onSkip, onLeave }: Props) {
   const waitLow   = Math.max(1, estWaitMins - 5);
   const waitHigh  = estWaitMins + 5;
   const isFirst   = position <= 1;
@@ -46,6 +48,30 @@ export default function WaitingView({ position, estWaitMins, canSkip, skipCount,
           {isFirst ? "Skip used — you've been moved back" : `All ${skipLimit} skips used`}
         </div>
       )}
+
+      {/* Customer info row */}
+      {(firstName || email) && (
+        <div className={styles.infoRow}>
+          {firstName && (
+            <div className={styles.infoItem}>
+              <User className={styles.infoIcon} />
+              <span>{firstName}</span>
+            </div>
+          )}
+          {email && (
+            <div className={styles.infoItem}>
+              <Mail className={styles.infoIcon} />
+              <span className={styles.infoEmail}>{email}</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Priority note */}
+      <div className={styles.priorityNote}>
+        <AlertCircle className={styles.priorityIcon} />
+        <span>Note: Scheduled bookings may take priority over the live queue.</span>
+      </div>
 
       {/* Leave queue */}
       <button className={styles.leaveLink} onClick={onLeave}>

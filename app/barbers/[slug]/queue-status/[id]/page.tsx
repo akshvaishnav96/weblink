@@ -61,6 +61,8 @@ export default function QueueStatusPage() {
             canSkip={q.canSkip}
             skipCount={q.skipCount}
             skipLimit={q.skipLimit}
+            firstName={q.firstName}
+            email={q.email}
             onSkip={() => q.openModal("skip")}
             onLeave={() => q.openModal("leave")}
           />
