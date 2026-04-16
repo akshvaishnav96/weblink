@@ -6,6 +6,7 @@ export const STORAGE_KEYS = {
   BOOKING:    "groomly-booking",       // Zustand persisted store key
   SAVED_USER: "groomly-saved-user",    // Pre-filled user details for repeat bookings
   BOOKING_IDS:"groomly-booking-ids",   // IDs of bookings created in this session
+   QUEUE_STATUS: "groomly-queue-status", // Session data passed to queue-status page
 } as const;
 
 // ── Regional defaults ─────────────────────────────────────────────────────────
@@ -29,7 +30,7 @@ export const APP_STORE_URL   = "https://apps.apple.com/app/valet-vault/id6450396
 export const PLAY_STORE_URL  = "https://play.google.com/store/apps/details?id=com.valetvault.app"; // Android
 
 // ── Base path (subdirectory hosting) ─────────────────────────────────────────
-// Set NEXT_PUBLIC_BASE_PATH=/bookme in .env when hosted at a subdirectory.
+// Set NEXT_PUBLIC_BASE_PATH=/barbers in .env when hosted at a subdirectory.
 // Used to prefix internal /api/ fetch calls so they resolve correctly.
 export const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
@@ -38,4 +39,9 @@ export const ANALYTICS_EVENTS = {
   PAGE_VISIT:        "business_profile_click",
   SERVICE_SELECTED:  "service_click",
   STAFF_SELECTED:    "staff_click",
+  SOCIAL_CLICK:      "social_click",
+  FACEBOOK_CLICK:    "facebook_click",
+  INSTAGRAM_CLICK:   "instagram_click",
+  TIKTOK_CLICK:      "tiktok_click",
+  WEBSITE_CLICK:     "website_click",
 } as const;

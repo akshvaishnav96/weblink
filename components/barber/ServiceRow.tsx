@@ -86,7 +86,7 @@ export default function ServiceRow({ service, businessId, barberSlug = "", busin
       serviceType:    service.serviceType ?? "walkin",
       userId,
     });
-    router.push(`/bookme/${barberSlug}/confirm-booking`);
+    router.push(`/barbers/${barberSlug}/confirm-booking`);
   }
 
   const isWalkIn = service.paymentType === "WALK_IN_ONLY";
@@ -232,7 +232,7 @@ export default function ServiceRow({ service, businessId, barberSlug = "", busin
               <Link
                 href={
                   barberSlug && businessId
-                    ? `/bookme/${encodeURIComponent(barberSlug)}/view-times?service=${service.id}&businessName=${encodeURIComponent(businessName)}&businessAddress=${encodeURIComponent(businessAddress)}&mode=${serviceMode}${userId ? `&user_id=${encodeURIComponent(userId)}` : ""}`
+                    ? `/barbers/${encodeURIComponent(barberSlug)}/view-times?service=${service.id}&businessName=${encodeURIComponent(businessName)}&businessAddress=${encodeURIComponent(businessAddress)}&mode=${serviceMode}${userId ? `&user_id=${encodeURIComponent(userId)}` : ""}`
                     : `#`
                 }
                 className={styles.viewMore}

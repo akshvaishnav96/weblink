@@ -79,7 +79,7 @@ export default function BookingCard({ booking }: BookingCardProps) {
               {/* btn/btnGhost: hover states — kept in CSS module */}
               <button className={`${styles.btn} ${styles.btnGhost}`}>Cancel</button>
               <Link
-                href={`/bookme/${booking.barberId}/view-times`}
+                href={`/barbers/${booking.barberId}/view-times`}
                 className={`${styles.btn} ${styles.btnPrimary}`}
               >
                 Reschedule
@@ -88,7 +88,7 @@ export default function BookingCard({ booking }: BookingCardProps) {
           )}
           {isCompleted && (
             <Link
-              href={`/bookme/${booking.barberId}/view-times`}
+              href={`/barbers/${booking.barberId}/view-times`}
               className={`${styles.btn} ${styles.btnPrimary}`}
             >
               Book Again
@@ -96,7 +96,7 @@ export default function BookingCard({ booking }: BookingCardProps) {
           )}
           {isCancelled && (
             <Link
-              href={`/bookme/${booking.barberId}/view-times`}
+              href={`/barbers/${booking.barberId}/view-times`}
               className={`${styles.btn} ${styles.btnGhost}`}
             >
               Rebook

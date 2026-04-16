@@ -19,9 +19,9 @@ export const API_ENDPOINTS = {
   SITEMAP_BUSINESSES: `${API_BASE}/marketplace-preview?search=`,
 
   // ── Next.js API routes (client-to-server) endpoints ───────────────────────
-  BOOKING_CREATE: "/bookme/api/booking/create",
-  BOOKING_PAYMENT_INTENT: "/bookme/api/booking/payment-intent",
-  BOOKING_DETAILS: (id: number | string) => `/bookme/api/booking/details/${id}`,
-  BOOKING_CANCEL: (id: number | string) => `/bookme/api/booking/cancel/${id}`,
-  LOG_PAYMENT_FAILURE: "/bookme/api/log/payment-failure",
+  BOOKING_CREATE: "/barbers/api/booking/create",
+  BOOKING_PAYMENT_INTENT: "/barbers/api/booking/payment-intent",
+  BOOKING_DETAILS: (id: number | string) => `/barbers/api/booking/details/${id}`,
+  BOOKING_CANCEL: (id: number | string) => `/barbers/api/booking/cancel/${id}`,
+  LOG_PAYMENT_FAILURE: "/barbers/api/log/payment-failure",
 } as const;

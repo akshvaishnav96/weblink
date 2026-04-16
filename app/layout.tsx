@@ -17,7 +17,7 @@ const cormorant = Cormorant_Garamond({
 });
 
 
-const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? (process.env.NODE_ENV === "production" ? "/bookme" : "");
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? (process.env.NODE_ENV === "production" ? "/barbers" : "");
 
 export const metadata: Metadata = {
   title: "valetvault - Book top barbers near you",

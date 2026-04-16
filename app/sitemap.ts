@@ -12,16 +12,16 @@ interface BusinessEntry {
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
-  // ── Static /bookme/* pages ─────────────────────────────────────────────────
+  // ── Static /barbers/* pages ─────────────────────────────────────────────────
   const staticPages: MetadataRoute.Sitemap = [
     {
-      url: `${SITE_URL}/bookme/privacy`,
+      url: `${SITE_URL}/barbers/privacy`,
       lastModified: now,
       changeFrequency: "yearly",
       priority: 0.3,
     },
     {
-      url: `${SITE_URL}/bookme/terms`,
+      url: `${SITE_URL}/barbers/terms`,
       lastModified: now,
       changeFrequency: "yearly",
       priority: 0.3,
@@ -46,7 +46,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const businessPages: MetadataRoute.Sitemap = json.data
       .filter(b => b.business_slug)
       .map(b => ({
-        url: `${SITE_URL}/bookme/${b.business_slug}`,
+        url: `${SITE_URL}/barbers/${b.business_slug}`,
         lastModified: b.updated_at ? new Date(b.updated_at) : now,
         changeFrequency: "daily" as const,
         priority: 0.9,
