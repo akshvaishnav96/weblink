@@ -22,6 +22,8 @@ export interface BookingSelection {
   notes?: string;
   meetUpAddress?: string;
   userId?: string | null;
+  people?: number;
+  waitMins?: number;
 }
 
 export interface CustomerInfo {

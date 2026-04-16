@@ -70,6 +70,8 @@ export default function ServicesTab({
       bookingDate:     "",
       serviceType:     "walkin",
       userId:          userId ?? null,
+      people,
+      waitMins,
     } as Parameters<typeof setSelection>[0]);
     router.push(`/barbers/${slug}/queue-booking`);
   }
