@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { ArrowLeft, Send } from "lucide-react";
 import styles from "./page.module.css";
+import { API_ENDPOINTS } from "@/lib/api-endpoints";
 
 const TOTAL_STEPS = 7;
 const CURRENT_STEP = 6;
@@ -18,23 +19,38 @@ export default function RatingPage() {
   const serviceName = params.get("serviceName") ?? "Service";
   const duration    = params.get("duration")    ?? "";
   const staffName   = params.get("staffName")   ?? "";
+  const businessId  = params.get("businessId")  ?? "";
 
   const [rating,       setRating]       = useState(0);
   const [hovered,      setHovered]      = useState(0);
   const [submitting,   setSubmitting]   = useState(false);
   const [submitted,    setSubmitted]    = useState(false);
+  const [submitError,  setSubmitError]  = useState<string | null>(null);
 
   const activeStars = hovered || rating;
 
   async function handleSubmit() {
     if (!rating || submitting) return;
     setSubmitting(true);
+    setSubmitError(null);
     try {
-      // TODO: call rating API with rating value
-      // await fetch(`/bookme/api/rating`, { method: "POST", body: JSON.stringify({ bookingId: routeParams.id, rating }) });
-      setSubmitted(true);
+      const res  = await fetch(API_ENDPOINTS.QUEUE_RATING, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          order_id:    routeParams.id,
+          business_id: businessId ? Number(businessId) : undefined,
+          rating,
+        }),
+      });
+      const json = await res.json();
+      if (json.status === false) {
+        setSubmitError(json.message ?? "Failed to submit review. Please try again.");
+      } else {
+        setSubmitted(true);
+      }
     } catch {
-      /* best-effort */
+      setSubmitError("Network error. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -97,6 +113,13 @@ export default function RatingPage() {
               </button>
             ))}
           </div>
+
+          {/* Error message */}
+          {submitError && (
+            <p style={{ fontSize: 13, color: "#c0392b", textAlign: "center", marginBottom: 12 }}>
+              {submitError}
+            </p>
+          )}
 
           {/* Submit */}
           {submitted ? (

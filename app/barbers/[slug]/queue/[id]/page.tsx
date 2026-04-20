@@ -1,15 +1,15 @@
 "use client";
 
-import { Suspense, use, useState } from "react";
+import { Suspense, use, useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Calendar, Clock, CreditCard, Layers, Timer } from "lucide-react";
 import styles from "./page.module.css";
-// TODO: import { API_ENDPOINTS } from "@/lib/api-endpoints";
+import { API_ENDPOINTS } from "@/lib/api-endpoints";
 
-type BookingStatus = "upcoming" | "cancelled";
+type BookingStatus = "waiting" | "cancelled" | "completed" | string;
 
 interface QueueBooking {
-  id: number;
+  id: string | number;
   service: string;
   provider: string;
   date: string;
@@ -17,25 +17,20 @@ interface QueueBooking {
   duration: string;
   paymentMethod: string;
   price: string;
-  verificationCode: string;
   status: BookingStatus;
   queuePosition?: number;
 }
 
-// ── Dummy data — replace with API call when ready ─────────────────────────
-const DUMMY_BOOKING: QueueBooking = {
-  id:               1,
-  service:          "Haircut & Style",
-  provider:         "Haircut Studio",
-  date:             "Tue, Nov 25, 2025",
-  dateGroup:        "Tuesday, November 25, 2025",
-  duration:         "45 min",
-  paymentMethod:    "Card",
-  price:            "$45",
-  verificationCode: "7842",
-  status:           "upcoming",
-  queuePosition:    1,
-};
+function formatDate(dateStr: string): { short: string; long: string } {
+  try {
+    const d = new Date(dateStr + "T00:00:00");
+    const short = d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+    const long  = d.toLocaleDateString("en-US", { weekday: "long",  month: "long",  day: "numeric", year: "numeric" });
+    return { short, long };
+  } catch {
+    return { short: dateStr, long: dateStr };
+  }
+}
 
 // ── Page ────────────────────────────────────────────────────────────────────
 
@@ -59,23 +54,72 @@ function QueueDetailInner({
   const { id, slug } = use(params);
   const router = useRouter();
 
-  // TODO: replace with API fetch when ready
-  const [booking,    setBooking]    = useState<QueueBooking>(DUMMY_BOOKING);
-  const [loading]                   = useState(false);
+  const [booking,    setBooking]    = useState<QueueBooking | null>(null);
+  const [loading,    setLoading]    = useState(true);
   const [confirming, setConfirming] = useState(false);
   const [leaving,    setLeaving]    = useState(false);
   const [leaveError, setLeaveError] = useState<string | null>(null);
 
-  // TODO: handleConfirmLeave — wire up API_ENDPOINTS.BOOKING_CANCEL(id)
-  function handleConfirmLeave() {
+  const fetchBooking = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res  = await fetch(API_ENDPOINTS.QUEUE_DETAILS(id));
+      const json = await res.json();
+      const data = json.data ?? json;
+
+      const serviceName = data.services?.[0]?.business_services?.service_name ?? "Queue Service";
+      const provider    = data.business?.business_display_name ?? "";
+      const dates       = formatDate(data.booking_date ?? "");
+      const durationMin = data.duration ?? data.services?.[0]?.business_services?.time ?? "";
+      const pm          = data.payment_mode ?? "";
+      const price       = data.total_amount != null ? `$${Number(data.total_amount).toFixed(2)}` : "";
+      const status: BookingStatus = data.status ?? "waiting";
+      const queuePosition = data.queue_order != null ? Number(data.queue_order) : undefined;
+
+      setBooking({
+        id,
+        service:       serviceName,
+        provider,
+        date:          dates.short,
+        dateGroup:     dates.long,
+        duration:      durationMin ? `${durationMin} min` : "",
+        paymentMethod: pm ? pm.charAt(0).toUpperCase() + pm.slice(1) : "",
+        price,
+        status,
+        queuePosition,
+      });
+    } catch {
+      setBooking(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => { fetchBooking(); }, [fetchBooking]);
+
+  async function handleConfirmLeave() {
     setLeaving(true);
     setConfirming(false);
     setLeaveError(null);
-    // Simulate leave with dummy state update
-    setTimeout(() => {
-      setBooking(prev => ({ ...prev, status: "cancelled" }));
+    try {
+      const res  = await fetch(API_ENDPOINTS.QUEUE_ACTION(id), {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ action: "cancel" }),
+      });
+      const json = await res.json();
+      if (json.status === false) {
+        setLeaveError(json.message ?? "Failed to leave queue.");
+        setConfirming(true);
+      } else {
+        setBooking(prev => prev ? { ...prev, status: "cancelled" } : prev);
+      }
+    } catch {
+      setLeaveError("Network error. Please try again.");
+      setConfirming(true);
+    } finally {
       setLeaving(false);
-    }, 800);
+    }
   }
 
   return (
@@ -110,7 +154,7 @@ function QueueDetailInner({
             </p>
           )}
 
-          {booking && (
+          {!loading && booking && (
             <>
               <p className="text-[13px] font-semibold text-[#5a5a5a] text-center m-0 mb-[10px]" style={{ fontWeight: "bold" }}>
                 {booking.dateGroup}
@@ -153,7 +197,7 @@ function QueueCard({
   onConfirmLeave: () => void;
 }) {
   const router      = useRouter();
-  const isUpcoming  = booking.status === "upcoming";
+  const isActive    = booking.status === "waiting";
   const isCancelled = booking.status === "cancelled";
 
   return (
@@ -191,7 +235,7 @@ function QueueCard({
       </div>
 
       {/* Live Queue banner */}
-      {isUpcoming && (
+      {isActive && (
         <button
           onClick={() => router.push(`/barbers/${slug}/queue/${booking.id}/status`)}
           className="w-full flex items-center justify-between py-[12px] px-[14px] mb-[12px] bg-[#f0fdf4] border border-[#16a34a] rounded-[10px] cursor-pointer"
@@ -211,28 +255,22 @@ function QueueCard({
         <span className="text-[17px] font-bold text-[#B8860B] md:text-[18px] ">{booking.price}</span>
       </div>
 
-      {/* Verification code */}
-      {/* <div className="flex items-center justify-between py-[10px] px-[12px] bg-[#F7F5F1] rounded-[8px] mb-[12px]">
-        <span className="text-[13px] text-[#7a7060]">Verification Code</span>
-        <span className="text-[13px] font-semibold text-[#1a1a1a] tracking-[0.04em]" style={{ fontWeight: "bold" }}>
-          {booking.verificationCode}
-        </span>
-      </div> */}
-
       {/* Leave Queue button */}
-      {/* {isUpcoming && !confirming && (
+      {isActive && !confirming && (
         <button className={styles.leaveBtn} onClick={onRequestLeave} disabled={leaving}>
           {leaving ? "Leaving…" : "Leave Queue"}
         </button>
-      )} */}
+      )}
 
       {/* Inline confirm */}
-      {isUpcoming && confirming && (
+      {isActive && confirming && (
         <div className="bg-[#FFF5F5] border border-[#FDDEDE] rounded-[10px] p-[14px] pb-[12px]">
           <p className="text-[14px] font-semibold text-[#1a1a1a] m-0 mb-[12px]">Leave the queue?</p>
           <div className="flex gap-[10px]">
             <button className={styles.keepBtn} onClick={onKeep}>Keep</button>
-            <button className={styles.confirmLeaveBtn} onClick={onConfirmLeave}>Leave Queue</button>
+            <button className={styles.confirmLeaveBtn} onClick={onConfirmLeave} disabled={leaving}>
+              {leaving ? "Leaving…" : "Leave Queue"}
+            </button>
           </div>
         </div>
       )}

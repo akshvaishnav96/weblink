@@ -19,20 +19,24 @@ export function useQueueStatus() {
   const slug   = params?.slug ?? "";
 
   // ── Read session data written by queue-booking on success ─────────────────
+  const params2 = useParams<{ id: string }>();
+  const urlOrderId = params2?.id ?? "";
+
   const session = (() => {
     try {
       const raw = sessionStorage.getItem(STORAGE_KEYS.QUEUE_STATUS);
       return raw ? JSON.parse(raw) as {
-        bookingId: string; pin: string; position: number;
+        bookingId: string; orderId?: string; position: number;
         serviceName: string; staffName: string; duration: string;
         people: number; waitMins: number;
         firstName?: string; email?: string;
+        skipCount?: number; skipLimit?: number;
       } : null;
     } catch { return null; }
   })();
 
   const bookingId   = session?.bookingId   ?? "";
-  const pin         = session?.pin         ?? "";
+  const orderId     = session?.orderId     ?? urlOrderId;
   const serviceName = session?.serviceName ?? "";
   const staffName   = session?.staffName   ?? "";
   const duration    = session?.duration    ?? "—";
@@ -46,34 +50,30 @@ export function useQueueStatus() {
   const [estWaitMins, setEstWait]    = useState(waitMins);
   const [view,        setView]       = useState<QueueView>("waiting");
   const [modal,       setModal]      = useState<ModalView>(null);
-  const [skipCount,   setSkipCount]  = useState(0);
-  const [skipLimit,   setSkipLimit]  = useState<number | null>(null); // locked on first skip
+  const [skipCount,   setSkipCount]  = useState(session?.skipCount  ?? 0);
+  const [skipLimit,   setSkipLimit]  = useState<number | null>(session?.skipLimit ?? null); // locked on first skip
   const [countdown,   setCountdown]  = useState(YOUR_TURN_SECONDS);
   const [isLeaving,   setIsLeaving]  = useState(false);
   const [isSkipping,  setIsSkipping] = useState(false);
 
   // ── Poll booking details for live position ─────────────────────────────────
   const fetchPosition = useCallback(async () => {
-    if (!bookingId) return;
+    if (!orderId) return;
     try {
-      const res  = await fetch(API_ENDPOINTS.BOOKING_DETAILS(bookingId));
+      const res  = await fetch(API_ENDPOINTS.QUEUE_DETAILS(orderId));
       const json = await res.json();
       if (!json.status) return;
 
       const data = json.data ?? json;
-      const pos  = data.queue_position ?? data.position;
+      const pos  = data.queue_order ?? data.queue_position;
       if (pos !== undefined) setPosition(Number(pos));
 
-      const wait = data.estimated_wait ?? data.wait_minutes;
-      if (wait !== undefined) setEstWait(Number(wait));
-
-      // Show timer when position reaches 0
-      if (data.is_your_turn || data.queue_position === 0) {
+      if (data.is_turn || pos === 0) {
         setView("your-turn");
         setCountdown(YOUR_TURN_SECONDS);
       }
     } catch { /* ignore polling errors */ }
-  }, [bookingId]);
+  }, [orderId]);
 
   useEffect(() => {
     fetchPosition();
@@ -106,8 +106,12 @@ export function useQueueStatus() {
   async function confirmLeave() {
     setIsLeaving(true);
     try {
-      if (bookingId) {
-        await fetch(API_ENDPOINTS.BOOKING_CANCEL(bookingId), { method: "POST" });
+      if (orderId) {
+        await fetch(API_ENDPOINTS.QUEUE_ACTION(orderId), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "cancel" }),
+        });
       }
     } catch { /* best-effort */ } finally {
       setIsLeaving(false);
@@ -123,19 +127,44 @@ export function useQueueStatus() {
 
   async function confirmSkip() {
     if (!canSkip) return;
-    // Lock the limit the first time: position 0 or 1 = 1 skip only, else 5
-    if (skipLimit === null) setSkipLimit(position <= 1 ? 1 : 5);
+    const lockedLimit = skipLimit ?? (position <= 1 ? 1 : 5);
+    if (skipLimit === null) setSkipLimit(lockedLimit);
     setIsSkipping(true);
     try {
-      setPosition(p => p + 1);
-      setSkipCount(n => n + 1);
+      let newSkipCount = skipCount + 1; // always increment locally
+      if (orderId) {
+        const res  = await fetch(API_ENDPOINTS.QUEUE_ACTION(orderId), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "skip" }),
+        });
+        const json = await res.json();
+        if (json.status && json.data) {
+          if (json.data.queue_order != null) setPosition(Number(json.data.queue_order));
+          // Use server count if returned, otherwise keep local increment
+          if (json.data.skip_count != null) newSkipCount = Number(json.data.skip_count);
+        }
+      } else {
+        setPosition(p => p + 1);
+      }
+      setSkipCount(newSkipCount); // always apply
+      // Persist skip state so it survives a page refresh
+      try {
+        const raw = sessionStorage.getItem(STORAGE_KEYS.QUEUE_STATUS);
+        if (raw) {
+          const stored = JSON.parse(raw);
+          sessionStorage.setItem(STORAGE_KEYS.QUEUE_STATUS, JSON.stringify({
+            ...stored,
+            skipCount: newSkipCount,
+            skipLimit: lockedLimit,
+          }));
+        }
+      } catch { /* ignore storage errors */ }
       setModal(null);
-      // Skipping from the timer screen → go back to waiting, reset countdown
       if (view === "your-turn") {
         setView("waiting");
         setCountdown(YOUR_TURN_SECONDS);
       }
-      // In production: call your skip-queue API here
     } catch { /* ignore */ } finally {
       setIsSkipping(false);
     }
@@ -149,7 +178,7 @@ export function useQueueStatus() {
 
   return {
     // Booking info
-    bookingId, pin, serviceName, staffName, duration, people, firstName, email,
+    bookingId, orderId, serviceName, staffName, duration, people, firstName, email,
     // Live queue state
     position, estWaitMins, view,
     // Modals

@@ -17,8 +17,6 @@ import {
   DEFAULT_CURRENCY,
   APPLE_PAY_COUNTRY,
   COUNTRY_SEARCH_FOCUS_DELAY_MS,
-  PIN_MIN,
-  PIN_MAX,
 } from "@/lib/constants";
 import { detectWalletLabel, nowInTZ } from "@/lib/utils";
 import type { Country, FieldErrors, PaymentMethod } from "../_types";
@@ -121,11 +119,6 @@ export function useQueueBooking() {
   const barberSlug = selection.barberSlug ?? "";
   const serviceId = selection.serviceId ?? "";
 
-  const fallbackPin = useMemo(() => {
-    const buf = new Uint32Array(1);
-    crypto.getRandomValues(buf);
-    return String(PIN_MIN + (buf[0] % (PIN_MAX - PIN_MIN + 1)));
-  }, []);
 
   // ── Redirect guard ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -233,28 +226,17 @@ export function useQueueBooking() {
       let capturedIntentId = "";
 
       try {
-        const base = buildBasePayload({
-          firstName: fn,
-          phone: ph,
-          email: em,
-          guestName: gn,
-          isBookingSomeone: fse,
-          countryCode: ct.dial_code,
-        });
-        const res = await fetch(API_ENDPOINTS.BOOKING_PAYMENT_INTENT, {
+        const res = await fetch(API_ENDPOINTS.QUEUE_PAYMENT_INTENT, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ...base,
-            total_amount: Math.round(deposit * 100),
-            services: base.services.map(
-              (s: { service_id: number; price: number }) => ({
-                ...s,
-                price: Math.round(deposit * 100),
-              }),
-            ),
-            payment_intent_id: "",
-          }),
+          body: JSON.stringify(buildQueueIntentPayload({
+            firstName: fn,
+            phone: ph,
+            email: em,
+            guestName: gn,
+            isBookingSomeone: fse,
+            countryCode: ct.dial_code,
+          })),
         });
         const json = await res.json();
         if (!json.status) {
@@ -277,7 +259,7 @@ export function useQueueBooking() {
         setIsProcessing(true);
         setProcessingLabel("Joining queue…");
 
-        const { pin, bookingId, position } = await createBookingOnServer(
+        const { orderId, bookingId, position } = await createBookingOnServer(
           capturedIntentId,
           "apple",
           fn,
@@ -295,7 +277,7 @@ export function useQueueBooking() {
           cc: ct.dial_code,
           gn,
           fse,
-          pin,
+          orderId,
           bookingId,
           position,
         });
@@ -322,12 +304,11 @@ export function useQueueBooking() {
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
-  function buildBasePayload({
+  // Payload for the queue-specific payment intent API
+  function buildQueueIntentPayload({
     firstName: fn,
     phone: ph,
     email: em,
-    guestName: gn,
-    isBookingSomeone: fse,
     countryCode: cc,
   }: {
     firstName: string;
@@ -338,24 +319,15 @@ export function useQueueBooking() {
     countryCode: string;
   }) {
     return {
-      business_id: Number(barberId),
-      staff_id: ["anyone", "fastest"].includes(selection.staffId ?? "")
-        ? 0
-        : Number(selection.staffId ?? 0),
-      total_amount: deposit,
-      is_secure: false,
-      booking_type: "queue",
-      service_type: selection.serviceType ?? "walkin",
-      services: [{ service_id: Number(serviceId), price: deposit }],
-      customer_name: fn,
-      is_booking_someone: fse,
-      ...(fse ? { guest_name: gn } : {}),
+      business_id:           Number(barberId),
+      services:              [{ service_id: Number(serviceId), price: Math.round(price * 100) }],
+      customer_name:         fn,
       customer_country_code: cc,
       customer_phone_number: ph,
-      customer_email: em,
-      payment_mode: "card",
-      people_count: people,
-      user_id: selection.userId ?? null,
+      customer_email:        em,
+      total_amount:          Math.round(price * 100),
+      deposit_amount:        Math.round(deposit * 100),
+      no_of_person:          people,
     };
   }
 
@@ -369,21 +341,28 @@ export function useQueueBooking() {
     fse: boolean,
     cc: string,
     userId: number | null,
-  ): Promise<{ pin: string; bookingId: number | null; position?: number }> {
+  ): Promise<{ orderId: string; bookingId: number | null; position?: number }> {
+    const isAnyStaff = ["anyone", "fastest"].includes(selection.staffId ?? "");
     const payload = {
-      ...buildBasePayload({
-        firstName: fn,
-        phone: ph,
-        email: em,
-        guestName: gn,
-        isBookingSomeone: fse,
-        countryCode: cc,
-      }),
-      payment_intent_id: piId,
-      payment_mode: pm,
-      user_id: pm === "cash" ? null : userId,
+      business_id:           Number(barberId),
+      staff_type:            isAnyStaff ? "fastest" : "specific",
+      staff_id:              isAnyStaff ? 0 : Number(selection.staffId ?? 0),
+      total_amount:          price,
+      deposit_amount:        deposit,
+      is_secure:             false,
+      service_type:          "queue",
+      services:              [{ service_id: Number(serviceId), price }],
+      customer_name:         fn,
+      customer_country_code: cc,
+      customer_phone_number: ph,
+      customer_email:        em,
+      ...(fse ? { guest_name: gn } : {}),
+      payment_mode:          pm,
+      user_id:               userId,
+      payment_intent_id:     piId,
+      no_of_person:          people,
     };
-    const res = await fetch(API_ENDPOINTS.BOOKING_CREATE, {
+    const res = await fetch(API_ENDPOINTS.QUEUE_CREATE, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -391,22 +370,13 @@ export function useQueueBooking() {
     const json = await res.json();
     if (!json.status) throw new Error(json.message ?? "Queue booking failed");
 
-    const bId =
-      json.data?.booking_id ??
-      json.data?.id ??
-      json.booking_id ??
-      json.id ??
-      null;
-    const bookingId = bId ? Number(bId) : null;
-
-    const pin = json.data?.booking_otp
-      ? String(json.data.booking_otp).slice(-4)
-      : fallbackPin;
-    const position = json.data?.queue_position ?? json.data?.position ?? null;
+    const orderId  = json.data?.order_id ?? "";
+    const bookingId = json.data?.booking_id ? Number(json.data.booking_id) : null;
+    const position  = json.data?.queue_order ?? null;
     return {
-      pin,
+      orderId,
       bookingId,
-      position: position ? Number(position) : undefined,
+      position: position != null ? Number(position) : undefined,
     };
   }
 
@@ -454,7 +424,7 @@ export function useQueueBooking() {
   function finaliseSuccess({
     fn = "",
     em = "",
-    pin,
+    orderId,
     bookingId,
     position,
   }: {
@@ -464,7 +434,7 @@ export function useQueueBooking() {
     cc?: string;
     gn?: string;
     fse?: boolean;
-    pin: string;
+    orderId: string;
     bookingId: number | null;
     position?: number;
   }) {
@@ -475,7 +445,7 @@ export function useQueueBooking() {
         STORAGE_KEYS.QUEUE_STATUS,
         JSON.stringify({
           bookingId: String(bookingId ?? ""),
-          pin,
+          orderId,
           position: position ?? 1,
           serviceName,
           staffName,
@@ -487,7 +457,7 @@ export function useQueueBooking() {
         }),
       );
     } catch { /* ignore */ }
-    router.replace(`/barbers/${barberSlug}/queue/${bookingId ?? pin}`);
+    router.replace(`/barbers/${barberSlug}/queue/${orderId || bookingId}`);
   }
 
   // ── Validation ─────────────────────────────────────────────────────────────
@@ -559,25 +529,17 @@ export function useQueueBooking() {
       });
       if (pmErr) throw new Error(pmErr.message);
 
-      const base = buildBasePayload({
-        firstName,
-        phone,
-        email,
-        guestName,
-        isBookingSomeone: forSomeoneElse,
-        countryCode: cc,
-      });
-      const intentRes = await fetch(API_ENDPOINTS.BOOKING_PAYMENT_INTENT, {
+      const intentRes = await fetch(API_ENDPOINTS.QUEUE_PAYMENT_INTENT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...base,
-          total_amount: Math.round(deposit * 100),
-          services: base.services.map((s) => ({
-            ...s,
-            price: Math.round(deposit * 100),
-          })),
-        }),
+        body: JSON.stringify(buildQueueIntentPayload({
+          firstName,
+          phone,
+          email,
+          guestName,
+          isBookingSomeone: forSomeoneElse,
+          countryCode: cc,
+        })),
       });
       const intentJson = await intentRes.json();
       if (!intentJson.status)
@@ -610,7 +572,7 @@ export function useQueueBooking() {
         /* ignore */
       }
 
-      const { pin, bookingId, position } = await createBookingOnServer(
+      const { orderId, bookingId, position } = await createBookingOnServer(
         cardIntentId,
         "card",
         firstName,
@@ -628,7 +590,7 @@ export function useQueueBooking() {
         cc,
         gn: guestName,
         fse: forSomeoneElse,
-        pin,
+        orderId,
         bookingId,
         position,
       });
